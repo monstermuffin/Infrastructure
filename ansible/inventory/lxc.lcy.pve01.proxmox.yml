@@ -29,7 +29,7 @@ keyed_groups:
     prefix: "node_"
 
 filters:
-  - proxmox_tags is search('ansible')
+  - (proxmox_tags | default('')) is search('ansible')
 
 hostnames:
   - proxmox_name
