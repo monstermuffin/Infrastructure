@@ -1,0 +1,19 @@
+---
+- name: Make resolv.conf mutable before updates
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    attributes: "-i"
+  when: pve_system_nameservers | length > 0
+
+- name: Configure DNS resolvers in /etc/resolv.conf
+  ansible.builtin.template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    mode: "0644"
+    backup: true
+
+- name: Make resolv.conf immutable (prevent overwrite by DHCP)
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    attributes: "+i"
+  when: pve_system_nameservers | length > 0

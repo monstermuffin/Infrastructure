@@ -1,0 +1,28 @@
+---
+- name: Check if HA services exist
+  ansible.builtin.systemd:
+    name: pve-ha-lrm
+  register: ha_lrm_check
+  failed_when: false
+  changed_when: false
+
+- name: Manage pve-ha-lrm service
+  ansible.builtin.systemd:
+    name: pve-ha-lrm
+    enabled: "{{ pve_ha_services_enabled }}"
+    state: "{{ 'started' if pve_ha_services_enabled else 'stopped' }}"
+  when: ha_lrm_check.status is defined
+
+- name: Manage pve-ha-crm service
+  ansible.builtin.systemd:
+    name: pve-ha-crm
+    enabled: "{{ pve_ha_services_enabled }}"
+    state: "{{ 'started' if pve_ha_services_enabled else 'stopped' }}"
+  when: ha_lrm_check.status is defined
+
+- name: Manage corosync service
+  ansible.builtin.systemd:
+    name: corosync
+    enabled: "{{ pve_ha_services_enabled }}"
+    state: "{{ 'started' if pve_ha_services_enabled else 'stopped' }}"
+  when: ha_lrm_check.status is defined

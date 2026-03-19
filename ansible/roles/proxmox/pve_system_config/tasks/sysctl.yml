@@ -1,0 +1,12 @@
+---
+- name: Configure perf_event_paranoid for Intel GPU stats in LXC containers
+  ansible.posix.sysctl:
+    name: kernel.perf_event_paranoid
+    value: "{{ pve_system_perf_event_paranoid }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/99-frigate.conf
+    reload: true
+  when: pve_system_perf_event_paranoid is defined
+  tags:
+    - sysctl
+    - perf

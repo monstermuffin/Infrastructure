@@ -1,0 +1,22 @@
+---
+- name: Disable default MOTD scripts
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: "0644"
+  loop:
+    - /etc/update-motd.d/10-uname
+    - /etc/update-motd.d/90-updates-available
+  failed_when: false
+
+- name: Create custom MOTD
+  ansible.builtin.copy:
+    content: "{{ pve_system_motd_content }}"
+    dest: /etc/motd
+    mode: "0644"
+  when: pve_system_motd_content != ""
+
+- name: Remove custom MOTD
+  ansible.builtin.file:
+    path: /etc/motd
+    state: absent
+  when: not pve_system_motd_enabled | bool

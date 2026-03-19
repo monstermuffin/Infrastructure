@@ -1,0 +1,15 @@
+{% raw %}#!/bin/bash
+# Auto-remove Proxmox subscription nag after package updates
+
+PROXMOXLIB="/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
+
+if [ -f "$PROXMOXLIB" ]; then
+    # Check if already patched
+    if ! grep -q "orig_checked_command:function" "$PROXMOXLIB"; then
+        # Apply the patch
+        sed -i.bak "$PROXMOXLIB" -e 's#\(^ *checked_command: *function *(orig_cmd) *{$\)#\1orig_cmd();},orig_checked_command:function(orig_cmd){#'
+        echo "Proxmox subscription nag removed"
+        systemctl restart pveproxy 2>/dev/null || true
+    fi
+fi
+{% endraw %}

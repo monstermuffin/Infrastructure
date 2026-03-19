@@ -1,0 +1,59 @@
+---
+- name: Gather facts if not already gathered
+  ansible.builtin.setup:
+  when: ansible_distribution is not defined
+
+- name: Verify running on Proxmox VE
+  ansible.builtin.fail:
+    msg: "This role is designed for Proxmox VE systems only"
+  when: >
+    ansible_distribution != "Debian" or
+    not (ansible_distribution_release in ["bullseye", "bookworm", "trixie"])
+  tags:
+    - always
+
+- name: Include repository management tasks
+  ansible.builtin.include_tasks: repositories.yml
+  tags:
+    - repositories
+    - repos
+
+- name: Include subscription nag removal tasks
+  ansible.builtin.include_tasks: subscription_nag.yml
+  when: pve_remove_subscription_nag | bool
+  tags:
+    - subscription
+    - nag
+
+- name: Include HA services configuration
+  ansible.builtin.include_tasks: services.yml
+  tags:
+    - services
+    - ha
+
+- name: Include SSH key management tasks
+  ansible.builtin.include_tasks: ssh_keys.yml
+  when: pve_ssh_keys_manage | bool
+  tags:
+    - ssh
+    - ssh_keys
+    - keys
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: pve_run_apt_update | bool
+  tags:
+    - updates
+    - apt
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+    autoremove: true
+    autoclean: true
+  when: pve_run_apt_upgrade | bool
+  tags:
+    - updates
+    - upgrade

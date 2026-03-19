@@ -1,0 +1,47 @@
+---
+# Hostname
+pve_system_hostname: ""
+pve_system_domain: ""
+
+# /etc/hosts — must be real IP, NOT loopback.
+# Typically the corosync ring address for clustered nodes.
+pve_system_hosts_ip: ""
+
+# Cluster peers for /etc/hosts (migrations, replication)
+# List of dicts: [{ip: "172.29.82.2", fqdn: "pve04.aah.muffn.io", name: "pve04"}]
+pve_system_cluster_peers: []
+
+# Timezone (e.g. "UTC", "America/New_York", "Europe/London")
+pve_system_timezone: ""
+
+# Locale
+pve_system_locale: "en_US.UTF-8"
+pve_system_locale_generate:
+  - "en_US.UTF-8 UTF-8"
+
+# DNS
+pve_system_nameservers: []
+pve_system_search_domains: []
+
+# NTP
+pve_system_ntp_servers: []
+pve_system_ntp_fallback_servers:
+  - "time.cloudflare.com"
+pve_system_ntp_enabled: true
+
+# SSH
+pve_system_ssh_permit_root_login: "prohibit-password"
+pve_system_ssh_password_authentication: false
+pve_system_ssh_port: 22
+
+# SSH key import from URL (e.g. "https://github.com/username.keys")
+pve_system_ssh_import_keys_url: ""
+pve_system_ssh_import_keys_user: "root"
+
+# MOTD
+pve_system_motd_enabled: false
+pve_system_motd_content: ""
+
+# Sysctl
+# perf_event_paranoid: 2 = default, allows CAP_PERFMON (needed for Intel GPU stats)
+pve_system_perf_event_paranoid: 2

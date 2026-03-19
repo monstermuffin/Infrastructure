@@ -1,0 +1,43 @@
+{{ ansible_managed | comment }}
+
+# NTP servers
+{% for server in pve_system_ntp_servers %}
+server {{ server }} iburst
+{% endfor %}
+
+{% if pve_system_ntp_fallback_servers | default([]) | length > 0 %}
+# Fallback pools
+{% for server in pve_system_ntp_fallback_servers %}
+pool {{ server }} iburst
+{% endfor %}
+{% endif %}
+
+# Use NTP sources found in /etc/chrony/sources.d
+sourcedir /etc/chrony/sources.d
+
+# Authentication keys
+keyfile /etc/chrony/chrony.keys
+
+# Clock drift tracking
+driftfile /var/lib/chrony/chrony.drift
+
+# NTS keys and cookies
+ntsdumpdir /var/lib/chrony
+
+# Log files
+logdir /var/log/chrony
+
+# Stop bad estimates upsetting machine clock
+maxupdateskew 100.0
+
+# Sync RTC every 11 minutes
+rtcsync
+
+# Step clock if adjustment > 1 second in first 3 updates
+makestep 1 3
+
+# Leap seconds from system tz database
+leapseclist /usr/share/zoneinfo/leap-seconds.list
+
+# Include additional config
+confdir /etc/chrony/conf.d

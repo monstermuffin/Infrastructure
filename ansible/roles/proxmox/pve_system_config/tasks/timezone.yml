@@ -1,0 +1,4 @@
+---
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ pve_system_timezone }}"

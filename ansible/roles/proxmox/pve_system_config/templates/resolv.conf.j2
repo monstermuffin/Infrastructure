@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+# DNS configuration managed by Ansible
+
+{% for ns in pve_system_nameservers %}
+nameserver {{ ns }}
+{% endfor %}
+
+{% if pve_system_search_domains | length > 0 %}
+search {{ pve_system_search_domains | join(' ') }}
+{% endif %}
+
+options edns0 trust-ad

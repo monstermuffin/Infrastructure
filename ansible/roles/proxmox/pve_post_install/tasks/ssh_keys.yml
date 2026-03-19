@@ -1,0 +1,42 @@
+---
+- name: Fetch SSH keys from GitHub
+  ansible.builtin.uri:
+    url: "https://github.com/{{ pve_ssh_keys_github_user }}.keys"
+    return_content: true
+    timeout: 10
+  register: github_keys_result
+  when:
+    - pve_ssh_keys_github_user | length > 0
+    - pve_ssh_keys_from_github | bool
+  delegate_to: localhost
+  become: false
+
+- name: Ensure .ssh directory exists for root
+  ansible.builtin.file:
+    path: /root/.ssh
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Add GitHub SSH keys to root authorized_keys
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ github_keys_result.content }}"
+    comment: "GitHub: {{ pve_ssh_keys_github_user }}"
+    exclusive: false
+  when:
+    - pve_ssh_keys_from_github | bool
+    - github_keys_result is defined
+    - github_keys_result.content is defined
+    - github_keys_result.content | length > 0
+
+- name: Add custom SSH keys to root authorized_keys
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ item }}"
+    exclusive: false
+  loop: "{{ pve_ssh_keys_custom }}"
+  when:
+    - pve_ssh_keys_custom | length > 0
+    - item | length > 0

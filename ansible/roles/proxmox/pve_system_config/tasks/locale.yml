@@ -1,0 +1,23 @@
+---
+- name: Ensure locale packages are installed
+  ansible.builtin.apt:
+    name:
+      - locales
+      - locales-all
+    state: present
+    update_cache: false
+
+- name: Generate locales
+  community.general.locale_gen:
+    name: "{{ item.split()[0] }}"
+    state: present
+  loop: "{{ pve_system_locale_generate }}"
+
+- name: Set system locale
+  ansible.builtin.copy:
+    content: "LANG={{ pve_system_locale }}\n"
+    dest: /etc/default/locale
+    owner: root
+    group: root
+    mode: "0644"
+  when: pve_system_locale != ""

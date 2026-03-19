@@ -1,0 +1,75 @@
+---
+- name: Check if proxmoxlib.js exists
+  ansible.builtin.stat:
+    path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+  register: proxmoxlib_stat
+  tags:
+    - always
+
+- name: Check if subscription nag is already disabled
+  ansible.builtin.shell: |
+    grep -q "orig_checked_command:function" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+  register: nag_disabled_check
+  changed_when: false
+  failed_when: false
+  when: proxmoxlib_stat.stat.exists
+  tags:
+    - subscription
+    - nag
+
+- name: Backup proxmoxlib.js before modification
+  ansible.builtin.copy:
+    src: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+    dest: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js.bak
+    remote_src: true
+    mode: preserve
+  when:
+    - proxmoxlib_stat.stat.exists
+    - nag_disabled_check.rc != 0
+  tags:
+    - subscription
+    - nag
+
+- name: Remove subscription nag by wrapping checked_command function
+  ansible.builtin.replace:
+    path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+    regexp: '(^ *checked_command: *function *\(orig_cmd\) *\{$)'
+    replace: '\1orig_cmd();},orig_checked_command:function(orig_cmd){'
+    backup: false
+  when:
+    - proxmoxlib_stat.stat.exists
+    - nag_disabled_check.rc != 0
+  register: nag_removal
+  tags:
+    - subscription
+    - nag
+
+- name: Create shell script for nag removal
+  ansible.builtin.template:
+    src: pve-remove-nag.sh.j2
+    dest: /usr/local/bin/pve-remove-nag.sh
+    mode: '0755'
+  tags:
+    - subscription
+    - nag
+
+- name: Create APT hook to reapply nag removal after updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99-proxmox-disable-subscription-nag
+    mode: '0644'
+    content: |
+      DPkg::Post-Invoke {
+        "if [ -f /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js ]; then /usr/local/bin/pve-remove-nag.sh > /dev/null 2>&1 || true; fi";
+      };
+  tags:
+    - subscription
+    - nag
+
+- name: Restart pveproxy service # noqa: no-handler
+  ansible.builtin.systemd:
+    name: pveproxy
+    state: restarted
+  when: nag_removal.changed | default(false)
+  tags:
+    - subscription
+    - nag

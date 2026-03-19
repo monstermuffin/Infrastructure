@@ -1,0 +1,27 @@
+---
+# Repository configuration
+pve_enterprise_repo_enabled: false
+pve_no_subscription_repo_enabled: true
+pve_test_repo_enabled: false
+
+# Ceph repository
+pve_ceph_repo_enabled: false
+pve_ceph_repo_component: "quincy"  # quincy, reef, squid
+
+# Subscription nag removal
+pve_remove_subscription_nag: true
+
+# HA services
+pve_ha_services_enabled: false
+
+# System updates
+pve_run_apt_update: true
+pve_run_apt_upgrade: false
+
+pve_distribution: "{{ ansible_distribution_release }}"
+
+# SSH key management
+pve_ssh_keys_manage: true
+pve_ssh_keys_from_github: true
+pve_ssh_keys_github_user: "monstermuffin"
+pve_ssh_keys_custom: []

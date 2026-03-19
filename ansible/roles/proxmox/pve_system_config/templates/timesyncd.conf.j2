@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+# NTP configuration managed by Ansible
+
+[Time]
+{% if pve_system_ntp_servers | length > 0 %}
+NTP={{ pve_system_ntp_servers | join(' ') }}
+{% endif %}
+FallbackNTP={{ pve_system_ntp_fallback_servers | join(' ') }}
