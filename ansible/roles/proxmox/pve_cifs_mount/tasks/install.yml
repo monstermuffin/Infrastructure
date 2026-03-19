@@ -1,0 +1,7 @@
+---
+- name: Install cifs-utils
+  ansible.builtin.apt:
+    name: cifs-utils
+    state: present
+    update_cache: true
+    cache_valid_time: 3600

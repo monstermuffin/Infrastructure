@@ -1,0 +1,39 @@
+---
+pve_cifs_enabled: false
+pve_cifs_install_utils: true
+pve_cifs_credentials_dir: "/etc/cifs"
+pve_cifs_mount_timeout: 30
+
+# 0 = never unmount, required for LXC bind mounts
+pve_cifs_automount_timeout_idle: 0
+
+# noperm: disables client-side POSIX permission checks.
+# Without this, UID mismatches between the CIFS mount ownership and container process UIDs cause access denied errors.
+
+pve_cifs_default_options:
+  vers: "3.0"
+  noperm: true
+  soft: true
+  rsize: 1048576
+  wsize: 1048576
+  iocharset: utf8
+
+# Sources and mounts should be defined in host_vars/group_vars
+
+# pve_cifs_sources:
+#   media_nas:
+#     server: "10.82.x.x"
+#     credentials:
+#       username: "svc_proxmox"
+#       password: !vault |
+#           $ANSIBLE_VAULT;...
+#       domain: ""
+pve_cifs_sources: {}
+
+# pve_cifs_mounts:
+#   - name: media
+#     source: media_nas
+#     share: "media"
+#     mountpoint: "/mnt/nas/media"
+#     options: {}
+pve_cifs_mounts: []

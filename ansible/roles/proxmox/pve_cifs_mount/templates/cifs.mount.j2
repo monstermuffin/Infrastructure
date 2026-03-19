@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+# CIFS mount for {{ item.name }} (//{{ pve_cifs_sources[item.source].server }}/{{ item.share }})
+{% set _merged_options = pve_cifs_default_options | combine(item.options | default({})) %}
+{% set _options_parts = [] %}
+{% for key, value in _merged_options.items() %}
+{%   if value is sameas true %}
+{%     set _ = _options_parts.append(key) %}
+{%   elif value is sameas false %}
+{# skip false boolean options #}
+{%   else %}
+{%     set _ = _options_parts.append(key ~ '=' ~ value) %}
+{%   endif %}
+{% endfor %}
+{% set _options_string = 'credentials=' ~ pve_cifs_credentials_dir ~ '/' ~ item.source ~ '.cred,' ~ _options_parts | join(',') %}
+
+[Unit]
+Description=CIFS mount {{ item.name }} (//{{ pve_cifs_sources[item.source].server }}/{{ item.share }})
+After=network-online.target
+Requires=network-online.target
+
+[Mount]
+What=//{{ pve_cifs_sources[item.source].server }}/{{ item.share }}
+Where={{ item.mountpoint }}
+Type=cifs
+Options={{ _options_string }}
+TimeoutSec={{ pve_cifs_mount_timeout }}
+
+[Install]
+WantedBy=multi-user.target

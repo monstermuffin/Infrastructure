@@ -1,0 +1,54 @@
+---
+- name: Check active CIFS mounts
+  ansible.builtin.command:
+    cmd: findmnt -t cifs --noheadings --output TARGET,SOURCE,OPTIONS
+  register: _cifs_active_mounts
+  changed_when: false
+  failed_when: false
+
+- name: Derive systemd unit names from mountpoints
+  ansible.builtin.command:
+    cmd: "systemd-escape --path {{ item.mountpoint }}"
+  loop: "{{ pve_cifs_mounts }}"
+  loop_control:
+    label: "{{ item.mountpoint }}"
+  register: _cifs_unit_names
+  changed_when: false
+
+- name: Gather service facts for automount units
+  ansible.builtin.service_facts:
+
+- name: Build automount unit status
+  ansible.builtin.set_fact:
+    _cifs_automount_status: >-
+      {{ _cifs_unit_names.results
+         | map(attribute='stdout')
+         | map('trim')
+         | map('regex_replace', '$', '.automount')
+         | list }}
+
+- name: Check credential files
+  ansible.builtin.find:
+    paths: "{{ pve_cifs_credentials_dir }}"
+    patterns: "*.cred"
+  register: _cifs_cred_files
+  failed_when: false
+
+- name: Display CIFS mount status
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "CIFS Mount Status"
+      - "=========================================="
+      - "Active CIFS mounts:"
+      - "{{ _cifs_active_mounts.stdout_lines | default(['  (none)']) }}"
+      - ""
+      - "Automount units:"
+      - >-
+        {% for unit in _cifs_automount_status %}
+        {{ unit }}: {{ ansible_facts.services[unit].state | default('not found') }}
+        {% endfor %}
+      - ""
+      - "Credential files:"
+      - "{{ _cifs_cred_files.files | default([]) | map(attribute='path') | list | default(['  (none)']) }}"
+      - "=========================================="

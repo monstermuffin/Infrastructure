@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+# Automount for {{ item.name }} (//{{ pve_cifs_sources[item.source].server }}/{{ item.share }})
+
+[Unit]
+Description=Automount {{ item.name }} (//{{ pve_cifs_sources[item.source].server }}/{{ item.share }})
+
+[Automount]
+Where={{ item.mountpoint }}
+TimeoutIdleSec={{ pve_cifs_automount_timeout_idle }}
+
+[Install]
+WantedBy=multi-user.target

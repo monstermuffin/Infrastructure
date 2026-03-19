@@ -1,0 +1,69 @@
+---
+- name: Derive systemd unit names from mountpoints
+  ansible.builtin.command:
+    cmd: "systemd-escape --path {{ item.mountpoint }}"
+  loop: "{{ pve_cifs_mounts }}"
+  loop_control:
+    label: "{{ item.mountpoint }}"
+  register: _cifs_unit_names
+  changed_when: false
+
+- name: Build mount definition list with unit names
+  ansible.builtin.set_fact:
+    _cifs_mount_defs: >-
+      {{ _cifs_mount_defs | default([]) + [item.item | combine({'unit_name': item.stdout | trim})] }}
+  loop: "{{ _cifs_unit_names.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+- name: Stop and disable automount units
+  ansible.builtin.systemd:
+    name: "{{ item.unit_name }}.automount"
+    enabled: false
+    state: stopped
+  loop: "{{ _cifs_mount_defs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  failed_when: false
+
+- name: Stop mount units
+  ansible.builtin.systemd:
+    name: "{{ item.unit_name }}.mount"
+    state: stopped
+  loop: "{{ _cifs_mount_defs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  failed_when: false
+
+- name: Remove automount unit files
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item.unit_name }}.automount"
+    state: absent
+  loop: "{{ _cifs_mount_defs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd daemon
+
+- name: Remove mount unit files
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item.unit_name }}.mount"
+    state: absent
+  loop: "{{ _cifs_mount_defs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd daemon
+
+- name: Determine unique NAS sources from mount definitions
+  ansible.builtin.set_fact:
+    _cifs_unique_sources: "{{ pve_cifs_mounts | map(attribute='source') | unique | list }}"
+
+- name: Remove credential files
+  ansible.builtin.file:
+    path: "{{ pve_cifs_credentials_dir }}/{{ item }}.cred"
+    state: absent
+  loop: "{{ _cifs_unique_sources }}"
+  loop_control:
+    label: "{{ pve_cifs_credentials_dir }}/{{ item }}.cred"
+
+- name: Flush handlers to reload systemd
+  ansible.builtin.meta: flush_handlers
