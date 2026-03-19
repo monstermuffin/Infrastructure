@@ -1,0 +1,26 @@
+---
+- name: Gather facts if not already gathered
+  ansible.builtin.setup:
+  when: ansible_distribution is not defined
+
+- name: Verify running on Proxmox VE
+  ansible.builtin.fail:
+    msg: "This role is designed for Proxmox VE systems only"
+  when: >
+    ansible_distribution != "Debian" or
+    not (ansible_distribution_release in ["bullseye", "bookworm", "trixie"])
+  tags:
+    - always
+
+- name: Skip network configuration
+  ansible.builtin.debug:
+    msg: "Network configuration skipped (pve_network_manage: {{ pve_network_manage }})"
+  when: pve_network_manage == "skip"
+  tags:
+    - always
+
+- name: Include network configuration tasks
+  ansible.builtin.include_tasks: configure.yml
+  when: pve_network_manage == "manual"
+  tags:
+    - configure

@@ -1,0 +1,59 @@
+---
+- name: Ensure required packages are installed
+  ansible.builtin.apt:
+    name:
+      - bridge-utils
+    state: present
+    update_cache: false
+
+- name: Backup existing network configuration
+  ansible.builtin.copy:
+    src: /etc/network/interfaces
+    dest: "/etc/network/interfaces.backup.{{ ansible_date_time.epoch }}"
+    remote_src: true
+    mode: "0644"
+  when: pve_network_backup | bool
+
+- name: Validate network configuration
+  ansible.builtin.assert:
+    that:
+      - pve_network_interfaces is defined
+      - pve_network_bridges is defined
+    fail_msg: "Network interfaces and bridges must be defined"
+    success_msg: "Network configuration validation passed"
+
+- name: Generate network interfaces configuration
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces
+    mode: "0644"
+    backup: true
+    validate: "grep -q 'auto lo' %s"
+  register: network_config_changed
+  notify: Network configuration changed
+
+- name: Display generated configuration
+  ansible.builtin.command: cat /etc/network/interfaces
+  register: interfaces_content
+  changed_when: false
+
+- name: Show network configuration
+  ansible.builtin.debug:
+    msg: "{{ interfaces_content.stdout_lines }}"
+
+- name: Restart networking if enabled
+  ansible.builtin.systemd:
+    name: networking
+    state: restarted
+  when:
+    - pve_network_auto_restart | bool
+    - network_config_changed is changed
+  tags:
+    - restart
+
+- name: Display manual restart instructions
+  ansible.builtin.debug:
+    msg: "Config updated. Apply with: systemctl reboot / systemctl restart networking / ifreload -a"
+  when:
+    - not pve_network_auto_restart | bool
+    - network_config_changed is changed

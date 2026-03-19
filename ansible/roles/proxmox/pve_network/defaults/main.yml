@@ -1,0 +1,16 @@
+---
+# "manual" to manage via template, "skip" to leave alone
+pve_network_manage: "skip"
+
+pve_network_backup: true
+pve_network_auto_restart: false
+
+pve_network_loopback:
+  enabled: true
+
+pve_network_interfaces: []
+pve_network_bridges: []
+pve_network_vlans: []
+pve_network_bonds: []
+pve_network_bridge_vlans: []
+pve_network_routes: []

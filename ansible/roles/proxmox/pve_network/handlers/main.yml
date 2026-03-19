@@ -1,0 +1,4 @@
+---
+- name: Network configuration changed
+  ansible.builtin.debug:
+    msg: "Network config updated — restart networking to apply."

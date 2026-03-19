@@ -1,0 +1,236 @@
+# {{ ansible_managed }}
+# Manual changes will be overwritten.
+
+# Loopback interface
+{% if pve_network_loopback.enabled %}
+auto lo
+iface lo inet loopback
+{% endif %}
+
+{% if pve_network_interfaces | length > 0 %}
+# Physical interfaces
+{% for iface in pve_network_interfaces %}
+{% if iface.comment is defined %}
+# {{ iface.comment }}
+{% endif %}
+{% if iface.auto | default(true) %}
+auto {{ iface.name }}
+{% endif %}
+{% if iface.method == 'static' %}
+iface {{ iface.name }} inet static
+	address {{ iface.address }}
+{% if iface.netmask is defined %}
+	netmask {{ iface.netmask }}
+{% endif %}
+{% if iface.gateway is defined %}
+	gateway {{ iface.gateway }}
+{% endif %}
+{% if iface.metric is defined %}
+	metric {{ iface.metric }}
+{% endif %}
+{% if iface.dns_nameservers is defined %}
+	dns-nameservers {{ iface.dns_nameservers | join(' ') }}
+{% endif %}
+{% if iface.dns_search is defined %}
+	dns-search {{ iface.dns_search }}
+{% endif %}
+{% elif iface.method == 'dhcp' %}
+iface {{ iface.name }} inet dhcp
+{% elif iface.method == 'manual' %}
+iface {{ iface.name }} inet manual
+{% endif %}
+{% if iface.mtu is defined %}
+	mtu {{ iface.mtu }}
+{% endif %}
+{%- for line in iface.post_up | default([]) %}
+	post-up {{ line }}
+{% endfor %}
+{%- for line in iface.pre_down | default([]) %}
+	pre-down {{ line }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% if pve_network_bonds | length > 0 %}
+# Bond interfaces
+{% for bond in pve_network_bonds %}
+{% if bond.comment is defined %}
+# {{ bond.comment }}
+{% endif %}
+auto {{ bond.name }}
+{% if bond.method == 'static' %}
+iface {{ bond.name }} inet static
+	address {{ bond.address }}
+{% if bond.netmask is defined %}
+	netmask {{ bond.netmask }}
+{% endif %}
+{% if bond.gateway is defined %}
+	gateway {{ bond.gateway }}
+{% endif %}
+{% if bond.metric is defined %}
+	metric {{ bond.metric }}
+{% endif %}
+{% elif bond.method == 'dhcp' %}
+iface {{ bond.name }} inet dhcp
+{% else %}
+iface {{ bond.name }} inet manual
+{% endif %}
+	bond-slaves {{ bond.slaves }}
+	bond-mode {{ bond.bond_mode | default('802.3ad') }}
+	bond-miimon {{ bond.bond_miimon | default(100) }}
+{% if bond.bond_downdelay is defined %}
+	bond-downdelay {{ bond.bond_downdelay }}
+{% endif %}
+{% if bond.bond_updelay is defined %}
+	bond-updelay {{ bond.bond_updelay }}
+{% endif %}
+{% if bond.bond_xmit_hash_policy is defined %}
+	bond-xmit-hash-policy {{ bond.bond_xmit_hash_policy }}
+{% endif %}
+{% if bond.bond_lacp_rate is defined %}
+	bond-lacp-rate {{ bond.bond_lacp_rate }}
+{% endif %}
+{%- for line in bond.post_up | default([]) %}
+	post-up {{ line }}
+{% endfor %}
+{%- for line in bond.pre_down | default([]) %}
+	pre-down {{ line }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% if pve_network_vlans | length > 0 %}
+# VLAN interfaces
+{% for vlan in pve_network_vlans %}
+{% if vlan.comment is defined %}
+# {{ vlan.comment }}
+{% endif %}
+auto {{ vlan.name }}
+{% if vlan.method == 'static' %}
+iface {{ vlan.name }} inet static
+	address {{ vlan.address }}
+{% if vlan.netmask is defined %}
+	netmask {{ vlan.netmask }}
+{% endif %}
+{% if vlan.gateway is defined %}
+	gateway {{ vlan.gateway }}
+{% endif %}
+{% if vlan.metric is defined %}
+	metric {{ vlan.metric }}
+{% endif %}
+{% elif vlan.method == 'dhcp' %}
+iface {{ vlan.name }} inet dhcp
+{% else %}
+iface {{ vlan.name }} inet manual
+{% endif %}
+	vlan-raw-device {{ vlan.vlan_raw_device }}
+{% if vlan.vlan_id is defined %}
+	vlan-id {{ vlan.vlan_id }}
+{% endif %}
+{% if vlan.mtu is defined %}
+	mtu {{ vlan.mtu }}
+{% endif %}
+{%- for line in vlan.post_up | default([]) %}
+	post-up {{ line }}
+{% endfor %}
+{%- for line in vlan.pre_down | default([]) %}
+	pre-down {{ line }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% if pve_network_bridges | length > 0 %}
+# Bridge interfaces
+{% for bridge in pve_network_bridges %}
+{% if bridge.comment is defined %}
+# {{ bridge.comment }}
+{% endif %}
+auto {{ bridge.name }}
+{% if bridge.method == 'static' %}
+iface {{ bridge.name }} inet static
+	address {{ bridge.address }}
+{% if bridge.netmask is defined %}
+	netmask {{ bridge.netmask }}
+{% endif %}
+{% if bridge.gateway is defined %}
+	gateway {{ bridge.gateway }}
+{% endif %}
+{% if bridge.metric is defined %}
+	metric {{ bridge.metric }}
+{% endif %}
+{% elif bridge.method == 'dhcp' %}
+iface {{ bridge.name }} inet dhcp
+{% else %}
+iface {{ bridge.name }} inet manual
+{% endif %}
+	bridge-ports {{ bridge.ports }}
+	bridge-stp {{ bridge.bridge_stp | default('off') }}
+	bridge-fd {{ bridge.bridge_fd | default(0) }}
+{% if bridge.bridge_vlan_aware is defined and bridge.bridge_vlan_aware %}
+	bridge-vlan-aware yes
+{% endif %}
+{% if bridge.bridge_vids is defined %}
+	bridge-vids {{ bridge.bridge_vids }}
+{% endif %}
+{% if bridge.bridge_pvid is defined %}
+	bridge-pvid {{ bridge.bridge_pvid }}
+{% endif %}
+{% if bridge.mtu is defined %}
+	mtu {{ bridge.mtu }}
+{% endif %}
+{%- for line in bridge.post_up | default([]) %}
+	post-up {{ line }}
+{% endfor %}
+{%- for line in bridge.pre_down | default([]) %}
+	pre-down {{ line }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% if pve_network_bridge_vlans | length > 0 %}
+# Bridge VLAN sub-interfaces
+{% for bvlan in pve_network_bridge_vlans %}
+{% if bvlan.comment is defined %}
+# {{ bvlan.comment }}
+{% endif %}
+auto {{ bvlan.name }}
+{% if bvlan.method | default('static') == 'static' %}
+iface {{ bvlan.name }} inet static
+	address {{ bvlan.address }}
+{% if bvlan.netmask is defined %}
+	netmask {{ bvlan.netmask }}
+{% endif %}
+{% if bvlan.gateway is defined %}
+	gateway {{ bvlan.gateway }}
+{% endif %}
+{% if bvlan.metric is defined %}
+	metric {{ bvlan.metric }}
+{% endif %}
+{% elif bvlan.method == 'dhcp' %}
+iface {{ bvlan.name }} inet dhcp
+{% else %}
+iface {{ bvlan.name }} inet manual
+{% endif %}
+{% if bvlan.mtu is defined %}
+	mtu {{ bvlan.mtu }}
+{% endif %}
+{%- for line in bvlan.post_up | default([]) %}
+	post-up {{ line }}
+{% endfor %}
+{%- for line in bvlan.pre_down | default([]) %}
+	pre-down {{ line }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% if pve_network_routes | length > 0 %}
+# Static routes
+{% for route in pve_network_routes %}
+# Route to {{ route.destination }} via {{ route.gateway }}
+up ip route add {{ route.destination }} via {{ route.gateway }}{% if route.device is defined %} dev {{ route.device }}{% endif %}{% if route.metric is defined %} metric {{ route.metric }}{% endif %}
+
+down ip route del {{ route.destination }} via {{ route.gateway }}{% if route.device is defined %} dev {{ route.device }}{% endif %}{% if route.metric is defined %} metric {{ route.metric }}{% endif %}
+
+{% endfor %}
+{% endif %}
+source /etc/network/interfaces.d/*
