@@ -1,0 +1,10 @@
+---
+profile: production
+
+warn_list:
+  - var-naming[no-role-prefix]
+
+skip_list:
+  - role-name[path]  # Allow paths without galaxy prefix
+
+use_default_rules: true

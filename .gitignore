@@ -1,0 +1,26 @@
+*.retry
+*.log
+.ansible/
+ansible/collections/
+.vault_password
+!.vault_password.example
+*.secret
+docs/
+.env
+ansible/.venv
+.envrc
+*.key
+*.pem
+*.pfx
+.*au*
+*au*.md
+password*.txt
+inventory/hosts.yml
+inventory/*/hosts.yml
+inventories/*/inventory.yml
+inventories/inventory.yml
+!*.example.yml
+!*.example
+
+# Terraform - not ready yet
+tf/
