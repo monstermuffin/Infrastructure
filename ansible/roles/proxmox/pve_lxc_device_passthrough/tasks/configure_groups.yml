@@ -1,0 +1,8 @@
+---
+- name: Create/manage groups in container
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid | default(omit) }}"
+    state: present
+  loop: "{{ pve_lxc_device_groups }}"
+  when: item.name is defined

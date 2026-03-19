@@ -1,0 +1,10 @@
+---
+- name: Add users to device groups
+  ansible.builtin.user:
+    name: "{{ item.username }}"
+    groups: "{{ item.groups | join(',') }}"
+    append: true
+  loop: "{{ pve_lxc_device_users }}"
+  when:
+    - item.username is defined
+    - item.groups is defined

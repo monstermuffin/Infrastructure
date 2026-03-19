@@ -1,0 +1,78 @@
+---
+- name: Check container status
+  ansible.builtin.command:
+    cmd: "pct status {{ pve_lxc_vmid }}"
+  register: _pve_lxc_status
+  changed_when: false
+  failed_when: false
+  delegate_to: "{{ pve_lxc_proxmox_node }}"
+  tags: [always]
+
+- name: Fail if container does not exist
+  ansible.builtin.fail:
+    msg: "Container {{ pve_lxc_vmid }} does not exist on {{ pve_lxc_proxmox_node }}"
+  when: _pve_lxc_status.rc != 0
+  tags: [always]
+
+- name: Store container running state
+  ansible.builtin.set_fact:
+    _pve_lxc_was_running: "{{ 'running' in _pve_lxc_status.stdout }}"
+  tags: [always]
+
+- name: Backup container configuration
+  ansible.builtin.command:
+    cmd: "cp /etc/pve/lxc/{{ pve_lxc_vmid }}.conf /etc/pve/lxc/{{ pve_lxc_vmid }}.conf.bak-{{ ansible_date_time.epoch }}"
+  when: pve_lxc_device_backup_config | bool
+  delegate_to: "{{ pve_lxc_proxmox_node }}"
+  changed_when: true
+  tags: [backup]
+
+- name: Stop container if running
+  ansible.builtin.command:
+    cmd: "pct stop {{ pve_lxc_vmid }}"
+  when: _pve_lxc_was_running | bool
+  delegate_to: "{{ pve_lxc_proxmox_node }}"
+  changed_when: true
+  tags: [stop]
+
+- name: Configure device passthrough
+  ansible.builtin.include_tasks: device_item.yml
+  loop: "{{ pve_lxc_devices }}"
+  loop_control:
+    loop_var: device
+    index_var: device_idx
+  tags: [device, passthrough]
+
+- name: Start container if it was running
+  ansible.builtin.command:
+    cmd: "pct start {{ pve_lxc_vmid }}"
+  when:
+    - _pve_lxc_was_running | bool
+    - pve_lxc_device_auto_restart | bool
+  delegate_to: "{{ pve_lxc_proxmox_node }}"
+  changed_when: true
+  tags: [start]
+
+- name: Wait for container to be accessible
+  ansible.builtin.wait_for_connection:
+    timeout: 60
+  when:
+    - _pve_lxc_was_running | bool
+    - pve_lxc_device_auto_restart | bool
+  tags: [start]
+
+- name: Configure groups in container
+  ansible.builtin.include_tasks: configure_groups.yml
+  when:
+    - pve_lxc_device_groups | length > 0
+    - _pve_lxc_was_running | bool
+    - pve_lxc_device_auto_restart | bool
+  tags: [groups, permissions]
+
+- name: Configure users in container
+  ansible.builtin.include_tasks: configure_users.yml
+  when:
+    - pve_lxc_device_users | length > 0
+    - _pve_lxc_was_running | bool
+    - pve_lxc_device_auto_restart | bool
+  tags: [users, permissions]

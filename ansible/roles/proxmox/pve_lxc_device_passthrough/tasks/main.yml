@@ -1,0 +1,30 @@
+---
+- name: Validate role is enabled
+  ansible.builtin.assert:
+    that:
+      - pve_lxc_device_enabled | bool
+    fail_msg: "pve_lxc_device_passthrough role is disabled. Set pve_lxc_device_enabled: true to proceed."
+    quiet: true
+  tags: [always]
+
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - pve_lxc_vmid is defined
+      - pve_lxc_vmid | string | length > 0
+      - pve_lxc_proxmox_node is defined
+      - pve_lxc_devices is defined
+      - pve_lxc_devices | length > 0
+    fail_msg: "Missing required variables: pve_lxc_vmid, pve_lxc_proxmox_node, or pve_lxc_devices"
+    quiet: true
+  tags: [always]
+
+- name: Include device configuration tasks
+  ansible.builtin.include_tasks: configure_devices.yml
+  when: pve_lxc_device_action == "present"
+  tags: [configure, device, passthrough]
+
+- name: Include device removal tasks
+  ansible.builtin.include_tasks: remove_devices.yml
+  when: pve_lxc_device_action == "absent"
+  tags: [remove, cleanup]

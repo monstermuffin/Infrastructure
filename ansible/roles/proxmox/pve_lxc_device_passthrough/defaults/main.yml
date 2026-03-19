@@ -1,0 +1,31 @@
+---
+pve_lxc_device_enabled: false
+pve_lxc_device_action: present  # 'present' or 'absent'
+
+# Container target
+pve_lxc_vmid: ""
+pve_lxc_proxmox_node: "{{ proxmox_node_fqdn | default(inventory_hostname) }}"
+
+# Devices to pass through
+# Character device example:
+#   - type: "device"
+#     path: "/dev/dri/renderD128"
+#     gid: 109
+#     slot: 0  # optional, auto-assigned from list index
+#
+# USB device example:
+#   - type: "usb"
+#     vid_pid: "1a6e:089a"
+#     usb3: true
+#     slot: 0  # optional
+pve_lxc_devices: []
+
+# Groups to create in container (e.g., render, video, plugdev)
+pve_lxc_device_groups: []
+
+# Users to add to device groups
+pve_lxc_device_users: []
+
+pve_lxc_device_validate: true
+pve_lxc_device_auto_restart: false
+pve_lxc_device_backup_config: true

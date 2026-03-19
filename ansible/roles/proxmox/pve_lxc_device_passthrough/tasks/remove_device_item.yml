@@ -1,0 +1,38 @@
+---
+- name: Determine device slot for removal
+  ansible.builtin.set_fact:
+    _device_slot: "{{ device.slot | default(device_idx) }}"
+
+- name: Remove character device passthrough
+  when: device.type == "device"
+  block:
+    - name: Check if device passthrough exists - dev{{ _device_slot }}
+      ansible.builtin.shell:
+        cmd: "set -o pipefail && pct config {{ pve_lxc_vmid }} | grep -E '^dev{{ _device_slot }}:' || true"
+      register: _pve_current_dev
+      changed_when: false
+      delegate_to: "{{ pve_lxc_proxmox_node }}"
+
+    - name: Remove device passthrough - dev{{ _device_slot }}
+      ansible.builtin.command:
+        cmd: "pct set {{ pve_lxc_vmid }} --delete dev{{ _device_slot }}"
+      when: _pve_current_dev.stdout | length > 0
+      delegate_to: "{{ pve_lxc_proxmox_node }}"
+      changed_when: true
+
+- name: Remove USB device passthrough
+  when: device.type == "usb"
+  block:
+    - name: Check if USB passthrough exists - usb{{ _device_slot }}
+      ansible.builtin.shell:
+        cmd: "set -o pipefail && pct config {{ pve_lxc_vmid }} | grep -E '^usb{{ _device_slot }}:' || true"
+      register: _pve_current_usb
+      changed_when: false
+      delegate_to: "{{ pve_lxc_proxmox_node }}"
+
+    - name: Remove USB passthrough - usb{{ _device_slot }}
+      ansible.builtin.command:
+        cmd: "pct set {{ pve_lxc_vmid }} --delete usb{{ _device_slot }}"
+      when: _pve_current_usb.stdout | length > 0
+      delegate_to: "{{ pve_lxc_proxmox_node }}"
+      changed_when: true
