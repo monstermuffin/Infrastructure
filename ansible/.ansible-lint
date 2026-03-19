@@ -1,10 +1,8 @@
 ---
 profile: production
 
-warn_list:
-  - var-naming[no-role-prefix]
-
 skip_list:
   - role-name[path]  # Allow paths without galaxy prefix
+  - var-naming[no-role-prefix]  # Role vars don't need role-name prefix
 
 use_default_rules: true
