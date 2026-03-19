@@ -1,0 +1,29 @@
+---
+sonarr_enabled: false
+
+sonarr_image: ghcr.io/home-operations/sonarr
+sonarr_image_tag: rolling
+
+sonarr_service_name: sonarr
+sonarr_container_name: sonarr
+
+sonarr_web_port: 8989
+sonarr_container_port: "{{ sonarr_web_port }}"
+
+sonarr_timezone: Europe/London
+
+# home-operations images run as nobody (65534) inside the container.
+# With rootful Podman (no UID remapping), directories need this ownership.
+sonarr_container_uid: 65534
+sonarr_container_gid: 65534
+
+sonarr_config_dir: /opt/sonarr/config
+sonarr_tv_dir: /opt/sonarr/tv
+sonarr_downloads_dir: /opt/sonarr/downloads
+
+sonarr_env_vars:
+  TZ: "{{ sonarr_timezone }}"
+
+sonarr_service_enable: true
+sonarr_service_start: true
+sonarr_service_restart: always

@@ -1,0 +1,30 @@
+---
+- name: Create Sonarr directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ sonarr_container_uid }}"
+    group: "{{ sonarr_container_gid }}"
+    mode: '0755'
+  loop:
+    - "{{ sonarr_config_dir }}"
+    - "{{ sonarr_tv_dir }}"
+    - "{{ sonarr_downloads_dir }}"
+  notify: Restart sonarr
+
+- name: Deploy Sonarr Quadlet file
+  ansible.builtin.template:
+    src: sonarr.container.j2
+    dest: /etc/containers/systemd/{{ sonarr_service_name }}.container
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Reload systemd if Quadlet changed
+  ansible.builtin.meta: flush_handlers
+
+- name: Pull Sonarr image
+  ansible.builtin.command:
+    cmd: podman pull {{ sonarr_image }}:{{ sonarr_image_tag }}
+  register: sonarr_pull_result
+  changed_when: "'Writing manifest' in sonarr_pull_result.stderr"
+  notify: Restart sonarr

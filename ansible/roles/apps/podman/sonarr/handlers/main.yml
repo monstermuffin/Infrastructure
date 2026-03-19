@@ -1,0 +1,10 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  notify: Restart sonarr
+
+- name: Restart sonarr
+  ansible.builtin.systemd:
+    name: "{{ sonarr_service_name }}.service"
+    state: restarted

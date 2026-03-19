@@ -1,0 +1,25 @@
+---
+- name: Sonarr | Update Proxmox container note
+  ansible.builtin.include_tasks: "{{ role_path }}/../common/tasks/update_proxmox_note.yml"
+  vars:
+    lxc_note_vmid: "{{ proxmox_vmid }}"
+    lxc_note_node: "{{ proxmox_node }}"
+    lxc_note_content: |
+      ## Sonarr
+
+      **Web UI:** [http://{{ inventory_hostname }}:{{ sonarr_web_port }}](http://{{ inventory_hostname }}:{{ sonarr_web_port }})
+
+      | Property  | Value |
+      |-----------|-------|
+      | Image     | `{{ sonarr_image }}:{{ sonarr_image_tag }}` |
+      | Runtime   | {{ proxmox_runtime }} |
+      | OS        | {{ proxmox_os }} |
+      | Config    | `{{ sonarr_config_dir }}` |
+      | TV        | `{{ sonarr_tv_dir }}` |
+      | Downloads | `{{ sonarr_downloads_dir }}` |
+
+      ---
+      *Managed by Ansible — last deployed {{ lookup('pipe', 'date +%Y-%m-%d') }}*
+  when:
+    - proxmox_vmid is defined
+    - proxmox_node is defined

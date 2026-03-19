@@ -1,0 +1,36 @@
+---
+- name: Preflight checks
+  ansible.builtin.fail:
+    msg: >
+      Sonarr role is not enabled. Set 'sonarr_enabled: true'
+      in host_vars to enable deployment.
+  when: not sonarr_enabled
+  tags: always
+
+- name: Display deployment information
+  ansible.builtin.debug:
+    msg:
+      - "Deploying Sonarr (rootful Podman + system Quadlet)"
+      - "Image: {{ sonarr_image }}:{{ sonarr_image_tag }}"
+      - "Port: {{ sonarr_web_port }}"
+  tags: always
+
+- name: Deploy Sonarr container
+  ansible.builtin.import_tasks: deploy.yml
+  tags:
+    - deploy
+    - sonarr
+    - podman
+
+- name: Manage Sonarr service
+  ansible.builtin.import_tasks: service.yml
+  tags:
+    - service
+    - sonarr
+    - podman
+
+- name: Update Proxmox container note
+  ansible.builtin.include_tasks: note.yml
+  tags:
+    - note
+    - sonarr

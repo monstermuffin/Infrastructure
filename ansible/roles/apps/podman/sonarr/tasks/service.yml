@@ -1,0 +1,28 @@
+---
+- name: Enable and start Sonarr service
+  ansible.builtin.systemd:
+    name: "{{ sonarr_service_name }}.service"
+    enabled: "{{ sonarr_service_enable }}"
+    state: started
+    daemon_reload: true
+  when: sonarr_service_start
+
+- name: Wait for Sonarr to be reachable
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ sonarr_web_port }}"
+    delay: 2
+    timeout: 90
+  when: sonarr_service_start
+
+- name: Get Sonarr service status
+  ansible.builtin.systemd:
+    name: "{{ sonarr_service_name }}.service"
+  register: sonarr_service_status
+
+- name: Display Sonarr service status
+  ansible.builtin.debug:
+    msg:
+      - "Service: {{ sonarr_service_name }}.service"
+      - "Status: {{ sonarr_service_status.status.ActiveState }}"
+      - "Web UI: http://{{ ansible_host | default(inventory_hostname) }}:{{ sonarr_web_port }}"

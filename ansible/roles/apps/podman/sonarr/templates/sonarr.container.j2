@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description=Sonarr
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image={{ sonarr_image }}:{{ sonarr_image_tag }}
+ContainerName={{ sonarr_container_name }}
+PublishPort={{ sonarr_web_port }}:{{ sonarr_container_port }}
+Volume={{ sonarr_config_dir }}:/config
+Volume={{ sonarr_tv_dir }}:/tv
+Volume={{ sonarr_downloads_dir }}:/downloads
+{% for key, value in sonarr_env_vars.items() %}
+Environment={{ key }}={{ value }}
+{% endfor %}
+
+[Service]
+Restart={{ sonarr_service_restart }}
+
+[Install]
+WantedBy=multi-user.target
