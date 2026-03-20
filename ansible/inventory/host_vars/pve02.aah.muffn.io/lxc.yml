@@ -1,0 +1,31 @@
+---
+# pve_cluster_domain is needed so the provision role can delegate to the right
+# node FQDN via _lxc_current_node + "." + pve_cluster_domain
+pve_cluster_domain: "aah.muffn.io"
+
+pve_lxc_default_network_bridge: "vmbr1"
+pve_lxc_default_storage: "local-zfs"
+
+pve_lxcs:
+  qdev01:
+    vmid: 100
+    hostname: qdev01.aah.muffn.io
+    node: pve02
+    cores: 1
+    memory: 512
+    swap: 0
+    disk: "4G"
+    storage: "local-lvm"
+    network_ip: "10.82.2.149/24"
+    network_gw: "10.82.2.1"
+    network_bridge: "vmbr1"
+    network_vlan: 702
+    unprivileged: true
+    onboot: true
+    tags:
+      - ansible
+      - site_aah
+      - app_qdevice
+    features:
+      nesting: false
+      keyctl: false
