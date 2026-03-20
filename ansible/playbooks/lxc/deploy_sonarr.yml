@@ -2,7 +2,7 @@
 # Deploy Sonarr into its LXC using rootful Podman + system Quadlet
 
 - name: Deploy Sonarr
-  hosts: sonarr01.aah.muffn.io
+  hosts: tag_sonarr01
   become: true
   gather_facts: true
 
