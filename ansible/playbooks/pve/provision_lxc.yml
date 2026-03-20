@@ -1,11 +1,19 @@
 ---
-# Provision LXC containers on Proxmox VE hosts/clusters
+# Provision LXC containers on Proxmox VE clusters/hosts
+# Each cluster needs its own play block for run_once scoping
+# Standalone hosts with pve_lxcs defined get their own play
 
-- name: Provision LXC containers
-  hosts: proxmox
+- name: Provision LXC containers — AAH cluster
+  hosts: aah-cluster01
   run_once: true
   become: false
   gather_facts: false
+  roles:
+    - pve_lxc_provision
 
+- name: Provision LXC containers — standalone hosts
+  hosts: proxmox_standalone
+  become: false
+  gather_facts: false
   roles:
     - pve_lxc_provision
