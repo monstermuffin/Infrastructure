@@ -20,19 +20,18 @@ all:
           ansible_host: 10.82.2.154
 
     proxmox:
-      hosts:
-        pve01.aah.muffn.io:
-        pve02.aah.muffn.io:
-        pve03.aah.muffn.io:
-        pve04.aah.muffn.io:
-        pve01.lcy.muffn.io:
-        pve02.lcy.muffn.io:
+      children:
+        proxmox_standalone:
+          hosts:
+            pve01.aah.muffn.io:
+            pve02.aah.muffn.io:
+            pve01.lcy.muffn.io:
+            pve02.lcy.muffn.io:
+        aah-cluster01:
+          hosts:
+            pve03.aah.muffn.io:
+            pve04.aah.muffn.io:
       vars:
         ansible_user: ansible
         ansible_ssh_private_key_file: ~/.ssh/ansible_ed25519
         ansible_python_interpreter: /usr/bin/python3
-
-    aah-cluster01:
-      hosts:
-        pve03.aah.muffn.io:
-        pve04.aah.muffn.io:
