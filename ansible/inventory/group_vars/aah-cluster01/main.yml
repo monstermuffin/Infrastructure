@@ -4,6 +4,9 @@
 # Domain for SSH delegation to nodes
 pve_cluster_domain: "aah.muffn.io"
 
+# qdev01 LXC on pve02.aah
+lxc_qdevice_ip: "10.82.2.149"
+
 # API credentials
 pve_api_host: "10.82.2.153"
 pve_api_user: "ansible@pam"
