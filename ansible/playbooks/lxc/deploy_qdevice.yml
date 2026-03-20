@@ -1,0 +1,181 @@
+---
+# Deploy corosync-qnetd into a qdevice LXC and link it to a Proxmox cluster.
+#
+# Tags:
+#   qnetd    — install/configure corosync-qnetd on the LXC only
+#   cluster  — cluster linkup tasks only (pvecm qdevice setup)
+#   verify   — print pvecm status only
+
+- name: Deploy corosync-qnetd on qdevice LXC
+  hosts: "{{ qdevice_host | default('tag_app_qdevice') }}"
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: apps/qdevice
+      tags:
+        - qnetd
+        - install
+
+- name: Push cluster node root pubkeys to qdevice authorized_keys
+  hosts: "{{ cluster_group | default('aah-cluster01') }}"
+  become: true
+  gather_facts: false
+  vars:
+    _qdevice_delegate: "{{ (groups[qdevice_host | default('tag_app_qdevice')] | default([qdevice_host | default('tag_app_qdevice')]))[0] }}"
+  tasks:
+    - name: Fail if lxc_qdevice_ip not set
+      ansible.builtin.fail:
+        msg: "lxc_qdevice_ip must be set in the cluster's group_vars"
+      when: lxc_qdevice_ip | default('') | length == 0
+      tags: always
+
+    - name: Ensure corosync-qdevice is installed on cluster nodes
+      ansible.builtin.apt:
+        name: corosync-qdevice
+        state: present
+      tags:
+        - cluster
+        - setup
+
+    - name: Check for root ed25519 public key
+      ansible.builtin.stat:
+        path: /root/.ssh/id_ed25519.pub
+      register: _ed25519_stat
+      tags:
+        - cluster
+        - setup
+
+    - name: Check for root RSA public key
+      ansible.builtin.stat:
+        path: /root/.ssh/id_rsa.pub
+      register: _rsa_stat
+      tags:
+        - cluster
+        - setup
+
+    - name: Fail if no root public key found
+      ansible.builtin.fail:
+        msg: >
+          No root SSH public key found on {{ inventory_hostname }}.
+          Generate one with: ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N ""
+          Or deploy the infra key first: ansible-playbook playbooks/pve/post_install.yml --tags ssh
+      when: not _ed25519_stat.stat.exists and not _rsa_stat.stat.exists
+      tags:
+        - cluster
+        - setup
+
+    - name: Read cluster node root public key
+      ansible.builtin.slurp:
+        src: "{{ '/root/.ssh/id_ed25519.pub' if _ed25519_stat.stat.exists else '/root/.ssh/id_rsa.pub' }}"
+      register: _root_pubkey
+      tags:
+        - cluster
+        - setup
+
+    - name: Push cluster root pubkey to qdevice authorized_keys
+      ansible.posix.authorized_key:
+        user: root
+        key: "{{ _root_pubkey.content | b64decode | trim }}"
+        comment: "cluster-root-{{ inventory_hostname }}"
+        exclusive: false
+      delegate_to: "{{ _qdevice_delegate }}"
+      tags:
+        - cluster
+        - setup
+
+    - name: Scan qdevice SSH host key from cluster node
+      ansible.builtin.command:
+        cmd: "ssh-keyscan -H {{ lxc_qdevice_ip }}"
+      register: _qdevice_hostkey
+      changed_when: false
+      tags:
+        - cluster
+        - setup
+
+    - name: Add qdevice to cluster node known_hosts
+      ansible.builtin.known_hosts:
+        path: /root/.ssh/known_hosts
+        name: "{{ lxc_qdevice_ip }}"
+        key: "{{ _qdevice_hostkey.stdout }}"
+        state: present
+      tags:
+        - cluster
+        - setup
+
+- name: Run pvecm qdevice setup and verify
+  hosts: "{{ cluster_group | default('aah-cluster01') }}"
+  run_once: true
+  become: true
+  gather_facts: false
+  vars:
+    _qdevice_delegate: "{{ (groups[qdevice_host | default('tag_app_qdevice')] | default([qdevice_host | default('tag_app_qdevice')]))[0] }}"
+  tasks:
+    - name: Check if qdevice is already active in quorum
+      ansible.builtin.command:
+        cmd: pvecm status
+      register: _pre_status
+      changed_when: false
+      tags:
+        - cluster
+        - setup
+
+    - name: Clean stale qnetd cert database on qdevice if setup needed
+      ansible.builtin.file:
+        path: /etc/corosync/qnetd/nssdb
+        state: absent
+      delegate_to: "{{ _qdevice_delegate }}"
+      when: _pre_status.stdout is not search('(?i)qdevice')
+      tags:
+        - cluster
+        - setup
+
+    - name: Run pvecm qdevice setup
+      ansible.builtin.command:
+        cmd: "pvecm qdevice setup {{ lxc_qdevice_ip }}"
+      register: _qdevice_setup
+      changed_when: _qdevice_setup.rc == 0
+      failed_when: _qdevice_setup.rc != 0
+      when: _pre_status.stdout is not search('(?i)qdevice')
+      tags:
+        - cluster
+        - setup
+
+    - name: Show pvecm qdevice setup output
+      ansible.builtin.debug:
+        msg: "{{ (_qdevice_setup.stdout_lines | default([])) + (_qdevice_setup.stderr_lines | default([])) }}"
+      when: _qdevice_setup is not skipped
+      tags:
+        - cluster
+        - setup
+
+    - name: Get cluster quorum status
+      ansible.builtin.command:
+        cmd: pvecm status
+      register: _pvecm_status
+      changed_when: false
+      tags:
+        - cluster
+        - setup
+        - verify
+
+    - name: Print cluster quorum status
+      ansible.builtin.debug:
+        var: _pvecm_status.stdout_lines
+      tags:
+        - cluster
+        - setup
+        - verify
+
+    - name: Verify qdevice is registered in quorum
+      ansible.builtin.assert:
+        that:
+          - _pvecm_status.stdout is search('(?i)qdevice')
+        fail_msg: >
+          QDevice is not registered in cluster quorum after setup.
+          Check pvecm status output above — Expected votes should include the qdevice.
+        success_msg: "QDevice is registered and active in cluster quorum."
+      tags:
+        - cluster
+        - setup
+        - verify
