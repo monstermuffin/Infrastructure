@@ -23,7 +23,7 @@ compose:
   ansible_user: root
 
 keyed_groups:
-  - key: proxmox_tags
+  - key: proxmox_tags_parsed
     separator: ""
     prefix: "tag_"
   - key: proxmox_node
