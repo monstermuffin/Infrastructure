@@ -8,9 +8,9 @@ pve_lxc_default_network_bridge: "vmbr1"
 # Node for initial placement and does not affect migration after initial placement
 
 pve_lxcs:
-  sonarr:
+  sonarr01:
     vmid: 111
-    hostname: sonarr.aah.muffn.io
+    hostname: sonarr01.aah.muffn.io
     node: pve03
     cores: 2
     memory: 2048
