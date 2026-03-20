@@ -1,25 +1,18 @@
 ---
 - name: Radarr | Update Proxmox container note
-  ansible.builtin.include_tasks: "{{ role_path }}/../common/tasks/update_proxmox_note.yml"
+  ansible.builtin.include_tasks: "{{ role_path }}/../../../lxc/common/tasks/update_proxmox_note.yml"
   vars:
     lxc_note_vmid: "{{ proxmox_vmid }}"
     lxc_note_node: "{{ proxmox_node }}"
-    lxc_note_content: |
-      ## Radarr
-
-      **Web UI:** [http://{{ inventory_hostname }}:{{ radarr_web_port }}](http://{{ inventory_hostname }}:{{ radarr_web_port }})
-
-      | Property  | Value |
-      |-----------|-------|
-      | Image     | `{{ radarr_image }}:{{ radarr_image_tag }}` |
-      | Runtime   | {{ proxmox_runtime }} |
-      | OS        | {{ proxmox_os }} |
-      | Config    | `{{ radarr_config_dir }}` |
-      | Movies    | `{{ radarr_movies_dir }}` |
-      | Downloads | `{{ radarr_downloads_dir }}` |
-
-      ---
-      *Managed by Ansible — last deployed {{ lookup('pipe', 'date +%Y-%m-%d') }}*
+    lxc_note_app_name: Radarr
+    lxc_note_web_url: "http://{{ inventory_hostname }}:{{ radarr_web_port }}"
+    lxc_note_properties:
+      Image: "{{ radarr_image }}:{{ radarr_image_tag }}"
+      Runtime: "{{ proxmox_runtime }}"
+      OS: "{{ proxmox_os }}"
+      Config: "{{ radarr_config_dir }}"
+      Movies: "{{ radarr_movies_dir }}"
+      Downloads: "{{ radarr_downloads_dir }}"
   when:
     - proxmox_vmid is defined
     - proxmox_node is defined

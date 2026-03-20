@@ -2,14 +2,38 @@
 # Set the Proxmox LXC container description (note) with app-specific info.
 #
 # Required vars:
-#   lxc_note_vmid:        VMID of the container
-#   lxc_note_node:        Proxmox node FQDN to delegate pct commands
-#   lxc_note_content:     Full note content
+#   lxc_note_vmid:          VMID of the container
+#   lxc_note_node:          Proxmox node FQDN to delegate pct commands
+#
+# Structured mode:
+#   lxc_note_app_name:      App display name (e.g. "Radarr")
+#   lxc_note_web_url:       Web UI URL
+#   lxc_note_properties:    Dict of label→value pairs for the info table
+#
+# Raw mode (pass pre-built content):
+#   lxc_note_content:       Full note content (skips template rendering)
+
+- name: "LXC note | Build note from structured vars"
+  ansible.builtin.set_fact:
+    _lxc_note_rendered: |
+      ## {{ lxc_note_app_name }}
+
+      **Web UI:** [{{ lxc_note_web_url }}]({{ lxc_note_web_url }})
+
+      | Property  | Value |
+      |-----------|-------|
+      {% for label, value in lxc_note_properties.items() %}
+      | {{ label }} | `{{ value }}` |
+      {% endfor %}
+
+      ---
+      *Managed by Ansible — last deployed {{ lookup('pipe', 'date +%Y-%m-%d') }}*
+  when: lxc_note_content is not defined
 
 - name: "LXC note | Write note to temp file on node"
   become: true
   ansible.builtin.copy:
-    content: "{{ lxc_note_content }}"
+    content: "{{ lxc_note_content | default(_lxc_note_rendered) }}"
     dest: "/tmp/ansible_lxc_{{ lxc_note_vmid }}_note.txt"
     mode: "0600"
   delegate_to: "{{ lxc_note_node }}"
