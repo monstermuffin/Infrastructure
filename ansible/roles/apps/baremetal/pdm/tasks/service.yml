@@ -1,0 +1,11 @@
+---
+- name: Enable and start PDM services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: "{{ pdm_service_enable }}"
+    state: "{{ 'started' if pdm_service_start else 'stopped' }}"
+    daemon_reload: true
+  loop: "{{ pdm_services }}"
+  tags:
+    - service
+    - start

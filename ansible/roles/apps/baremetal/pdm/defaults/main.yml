@@ -1,0 +1,23 @@
+---
+pdm_enabled: false
+
+# Repo
+pdm_keyring_url: https://enterprise.proxmox.com/debian/proxmox-archive-keyring-trixie.gpg
+pdm_keyring_dest: /usr/share/keyrings/proxmox-archive-keyring.gpg
+pdm_repo_suite: trixie
+pdm_repo_component: pdm-no-subscription
+
+pdm_packages:
+  - proxmox-datacenter-manager
+  - proxmox-datacenter-manager-ui
+
+pdm_admin_userid: "admin@pdm"
+pdm_admin_comment: "Ansible Admin"
+pdm_admin_password: ""
+
+# Service
+pdm_services:
+  - proxmox-datacenter-api
+  - proxmox-datacenter-privileged-api
+pdm_service_start: true
+pdm_service_enable: true

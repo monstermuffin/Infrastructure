@@ -1,0 +1,9 @@
+---
+- name: Install PDM packages
+  ansible.builtin.apt:
+    name: "{{ pdm_packages }}"
+    state: present
+    update_cache: true
+  tags:
+    - install
+    - packages

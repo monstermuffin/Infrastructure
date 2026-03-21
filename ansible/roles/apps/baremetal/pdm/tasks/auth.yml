@@ -1,0 +1,113 @@
+---
+# Creates admin@pdm realm user by writing PDM config files directly.
+#
+# See README.md for more details.
+# Investigation on how this works done by claude.
+
+- name: Ensure PDM access config directory exists
+  ansible.builtin.file:
+    path: /etc/proxmox-datacenter-manager/access
+    state: directory
+    owner: root
+    group: www-data
+    mode: "0750"
+  tags:
+    - auth
+    - password
+  when: pdm_admin_password | length > 0
+
+- name: Write PDM realm user entry to user.cfg
+  # SectionConfig format: tab-indented properties with no colon after key name.
+  # Python is used to ensure real tab characters are written, not backslash-t literals.
+  ansible.builtin.shell: |
+    python3 - << 'PYEOF'
+    import grp, os
+
+    userid = os.environ['PDM_USERID']
+    comment = os.environ['PDM_COMMENT']
+    www_gid = grp.getgrnam('www-data').gr_gid
+    content = f"user: {userid}\n\tenable 1\n\tcomment {comment}\n"
+
+    with open('/etc/proxmox-datacenter-manager/access/user.cfg', 'w') as f:
+        f.write(content)
+
+    os.chown('/etc/proxmox-datacenter-manager/access/user.cfg', 0, www_gid)
+    os.chmod('/etc/proxmox-datacenter-manager/access/user.cfg', 0o640)
+    PYEOF
+  environment:
+    PDM_USERID: "{{ pdm_admin_userid }}"
+    PDM_COMMENT: "{{ pdm_admin_comment }}"
+  changed_when: true
+  tags:
+    - auth
+    - password
+  when: pdm_admin_password | length > 0
+
+- name: Remove stale users.cfg if it exists
+  ansible.builtin.file:
+    path: /etc/proxmox-datacenter-manager/access/users.cfg
+    state: absent
+  tags:
+    - auth
+    - password
+  when: pdm_admin_password | length > 0
+
+- name: Set PDM realm password in shadow.json
+  # Password and userid are passed via env vars to avoid shell quoting/expansion of special chars.
+  # shadow.json key is the username only (e.g. "admin"), not the full "admin@pdm".
+  # Permissions: root:www-data 640 so the unprivileged API (www-data) can read the hash.
+  ansible.builtin.shell: |
+    python3 - << 'PYEOF'
+    import grp, json, os, subprocess
+
+    password = os.environ['PDM_PASSWORD']
+    userid_full = os.environ['PDM_USERID']
+    username = userid_full.split('@')[0]
+
+    result = subprocess.run(
+        ['openssl', 'passwd', '-6', '-stdin'],
+        input=password.encode(),
+        capture_output=True,
+        check=True,
+    )
+    pw_hash = result.stdout.decode().strip()
+
+    shadow_file = '/etc/proxmox-datacenter-manager/access/shadow.json'
+    data = {}
+    if os.path.exists(shadow_file):
+        with open(shadow_file) as f:
+            data = json.load(f)
+
+    data[username] = pw_hash
+
+    with open(shadow_file, 'w') as f:
+        json.dump(data, f, indent=2)
+        f.write('\n')
+
+    www_gid = grp.getgrnam('www-data').gr_gid
+    os.chown(shadow_file, 0, www_gid)
+    os.chmod(shadow_file, 0o640)
+    PYEOF
+  environment:
+    PDM_PASSWORD: "{{ pdm_admin_password }}"
+    PDM_USERID: "{{ pdm_admin_userid }}"
+  no_log: true
+  changed_when: true
+  tags:
+    - auth
+    - password
+  when: pdm_admin_password | length > 0
+
+- name: Grant Administrator ACL to PDM realm user
+  ansible.builtin.lineinfile:
+    path: /etc/proxmox-datacenter-manager/access/acl.cfg
+    create: true
+    owner: root
+    group: www-data
+    mode: "0640"
+    line: "acl:1:/:{{ pdm_admin_userid }}:Administrator"
+    regexp: "^acl:.*:/:{{ pdm_admin_userid | regex_escape }}:"
+  tags:
+    - auth
+    - password
+  when: pdm_admin_password | length > 0

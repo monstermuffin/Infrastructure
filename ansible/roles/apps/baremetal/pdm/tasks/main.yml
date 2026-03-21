@@ -1,0 +1,31 @@
+---
+- name: Preflight check
+  ansible.builtin.fail:
+    msg: >
+      PDM role is not enabled. Set 'pdm_enabled: true' in host_vars to enable deployment.
+  when: not pdm_enabled
+  tags: always
+
+- name: Configure Proxmox repository
+  ansible.builtin.import_tasks: repo.yml
+  tags:
+    - repo
+    - setup
+
+- name: Install PDM packages
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - install
+    - packages
+
+- name: Manage PDM service
+  ansible.builtin.import_tasks: service.yml
+  tags:
+    - service
+    - start
+
+- name: Configure authentication
+  ansible.builtin.import_tasks: auth.yml
+  tags:
+    - auth
+    - password

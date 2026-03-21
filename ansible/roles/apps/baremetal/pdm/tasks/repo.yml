@@ -1,0 +1,51 @@
+---
+- name: Install prerequisite packages
+  ansible.builtin.apt:
+    name:
+      - wget
+      - ca-certificates
+      - gnupg
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - repo
+    - prerequisites
+
+- name: Download Proxmox archive keyring
+  ansible.builtin.get_url:
+    url: "{{ pdm_keyring_url }}"
+    dest: "{{ pdm_keyring_dest }}"
+    mode: "0644"
+  tags:
+    - repo
+    - keyring
+
+- name: Disable PDM enterprise repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pdm-enterprise.sources
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: https://enterprise.proxmox.com/debian/pdm
+      Suites: {{ pdm_repo_suite }}
+      Components: pdm-enterprise
+      Enabled: false
+      Signed-By: {{ pdm_keyring_dest }}
+  notify: Update apt cache
+  tags:
+    - repo
+
+- name: Configure Proxmox PDM no-subscription repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/proxmox-pdm.sources
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: http://download.proxmox.com/debian/pdm
+      Suites: {{ pdm_repo_suite }}
+      Components: {{ pdm_repo_component }}
+      Signed-By: {{ pdm_keyring_dest }}
+  notify: Update apt cache
+  tags:
+    - repo
