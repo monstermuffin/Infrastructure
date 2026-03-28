@@ -2,14 +2,14 @@
 # AAH site variables
 
 site_code: aah
-pve_system_domain: aah.muffn.io
-pve_system_nameservers:
+site_domain: aah.muffn.io
+site_nameservers:
   - 10.82.7.102
-pve_system_search_domains: 
+site_search_domains:
   - aah.muffn.io
   - lcy.muffn.io
   - lgy.muffn.io
   - internal.muffn.io # Legacy - needs to be migrated from
-pve_system_ntp_enabled: true
-pve_system_ntp_servers: 
+site_ntp_enabled: true
+site_ntp_servers:
   - 10.82.2.1

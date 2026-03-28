@@ -52,7 +52,7 @@ pve_scaling_governor_remove_persistence: false
 # System configuration
 
 pve_system_hostname: ""  # host_vars
-pve_system_domain: "" # group_vars
+site_domain: ""  # group_vars
 
 # Timezone
 pve_system_timezone: "Europe/London"
