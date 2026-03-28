@@ -1,15 +1,11 @@
 ---
-# Proxmox requires the FQDN to resolve to the node's real IP (typically
-# the corosync ring address), NOT 127.0.1.1 — loopback breaks cluster
-# communication and migrations.
 
 - name: Assert pve_system_hosts_ip is set
   ansible.builtin.assert:
     that: pve_system_hosts_ip != ""
     fail_msg: >-
       pve_system_hosts_ip is not set for {{ inventory_hostname }}.
-      This must be the node's real management IP — writing /etc/hosts without it
-      will break the Proxmox web UI. Set it in host_vars/{{ inventory_hostname }}.yml.
+      Management will break, failing.
 
 - name: Set hostname
   ansible.builtin.hostname:

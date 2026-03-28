@@ -1,5 +1,4 @@
 ---
-# Proxmox ships with chrony — configure it rather than replacing it
 
 - name: Ensure chrony is installed
   ansible.builtin.apt:

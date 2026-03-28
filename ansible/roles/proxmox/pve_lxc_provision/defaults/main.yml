@@ -16,8 +16,8 @@ pve_lxc_default_memory: 2048
 pve_lxc_default_swap: 512
 pve_lxc_default_unprivileged: true
 pve_lxc_default_onboot: true
-pve_lxc_default_nameserver: ""
-pve_lxc_default_searchdomain: ""
+pve_lxc_default_nameserver: "{{ (site_nameservers | default(pve_system_nameservers | default([]))) | join(' ') }}"
+pve_lxc_default_searchdomain: "{{ (site_search_domains | default(pve_system_search_domains | default([]))) | join(' ') }}"
 pve_lxc_default_network_bridge: "vmbr0"
 
 pve_lxc_ssh_public_keys: ""

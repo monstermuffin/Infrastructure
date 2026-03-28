@@ -1,28 +1,37 @@
 # pve_system_config
 
-Configures basic system settings on Proxmox VE hosts: hostname, timezone, locale, DNS, NTP, SSH, and MOTD.
+Configures basic system settings on Proxmox VE hosts. Recreated community scripts-ish.
 
-Each section is conditionally included based on whether its variables are set, leave a variable empty/default to skip that section.
+## Vars
 
-## Variables
+Preferred inventory interface:
 
-See [defaults/main.yml](defaults/main.yml) for all variables and their defaults. Should be set in host_vars/group_vars really.
+- Site-wide values should be set with `site_*` vars in site `group_vars`:
+  - `site_domain`
+  - `site_nameservers`
+  - `site_search_domains`
+  - `site_ntp_servers`
+  - `site_ntp_enabled`
+- Host-specific values remain `pve_system_*`:
+  - `pve_system_hostname`
+  - `pve_system_hosts_ip`
+  - `pve_system_cluster_peers`
+  - `pve_system_timezone`
+
+The role maps `site_*` values into its internal `pve_system_*` vars for compatibility.
 
 ## Tags
 
-| Tag | Description |
-|-----|-------------|
-| `hostname` | Hostname and /etc/hosts |
-| `timezone` | Timezone |
-| `locale` | Locale |
-| `dns` | DNS resolvers |
-| `ntp` | NTP (chrony) |
-| `ssh` | SSH server config |
-| `motd` | MOTD |
+- `hostname`
+- `timezone`
+- `locale`
+- `dns`
+- `ntp`
+- `ssh`
+- `motd`
 
 ## Notes
 
 - DNS makes `/etc/resolv.conf` immutable to prevent DHCP from overwriting it. Undo with `chattr -i /etc/resolv.conf`.
-- SSH config is validated with `sshd -t` before applying to prevent lockouts.
-- Hostname requires `pve_system_hosts_ip` to be set, Proxmox needs the FQDN to resolve to a real IP, not loopback, or cluster communication breaks.
-- SSH keys can be imported from a URL (e.g. `https://github.com/username.keys`).
+- The same site DNS settings are also used as the default DNS source for newly provisioned LXCs unless a container explicitly overrides `nameserver` or `searchdomain`.
+- Hostname requires `pve_system_hosts_ip` to be set, Proxmox needs the FQDN to resolve to a real IP, not loopback, or cluster communication will break.

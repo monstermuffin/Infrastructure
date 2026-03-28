@@ -40,6 +40,30 @@
       }}{{- ',keyctl=1' if _lxc.features.keyctl | default(false) else ''
       }}{{- ',fuse=1' if _lxc.features.fuse | default(false) else '' }}
 
+- name: "Build effective DNS settings — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_effective_nameserver: "{{ _lxc.nameserver | default(pve_lxc_default_nameserver) }}"
+    _lxc_effective_searchdomain: "{{ _lxc.searchdomain | default(pve_lxc_default_searchdomain) }}"
+
+- name: "Initialize bind mount args — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_bind_mounts: {}
+
+- name: "Build bind mount args — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_bind_mounts: >-
+      {{
+        _lxc_bind_mounts | combine({
+          'mp' ~ idx: item.host_path ~ ',mp=' ~ item.lxc_path
+            ~ (',shared=1' if item.shared | default(false) else '')
+            ~ (',readonly=1' if item.readonly | default(false) else '')
+            ~ ',replicate=0'
+        })
+      }}
+  loop: "{{ _lxc.bind_mounts | default([]) }}"
+  loop_control:
+    index_var: idx
+
 - name: "Ensure SSH keys exist on target node — {{ _lxc_name }}"
   become: true
   ansible.builtin.copy:
@@ -97,11 +121,11 @@
       }},ip={{ _lxc.network_ip }},gw={{ _lxc.network_gw }}{{
         ',tag=' ~ _lxc.network_vlan if _lxc.network_vlan is defined else '' }}
       --features {{ _lxc_features | trim }}
-      {{ '--nameserver ' ~ _lxc.nameserver if _lxc.nameserver is defined else '' }}
-      {{ '--searchdomain ' ~ _lxc.searchdomain if _lxc.searchdomain is defined else '' }}
+      {{ '--nameserver ' ~ (_lxc_effective_nameserver | quote) if _lxc_effective_nameserver | length > 0 else '' }}
+      {{ '--searchdomain ' ~ (_lxc_effective_searchdomain | quote) if _lxc_effective_searchdomain | length > 0 else '' }}
       --ssh-public-keys /tmp/ansible_lxc_ssh_keys.pub
       --tags {{ (_lxc.tags | default([]) + [_lxc_name]) | join(';') }}
-      {% for mp_key, mp_val in (_lxc.mounts | default({})).items() %}
+      {% for mp_key, mp_val in _lxc_bind_mounts.items() %}
       --{{ mp_key }} {{ mp_val }}
       {% endfor %}
   delegate_to: "{{ _lxc_delegate_host }}"
@@ -128,6 +152,8 @@
           (_lxc_cfg.memory | default(0) | int) != (_lxc.memory | default(pve_lxc_default_memory) | int) or
           (_lxc_cfg.swap | default(0) | int) != (_lxc.swap | default(pve_lxc_default_swap) | int) or
           (_lxc_cfg.onboot | default(0) | int) != (1 if _lxc.onboot | default(pve_lxc_default_onboot) else 0) or
+          (_lxc_cfg.nameserver | default('')) != _lxc_effective_nameserver or
+          (_lxc_cfg.searchdomain | default('')) != _lxc_effective_searchdomain or
           (_lxc_cfg.features | default('')) != (_lxc_features | trim) or
           ((_lxc_cfg.tags | default('')).split(';') | sort) != ((_lxc.tags | default([]) + [_lxc_name]) | sort)
         )
@@ -135,6 +161,64 @@
   vars:
     _lxc_cfg: "{{ (_lxc_current_config_raw.stdout | default('{}')) | from_json }}"
   when: _lxc_exists
+
+- name: "Determine if DNS needs updating — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_dns_needs_update: >-
+      {{
+        _lxc_exists and (
+          (_lxc_cfg.nameserver | default('')) != _lxc_effective_nameserver or
+          (_lxc_cfg.searchdomain | default('')) != _lxc_effective_searchdomain
+        )
+      }}
+  vars:
+    _lxc_cfg: "{{ (_lxc_current_config_raw.stdout | default('{}')) | from_json }}"
+  when: _lxc_exists
+
+- name: "Determine if net0 needs updating — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_net0_needs_update: >-
+      {{
+        _lxc_exists and (
+          ((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)bridge=([^,]+)', '\1') | first | default(''))
+            != (_lxc.network_bridge | default(pve_lxc_default_network_bridge)) or
+          ((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)ip=([^,]+)', '\1') | first | default(''))
+            != (_lxc.network_ip | default('')) or
+          ((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)gw=([^,]+)', '\1') | first | default(''))
+            != (_lxc.network_gw | default('')) or
+          ((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)tag=([^,]+)', '\1') | first | default('') | string)
+            != (_lxc.network_vlan | default('') | string)
+        )
+      }}
+  vars:
+    _lxc_cfg: "{{ (_lxc_current_config_raw.stdout | default('{}')) | from_json }}"
+  when: _lxc_exists
+
+- name: "Determine if bind mounts need updating — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_mounts_need_update: >-
+      {{
+        _lxc_exists and _lxc_bind_mounts | length > 0 and (
+          (_lxc_bind_mounts.items() | list | difference(
+            (_lxc_cfg | dict2items
+              | selectattr('key', 'match', '^mp[0-9]+$')
+              | items2dict).items() | list
+          )) | length > 0
+        )
+      }}
+  vars:
+    _lxc_cfg: "{{ (_lxc_current_config_raw.stdout | default('{}')) | from_json }}"
+  when: _lxc_exists
+
+- name: "Check if HA resource exists — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pvesh get /cluster/ha/resources/ct:{{ _lxc.vmid }}"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  register: _lxc_ha_check
+  changed_when: false
+  failed_when: false
+  when: _lxc.ha.enabled | default(false) | bool
 
 - name: "Update existing LXC container specs — {{ _lxc_name }}"
   become: true
@@ -146,13 +230,145 @@
       --memory {{ _lxc.memory | default(pve_lxc_default_memory) }}
       --swap {{ _lxc.swap | default(pve_lxc_default_swap) }}
       --onboot {{ '1' if _lxc.onboot | default(pve_lxc_default_onboot) else '0' }}
+      {{
+        '--nameserver ' ~ (_lxc_effective_nameserver | quote)
+        if _lxc_effective_nameserver | length > 0 else
+        ('--delete nameserver' if (_lxc_cfg.nameserver | default('') | length > 0) else '')
+      }}
+      {{
+        '--searchdomain ' ~ (_lxc_effective_searchdomain | quote)
+        if _lxc_effective_searchdomain | length > 0 else
+        ('--delete searchdomain' if (_lxc_cfg.searchdomain | default('') | length > 0) else '')
+      }}
       --features {{ _lxc_features | trim }}
       --tags {{ (_lxc.tags | default([]) + [_lxc_name]) | join(';') }}
+  vars:
+    _lxc_cfg: "{{ (_lxc_current_config_raw.stdout | default('{}')) | from_json }}"
   delegate_to: "{{ _lxc_delegate_host }}"
   when: _lxc_exists and (_lxc_needs_update | default(false) | bool)
   register: _lxc_update
   changed_when: _lxc_update is not skipped
 
+# For HA CTs, tell force HA to be stopped to allow following updates
+- name: "Set HA desired state to stopped before network update — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pvesh set /cluster/ha/resources/ct:{{ _lxc.vmid }} --state stopped"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  changed_when: false
+  when: >-
+    _lxc_exists and
+    (
+      (_lxc_net0_needs_update | default(false) | bool) or
+      (_lxc_dns_needs_update | default(false) | bool)
+    ) and
+    (_lxc.ha.enabled | default(false) | bool) and
+    (_lxc_ha_check.rc | default(1) == 0)
+
+- name: "Shutdown container to apply network update (non-HA) — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pct shutdown {{ _lxc.vmid }}"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  register: _lxc_shutdown_for_net
+  changed_when: _lxc_shutdown_for_net.rc == 0
+  failed_when: >-
+    _lxc_shutdown_for_net.rc != 0 and
+    'not running' not in (_lxc_shutdown_for_net.stderr | default('')) and
+    'already stopped' not in (_lxc_shutdown_for_net.stderr | default(''))
+  when: >-
+    _lxc_exists and
+    not (_lxc.ha.enabled | default(false) | bool) and (
+      (_lxc_net0_needs_update | default(false) | bool) or
+      (_lxc_dns_needs_update | default(false) | bool)
+    )
+
+- name: "Wait for HA to stop container for network update — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pct status {{ _lxc.vmid }}"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  register: _lxc_status_net
+  until: "'status: stopped' in _lxc_status_net.stdout"
+  retries: 30
+  delay: 5
+  changed_when: false
+  when: >-
+    _lxc_exists and
+    (_lxc.ha.enabled | default(false) | bool) and
+    (_lxc_ha_check.rc | default(1) == 0) and (
+      (_lxc_net0_needs_update | default(false) | bool) or
+      (_lxc_dns_needs_update | default(false) | bool)
+    )
+
+- name: "Update net0 — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: >-
+      pct set {{ _lxc.vmid }}
+      --net0 name=eth0,bridge={{ _lxc.network_bridge | default(pve_lxc_default_network_bridge) }},ip={{ _lxc.network_ip }},gw={{
+        _lxc.network_gw }}{{ ',tag=' ~ _lxc.network_vlan if _lxc.network_vlan is defined else '' }}
+  delegate_to: "{{ _lxc_delegate_host }}"
+  when: _lxc_exists and (_lxc_net0_needs_update | default(false) | bool)
+  register: _lxc_net0_update
+  changed_when: _lxc_net0_update is not skipped
+
+- name: "Set HA desired state to stopped before mount update — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pvesh set /cluster/ha/resources/ct:{{ _lxc.vmid }} --state stopped"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  changed_when: false
+  when: >-
+    _lxc_exists and
+    (_lxc_mounts_need_update | default(false) | bool) and
+    (_lxc.ha.enabled | default(false) | bool) and
+    (_lxc_ha_check.rc | default(1) == 0)
+
+- name: "Shutdown container to apply bind mount update (non-HA) — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pct shutdown {{ _lxc.vmid }}"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  register: _lxc_shutdown_for_mounts
+  changed_when: _lxc_shutdown_for_mounts.rc == 0
+  failed_when: >-
+    _lxc_shutdown_for_mounts.rc != 0 and
+    'not running' not in (_lxc_shutdown_for_mounts.stderr | default('')) and
+    'already stopped' not in (_lxc_shutdown_for_mounts.stderr | default(''))
+  when: >-
+    _lxc_exists and
+    not (_lxc.ha.enabled | default(false) | bool) and
+    (_lxc_mounts_need_update | default(false) | bool)
+
+- name: "Wait for HA to stop container for bind mount update — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pct status {{ _lxc.vmid }}"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  register: _lxc_status_mounts
+  until: "'status: stopped' in _lxc_status_mounts.stdout"
+  retries: 30
+  delay: 5
+  changed_when: false
+  when: >-
+    _lxc_exists and
+    (_lxc.ha.enabled | default(false) | bool) and
+    (_lxc_ha_check.rc | default(1) == 0) and
+    (_lxc_mounts_need_update | default(false) | bool)
+
+- name: "Update bind mounts — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/nodes/{{ _lxc_current_node }}/lxc/{{ _lxc.vmid }}.conf"
+    regexp: "^{{ item.key }}:"
+    line: "{{ item.key }}: {{ item.value }}"
+  loop: "{{ _lxc_bind_mounts | dict2items }}"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  when: _lxc_exists and (_lxc_mounts_need_update | default(false) | bool)
+
+# Non-HA containers: start directly with pct.
+# HA containers: restore the desired state so HA starts them using pct start
 - name: "Start container — {{ _lxc_name }}"
   become: true
   ansible.builtin.command:
@@ -161,7 +377,43 @@
   register: _lxc_start
   changed_when: _lxc_start.rc == 0
   failed_when: _lxc_start.rc != 0 and 'already running' not in (_lxc_start.stderr | default(''))
-  when: _lxc.start | default(true)
+  when: _lxc.start | default(true) and not (_lxc.ha.enabled | default(false) | bool)
+
+- name: "Check if HA resource exists — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pvesh get /cluster/ha/resources/ct:{{ _lxc.vmid }}"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  register: _lxc_ha_check
+  changed_when: false
+  failed_when: false
+  when: _lxc.ha.enabled | default(false) | bool
+
+- name: "Register container in HA — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: >-
+      pvesh create /cluster/ha/resources
+      --sid ct:{{ _lxc.vmid }}
+      --state {{ _lxc.ha.state | default(pve_lxc_ha_default_state) }}
+      --max_restart {{ _lxc.ha.max_restart | default(pve_lxc_ha_default_max_restart) }}
+      --max_relocate {{ _lxc.ha.max_relocate | default(pve_lxc_ha_default_max_relocate) }}
+  delegate_to: "{{ _lxc_delegate_host }}"
+  changed_when: true
+  when:
+    - _lxc.ha.enabled | default(false) | bool
+    - _lxc_ha_check.rc | default(1) != 0
+
+- name: "Restore HA desired state to started — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pvesh set /cluster/ha/resources/ct:{{ _lxc.vmid }} --state {{ _lxc.ha.state | default(pve_lxc_ha_default_state) }}"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  changed_when: false
+  when:
+    - _lxc.start | default(true)
+    - _lxc.ha.enabled | default(false) | bool
+    - _lxc_ha_check.rc | default(1) == 0
 
 - name: "Display provisioning result — {{ _lxc_name }}"
   ansible.builtin.debug:

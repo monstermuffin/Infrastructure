@@ -1,5 +1,5 @@
 ---
-- name: Configure perf_event_paranoid for Intel GPU stats in LXC containers
+- name: Configure perf_event_paranoid
   ansible.posix.sysctl:
     name: kernel.perf_event_paranoid
     value: "{{ pve_system_perf_event_paranoid }}"

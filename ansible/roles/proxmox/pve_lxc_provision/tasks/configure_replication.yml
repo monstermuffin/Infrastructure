@@ -1,11 +1,55 @@
 ---
-# Uses pvesr CLI — no Ansible module exists for PVE replication.
+# Uses pvesr CLI, no Ansible module exists for PVE replication.
+# The configured replication.target is the preferred target, but if the
+# container has migrated,pick another cluster node so the source/target are never identical :wessmart:
 
 - name: "Set replication facts — {{ lxc_item.key }}"
   ansible.builtin.set_fact:
     _repl_lxc: "{{ lxc_item.value }}"
     _repl_name: "{{ lxc_item.key }}"
     _repl_job_id: "{{ lxc_item.value.vmid }}-0"
+
+- name: "Find current container node — {{ _repl_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: pvesh get /cluster/resources --type vm --output-format json
+  register: _repl_cluster_resources
+  changed_when: false
+
+- name: "Set current node for replication — {{ _repl_name }}"
+  ansible.builtin.set_fact:
+    _repl_current_node: >-
+      {{
+        ((_repl_cluster_resources.stdout | from_json)
+        | selectattr('type', 'equalto', 'lxc')
+        | selectattr('vmid', 'equalto', (_repl_lxc.vmid | int))
+        | list | first | default({})).node | default(_repl_lxc.node)
+      }}
+
+- name: "Get cluster node list — {{ _repl_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: pvesh get /cluster/status --output-format json
+  register: _repl_cluster_status
+  changed_when: false
+
+- name: "Resolve effective replication target — {{ _repl_name }}" # Find suitable target is not defined
+  ansible.builtin.set_fact:
+    _repl_effective_target: >-
+      {{
+        _repl_lxc.replication.target
+        if (
+          _repl_lxc.replication.target is defined and
+          _repl_lxc.replication.target != _repl_current_node
+        )
+        else (
+          (_repl_cluster_status.stdout | from_json)
+          | selectattr('type', 'equalto', 'node')
+          | map(attribute='name')
+          | reject('equalto', _repl_current_node)
+          | list | first
+        )
+      }}
 
 - name: "Check if replication job exists — {{ _repl_name }}"
   become: true
@@ -23,7 +67,7 @@
   ansible.builtin.command:
     cmd: >-
       pvesr create-local-job {{ _repl_job_id }}
-      {{ _repl_lxc.replication.target }}
+      {{ _repl_effective_target }}
       --schedule "{{ _repl_lxc.replication.schedule | default(pve_lxc_replication_default_schedule) }}"
       {{ '--rate ' ~ _repl_lxc.replication.rate if _repl_lxc.replication.rate is defined else '' }}
       --comment "Ansible-managed: {{ _repl_name }}"
@@ -55,4 +99,5 @@
       Replication for {{ _repl_name }} ({{ _repl_job_id }}) →
       {{ (_repl_info.stdout | from_json).target | default('unknown') }} —
       {{ 'created' if not _repl_exists else 'already configured' }}
+      (container on {{ _repl_current_node }}, target {{ _repl_effective_target }})
   when: _repl_info is not skipped
