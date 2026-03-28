@@ -3,9 +3,8 @@
 Installs and configures Proxmox Datacenter Manager (PDM) and bootstraps a pdm realm user.
 
 1. Adds the PDM no-subscription APT repository and disables the enterprise repo
-2. Installs `proxmox-datacenter-manager` and `proxmox-datacenter-manager-ui`
-3. Enables and starts `proxmox-datacenter-api` and `proxmox-datacenter-privileged-api`
-4. Optionally creates an `admin@pdm` realm user with a set password and Administrator ACL
+2. Installs  and enables/starts `proxmox-datacenter-manager` and `proxmox-datacenter-manager-ui`
+4. Optionally creates an `admin@pdm` realm user with a set password and Administrator ACL bypassing need for root lxc pass
 
 ## Usage
 
@@ -19,7 +18,7 @@ pdm_admin_password: !vault |
 
 ```bash
 ansible-playbook playbooks/lxc/deploy_pdm.yml
-ansible-playbook playbooks/lxc/deploy_pdm.yml --tags auth   # re-apply user/password only
+ansible-playbook playbooks/lxc/deploy_pdm.yml --tags auth
 ```
 
 Web UI is at `https://<host>:8443`.
@@ -52,7 +51,7 @@ chown root:www-data /etc/proxmox-datacenter-manager/access/shadow.json
 chmod 640 /etc/proxmox-datacenter-manager/access/shadow.json
 ```
 
-The Ansible tasks handle this automatically via `grp.getgrnam('www-data')`.
+Ansible handles this via `grp.getgrnam('www-data')`.
 
 `shadow.json` key is the username, not the userid
 
