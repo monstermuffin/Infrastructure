@@ -1,0 +1,12 @@
+---
+# Mount NFS shares on Proxmox VE hosts
+#
+#   ansible-playbook playbooks/pve/nfs_mount.yml --tags status
+#   ansible-playbook playbooks/pve/nfs_mount.yml --tags remove
+
+- name: Configure NFS mounts on Proxmox VE hosts
+  hosts: proxmox
+  become: true
+
+  roles:
+    - pve_nfs_mount

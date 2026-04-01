@@ -1,0 +1,12 @@
+---
+# Manage scratch pool on Proxmox VE hosts:
+#   - mergerfs package
+#   - fstab entries for XFS drives and mergerfs pool
+#   - subdirectory layout with perms
+
+- name: Configure scratch pool on Proxmox VE hosts
+  hosts: proxmox
+  become: true
+
+  roles:
+    - pve_scratch

@@ -2,6 +2,18 @@
 # Provision LXC containers on Proxmox VE clusters/hosts
 # Each cluster needs its own play block for run_once scoping
 # Standalone hosts with pve_lxcs defined get their own play
+# Use --limit to target the Proxmox host(s), e.g. --limit pve04.aah.muffn.io
+# Use -e target=<name|fqdn> to target one LXC, e.g. -e target=vlmcsd
+# Use -e target=tag:<tag> to target LXCs by tag, e.g. -e target=tag:app_vlmcsd
+
+- name: Initialize global LXC selector state
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Reset global selector match flag
+      ansible.builtin.set_fact:
+        _pve_lxc_selector_found: false
+      when: (pve_lxc_target | default(target | default(''), true)) | length > 0
 
 - name: Provision LXC containers — AAH cluster
   hosts: aah-cluster01
@@ -17,3 +29,17 @@
   gather_facts: false
   roles:
     - pve_lxc_provision
+
+- name: Validate requested LXC selector
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Fail if requested LXC selector matched nothing
+      ansible.builtin.fail:
+        msg: >-
+          No LXC matched selector '{{ pve_lxc_target | default(target | default(''), true) }}'.
+          Use an LXC key like 'vlmcsd', a hostname like 'vlmcsd.aah.muffn.io',
+          or a tag selector like 'tag:app_vlmcsd'.
+      when:
+        - (pve_lxc_target | default(target | default(''), true)) | length > 0
+        - not (_pve_lxc_selector_found | default(false) | bool)
