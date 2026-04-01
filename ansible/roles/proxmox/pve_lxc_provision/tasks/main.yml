@@ -1,4 +1,64 @@
 ---
+- name: Resolve requested LXC selector
+  ansible.builtin.set_fact:
+    _pve_lxc_effective_target: "{{ pve_lxc_target | default(target | default(''), true) }}"
+    _pve_lxcs_effective: {}
+    _pve_lxc_selector_matched_host: false
+  tags: [always]
+
+# If any pve_lxcs_<category> variables are defined, combine them into pve_lxcs. Splits old monolithic files.
+- name: Combine pve_lxcs_* category variables into pve_lxcs
+  ansible.builtin.set_fact:
+    pve_lxcs: >-
+      {%- set ns = namespace(result=pve_lxcs | default({})) -%}
+      {%- for key, val in hostvars[inventory_hostname].items() -%}
+        {%- if key is match('^pve_lxcs_') and val is mapping -%}
+          {%- set ns.result = ns.result | combine(val) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ ns.result }}
+  when: >-
+    hostvars[inventory_hostname] | dict2items
+    | selectattr('key', 'match', '^pve_lxcs_') | list | length > 0
+  tags: [always]
+
+- name: Filter LXC map by requested selector
+  ansible.builtin.set_fact:
+    _pve_lxcs_effective: >-
+      {%- set selector = _pve_lxc_effective_target | default('') -%}
+      {%- set ns = namespace(result={}) -%}
+      {%- for item in (pve_lxcs | default({}) | dict2items) -%}
+        {%- set lxc = item.value -%}
+        {%- set hostname = lxc.hostname | default('') -%}
+        {%- set lxc_tags = lxc.tags | default([]) -%}
+        {%- if selector | length == 0 -%}
+          {%- set ns.result = ns.result | combine({item.key: lxc}) -%}
+        {%- elif selector is match('^tag:.+') and selector | regex_replace('^tag:', '') in lxc_tags -%}
+          {%- set ns.result = ns.result | combine({item.key: lxc}) -%}
+        {%- elif item.key == selector or hostname == selector -%}
+          {%- set ns.result = ns.result | combine({item.key: lxc}) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ ns.result }}
+  when: pve_lxcs is defined and pve_lxcs | length > 0
+  tags: [always]
+
+- name: Mark whether this host matched the requested selector
+  ansible.builtin.set_fact:
+    _pve_lxc_selector_matched_host: "{{ _pve_lxcs_effective | length > 0 }}"
+  when: pve_lxcs is defined and pve_lxcs | length > 0
+  tags: [always]
+
+- name: Record global selector match
+  ansible.builtin.set_fact:
+    _pve_lxc_selector_found: true
+  delegate_to: localhost
+  delegate_facts: true
+  when:
+    - _pve_lxc_effective_target | length > 0
+    - _pve_lxcs_effective | length > 0
+  tags: [always]
+
 - name: Skip host if pve_lxcs is not defined
   ansible.builtin.meta: end_host
   when: pve_lxcs is not defined or pve_lxcs | length == 0
@@ -10,7 +70,9 @@
     url: "https://github.com/{{ pve_lxc_ssh_github_user }}.keys"
     return_content: true
   register: _github_keys
-  when: pve_lxc_ssh_public_keys == ""
+  when:
+    - _pve_lxcs_effective | length > 0
+    - pve_lxc_ssh_public_keys == ""
   delegate_to: localhost
   become: false
   tags:
@@ -20,6 +82,7 @@
 - name: Set SSH public keys fact
   ansible.builtin.set_fact:
     _ssh_keys: "{{ pve_lxc_ssh_public_keys | default(_github_keys.content | default(''), true) }}"
+  when: _pve_lxcs_effective | length > 0
   tags:
     - provision
     - create
@@ -30,13 +93,14 @@
     content: "{{ _ssh_keys }}"
     dest: /tmp/ansible_lxc_ssh_keys.pub
     mode: "0644"
+  when: _pve_lxcs_effective | length > 0
   tags:
     - provision
     - create
 
 - name: Include LXC provisioning tasks
   ansible.builtin.include_tasks: provision_lxc.yml
-  loop: "{{ pve_lxcs | dict2items }}"
+  loop: "{{ _pve_lxcs_effective | dict2items }}"
   loop_control:
     loop_var: lxc_item
     label: "{{ lxc_item.key }} (VMID {{ lxc_item.value.vmid }})"
@@ -46,7 +110,7 @@
 
 - name: Include HA configuration tasks
   ansible.builtin.include_tasks: configure_ha.yml
-  loop: "{{ pve_lxcs | dict2items | selectattr('value.ha.enabled', 'defined') | selectattr('value.ha.enabled') | list }}"
+  loop: "{{ _pve_lxcs_effective | dict2items | selectattr('value.ha.enabled', 'defined') | selectattr('value.ha.enabled') | list }}"
   loop_control:
     loop_var: lxc_item
     label: "{{ lxc_item.key }} (VMID {{ lxc_item.value.vmid }})"
@@ -56,7 +120,7 @@
 
 - name: Include replication configuration tasks
   ansible.builtin.include_tasks: configure_replication.yml
-  loop: "{{ pve_lxcs | dict2items | selectattr('value.replication.enabled', 'defined') | selectattr('value.replication.enabled') | list }}"
+  loop: "{{ _pve_lxcs_effective | dict2items | selectattr('value.replication.enabled', 'defined') | selectattr('value.replication.enabled') | list }}"
   loop_control:
     loop_var: lxc_item
     label: "{{ lxc_item.key }} (VMID {{ lxc_item.value.vmid }})"

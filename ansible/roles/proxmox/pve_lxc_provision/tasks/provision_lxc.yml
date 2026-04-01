@@ -1,5 +1,5 @@
 ---
-# Uses pct CLI instead of community.proxmox module — feature flags, mounts,
+# Uses pct CLI instead of community.proxmox module, feature flags, mounts,
 # and cross-node API proxying all require root@pam; pct avoids this.
 
 - name: "Set container facts — {{ lxc_item.key }}"
@@ -46,6 +46,10 @@
     _lxc_effective_nameserver: "{{ _lxc.nameserver | default(pve_lxc_default_nameserver) }}"
     _lxc_effective_searchdomain: "{{ _lxc.searchdomain | default(pve_lxc_default_searchdomain) }}"
 
+- name: "Normalize desired disk size — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_desired_disk_gb: "{{ _lxc.disk | default(pve_lxc_default_disk) | regex_replace('[^0-9]', '') | int }}"
+
 - name: "Initialize bind mount args — {{ _lxc_name }}"
   ansible.builtin.set_fact:
     _lxc_bind_mounts: {}
@@ -62,6 +66,26 @@
         })
       }}
   loop: "{{ _lxc.bind_mounts | default([]) }}"
+  loop_control:
+    index_var: idx
+
+- name: "Initialize device passthrough args — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_devices: {}
+
+- name: "Build device passthrough args — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_devices: >-
+      {{
+        _lxc_devices | combine({
+          'dev' ~ idx: item.path
+            ~ (',mode=' ~ item.mode if item.mode is defined else '')
+            ~ (',gid=' ~ item.gid if item.gid is defined else '')
+            ~ (',uid=' ~ item.uid if item.uid is defined else '')
+            ~ (',deny-write=1' if item.deny_write | default(false) else '')
+        })
+      }}
+  loop: "{{ _lxc.devices | default([]) }}"
   loop_control:
     index_var: idx
 
@@ -119,7 +143,8 @@
       --onboot {{ '1' if _lxc.onboot | default(pve_lxc_default_onboot) else '0' }}
       --net0 name=eth0,bridge={{
         _lxc.network_bridge | default(pve_lxc_default_network_bridge)
-      }},ip={{ _lxc.network_ip }},gw={{ _lxc.network_gw }}{{
+      }},ip={{ _lxc.network_ip | default('dhcp') }}{{
+        ',gw=' ~ _lxc.network_gw if _lxc.network_ip is defined else '' }}{{
         ',tag=' ~ _lxc.network_vlan if _lxc.network_vlan is defined else '' }}
       --features {{ _lxc_features | trim }}
       {{ '--nameserver ' ~ (_lxc_effective_nameserver | quote) if _lxc_effective_nameserver | length > 0 else '' }}
@@ -128,6 +153,9 @@
       --tags {{ (_lxc.tags | default([]) + [_lxc_name]) | join(';') }}
       {% for mp_key, mp_val in _lxc_bind_mounts.items() %}
       --{{ mp_key }} {{ mp_val }}
+      {% endfor %}
+      {% for dev_key, dev_val in _lxc_devices.items() %}
+      --{{ dev_key }} {{ dev_val }}
       {% endfor %}
   delegate_to: "{{ _lxc_delegate_host }}"
   when: not _lxc_exists
@@ -163,6 +191,33 @@
     _lxc_cfg: "{{ (_lxc_current_config_raw.stdout | default('{}')) | from_json }}"
   when: _lxc_exists
 
+- name: "Read current disk size — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_current_disk_gb_raw: >-
+      {{
+        ((_lxc_cfg.rootfs | default(''))
+        | regex_search('(?:^|,)size=([0-9]+)G(?:,|$)', '\1') or [])
+        | first | default('')
+      }}
+  vars:
+    _lxc_cfg: "{{ (_lxc_current_config_raw.stdout | default('{}')) | from_json }}"
+  when: _lxc_exists
+
+- name: "Determine if disk needs resizing — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_current_disk_gb: "{{ (_lxc_current_disk_gb_raw | default('0')) | int }}"
+    _lxc_disk_needs_resize: >-
+      {{
+        _lxc_exists and
+        (_lxc_current_disk_gb_raw | default('') | length > 0) and
+        ((_lxc_current_disk_gb_raw | int) < (_lxc_desired_disk_gb | int))
+      }}
+    _lxc_disk_resize_delta_gb: >-
+      {{
+        (_lxc_desired_disk_gb | int) - ((_lxc_current_disk_gb_raw | default('0')) | int)
+      }}
+  when: _lxc_exists
+
 - name: "Determine if DNS needs updating — {{ _lxc_name }}"
   ansible.builtin.set_fact:
     _lxc_dns_needs_update: >-
@@ -181,13 +236,13 @@
     _lxc_net0_needs_update: >-
       {{
         _lxc_exists and (
-          ((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)bridge=([^,]+)', '\1') | first | default(''))
+          (((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)bridge=([^,]+)', '\1') or []) | first | default(''))
             != (_lxc.network_bridge | default(pve_lxc_default_network_bridge)) or
-          ((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)ip=([^,]+)', '\1') | first | default(''))
-            != (_lxc.network_ip | default('')) or
-          ((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)gw=([^,]+)', '\1') | first | default(''))
+          (((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)ip=([^,]+)', '\1') or []) | first | default(''))
+            != (_lxc.network_ip | default('dhcp')) or
+          (((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)gw=([^,]+)', '\1') or []) | first | default(''))
             != (_lxc.network_gw | default('')) or
-          ((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)tag=([^,]+)', '\1') | first | default('') | string)
+          (((_lxc_cfg.net0 | default('')) | regex_search('(?:^|,)tag=([^,]+)', '\1') or []) | first | default('') | string)
             != (_lxc.network_vlan | default('') | string)
         )
       }}
@@ -203,6 +258,22 @@
           (_lxc_bind_mounts.items() | list | difference(
             (_lxc_cfg | dict2items
               | selectattr('key', 'match', '^mp[0-9]+$')
+              | items2dict).items() | list
+          )) | length > 0
+        )
+      }}
+  vars:
+    _lxc_cfg: "{{ (_lxc_current_config_raw.stdout | default('{}')) | from_json }}"
+  when: _lxc_exists
+
+- name: "Determine if device passthrough needs updating — {{ _lxc_name }}"
+  ansible.builtin.set_fact:
+    _lxc_devices_need_update: >-
+      {{
+        _lxc_exists and _lxc_devices | length > 0 and (
+          (_lxc_devices.items() | list | difference(
+            (_lxc_cfg | dict2items
+              | selectattr('key', 'match', '^dev[0-9]+$')
               | items2dict).items() | list
           )) | length > 0
         )
@@ -250,7 +321,16 @@
   register: _lxc_update
   changed_when: _lxc_update is not skipped
 
-# For HA CTs, tell force HA to be stopped to allow following updates
+- name: "Grow rootfs disk — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "pct resize {{ _lxc.vmid }} rootfs +{{ _lxc_disk_resize_delta_gb }}G"
+  delegate_to: "{{ _lxc_delegate_host }}"
+  when: _lxc_exists and (_lxc_disk_needs_resize | default(false) | bool)
+  register: _lxc_disk_resize
+  changed_when: _lxc_disk_resize is not skipped
+
+# For HA CTs, tell force HA to be stopped to allow following updates - not sure if this is strictly necessary needed? idk
 - name: "Set HA desired state to stopped before network update — {{ _lxc_name }}"
   become: true
   ansible.builtin.command:
@@ -307,8 +387,8 @@
   ansible.builtin.command:
     cmd: >-
       pct set {{ _lxc.vmid }}
-      --net0 name=eth0,bridge={{ _lxc.network_bridge | default(pve_lxc_default_network_bridge) }},ip={{ _lxc.network_ip }},gw={{
-        _lxc.network_gw }}{{ ',tag=' ~ _lxc.network_vlan if _lxc.network_vlan is defined else '' }}
+      --net0 name=eth0,bridge={{ _lxc.network_bridge | default(pve_lxc_default_network_bridge) }},ip={{ _lxc.network_ip | default('dhcp') }}{{
+        ',gw=' ~ _lxc.network_gw if _lxc.network_ip is defined else '' }}{{ ',tag=' ~ _lxc.network_vlan if _lxc.network_vlan is defined else '' }}
   delegate_to: "{{ _lxc_delegate_host }}"
   when: _lxc_exists and (_lxc_net0_needs_update | default(false) | bool)
   register: _lxc_net0_update
@@ -367,6 +447,20 @@
   loop: "{{ _lxc_bind_mounts | dict2items }}"
   delegate_to: "{{ _lxc_delegate_host }}"
   when: _lxc_exists and (_lxc_mounts_need_update | default(false) | bool)
+
+# Device passthrough (dev[n]) can be set without stopping the container, LXC restart needed to show tho
+- name: "Update device passthrough — {{ _lxc_name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: >-
+      pct set {{ _lxc.vmid }}
+      {% for dev_key, dev_val in _lxc_devices.items() %}
+      --{{ dev_key }} {{ dev_val }}
+      {% endfor %}
+  delegate_to: "{{ _lxc_delegate_host }}"
+  when: _lxc_exists and (_lxc_devices_need_update | default(false) | bool)
+  register: _lxc_devices_update
+  changed_when: _lxc_devices_update is not skipped
 
 # Non-HA containers: start directly with pct.
 # HA containers: restore the desired state so HA starts them using pct start

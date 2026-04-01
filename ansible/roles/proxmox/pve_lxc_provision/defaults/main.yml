@@ -1,5 +1,7 @@
 ---
 pve_lxcs: {}
+target: ""
+pve_lxc_target: ""
 
 pve_api_host: "{{ ansible_host }}"
 pve_api_user: "root@pam"
