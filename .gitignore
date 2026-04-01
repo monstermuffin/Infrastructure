@@ -27,6 +27,9 @@ scripts/tf-env.sh
 ansible/roles/apps/podman/frigate
 ansible/roles/apps/docker/frigate
 ansible/roles/apps/docker/technitium
+ansible/playbooks/lxc/configure_frigate.yml
+ansible/playbooks/lxc/deploy_frigate_docker.yml
+ansible/playbooks/lxc/deploy_technitium_docker.yml
 
 # Terraform - not ready yet
 tf/
