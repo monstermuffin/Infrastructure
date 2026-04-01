@@ -1,0 +1,9 @@
+api:
+  server:
+    enable: false
+
+prometheus:
+  enabled: true
+  level: aggregated
+  listen_addr: "{{ ingress_crowdsec_prometheus_listen_addr }}"
+  listen_port: {{ ingress_crowdsec_prometheus_listen_port }}

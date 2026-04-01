@@ -1,0 +1,19 @@
+---
+- name: Write Traefik static config
+  ansible.builtin.template:
+    src: traefik.yml.j2
+    dest: "{{ ingress_traefik_static_config }}"
+    mode: "0644"
+  notify: Restart traefik service
+  tags:
+    - config
+    - traefik
+
+- name: Write Traefik dynamic config
+  ansible.builtin.template:
+    src: dynamic.yml.j2
+    dest: "{{ ingress_traefik_dynamic_config }}"
+    mode: "0644"
+  tags:
+    - config
+    - traefik

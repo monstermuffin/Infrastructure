@@ -1,0 +1,37 @@
+log:
+  level: "{{ ingress_log_level }}"
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+  format: json
+
+api:
+  dashboard: {{ ingress_dashboard_enabled | ternary('true', 'false') }}
+
+experimental:
+  plugins:
+    crowdsec-bouncer:
+      moduleName: {{ ingress_crowdsec_plugin_module }}
+      version: {{ ingress_crowdsec_plugin_version }}
+    traefikoidc:
+      moduleName: {{ ingress_oidc_plugin_module }}
+      version: {{ ingress_oidc_plugin_version }}
+
+entryPoints:
+  {{ ingress_entrypoint_name }}:
+    address: "{{ ingress_entrypoint_address }}"
+    forwardedHeaders:
+      trustedIPs:
+{% for cidr in ingress_forwarded_headers_trusted_ips %}
+        - "{{ cidr }}"
+{% endfor %}
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+tls:
+  certificates:
+    - certFile: {{ ingress_traefik_tls_cert_file }}
+      keyFile: {{ ingress_traefik_tls_key_file }}

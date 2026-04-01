@@ -1,0 +1,79 @@
+---
+ingress_base_dir: /opt/ingress
+ingress_traefik_dir: "{{ ingress_base_dir }}/traefik"
+ingress_traefik_config_dir: "{{ ingress_traefik_dir }}/config"
+ingress_traefik_dynamic_dir: "{{ ingress_traefik_config_dir }}/dynamic"
+ingress_traefik_log_dir: "{{ ingress_traefik_dir }}/logs"
+ingress_traefik_cert_dir: "{{ ingress_traefik_dir }}/certs"
+ingress_traefik_plugin_dir: "{{ ingress_traefik_dir }}/plugins-storage"
+ingress_traefik_static_config: "{{ ingress_traefik_config_dir }}/traefik.yml"
+ingress_traefik_dynamic_config: "{{ ingress_traefik_dynamic_dir }}/routes.yml"
+ingress_traefik_access_log_path_host: "{{ ingress_traefik_log_dir }}/access.log"
+
+ingress_routes: []
+
+ingress_entrypoint_name: websecure
+ingress_entrypoint_address: ":8443"
+ingress_log_level: INFO
+ingress_dashboard_enabled: false
+
+ingress_podman_network_name: ingress
+ingress_podman_network_subnet: "{{ podman_networks[ingress_podman_network_name].subnet | default('10.89.0.0/29') }}"
+ingress_forwarded_headers_trusted_ips:
+  - "{{ ingress_podman_network_subnet }}"
+
+ingress_traefik_tls_cert_file: /etc/traefik/certs/traefik.crt
+ingress_traefik_tls_key_file: /etc/traefik/certs/traefik.key
+
+ingress_oidc_plugin_module: github.com/lukaszraczylo/traefikoidc
+ingress_oidc_plugin_version: v0.8.24
+ingress_oidc_issuer: ""
+ingress_oidc_cookie_domain: ""
+ingress_oidc_client_id: ""
+ingress_oidc_client_secret: ""
+ingress_oidc_session_secret: ""
+ingress_oidc_scope:
+  - openid
+  - profile
+  - email
+ingress_oidc_callback_path: /oauth2/callback
+ingress_oidc_post_logout_redirect: /
+ingress_oidc_cookie_lifetime: 43200
+ingress_oidc_rate_limit: 100
+ingress_oidc_enable_pkce: true
+ingress_oidc_refresh_grace_period: 300
+ingress_oidc_session_sliding: true
+ingress_oidc_session_refresh: true
+ingress_oidc_force_https: true
+
+ingress_crowdsec_plugin_module: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+ingress_crowdsec_plugin_version: v1.5.1
+ingress_crowdsec_lapi_scheme: http
+ingress_crowdsec_lapi_host: ""
+ingress_crowdsec_bouncer_api_key: ""
+ingress_crowdsec_mode: stream
+ingress_crowdsec_http_timeout_seconds: 10
+ingress_crowdsec_update_interval_seconds: 60
+ingress_crowdsec_forwarded_headers_custom_name: CF-Connecting-IP
+
+ingress_crowdsec_repo_script_url: https://install.crowdsec.net
+ingress_crowdsec_repo_list_path: /etc/apt/sources.list.d/crowdsec_crowdsec.list
+ingress_crowdsec_prometheus_listen_addr: 0.0.0.0
+ingress_crowdsec_prometheus_listen_port: 6060
+ingress_crowdsec_collections:
+  - crowdsecurity/traefik
+  - crowdsecurity/base-http-scenarios
+  - crowdsecurity/http-cve
+  - crowdsecurity/appsec-virtual-patching
+  - crowdsecurity/appsec-generic-rules
+
+ingress_crowdsec_appsec_enabled: true
+ingress_crowdsec_appsec_scheme: http
+ingress_crowdsec_appsec_host: host.containers.internal:7422
+ingress_crowdsec_appsec_listen_addr: 0.0.0.0:7422
+ingress_crowdsec_appsec_path: /
+ingress_crowdsec_appsec_configs:
+  - crowdsecurity/appsec-default
+ingress_crowdsec_appsec_failure_block: false
+ingress_crowdsec_appsec_unreachable_block: false
+ingress_crowdsec_appsec_body_limit: 10485760

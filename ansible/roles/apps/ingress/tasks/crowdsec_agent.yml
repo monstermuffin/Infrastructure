@@ -1,0 +1,148 @@
+---
+- name: Install CrowdSec repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - openssl
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - crowdsec
+    - packages
+
+- name: Download CrowdSec repository installer
+  ansible.builtin.stat:
+    path: "{{ ingress_crowdsec_repo_list_path }}"
+  register: _ingress_crowdsec_repo
+  tags:
+    - crowdsec
+    - repo
+
+- name: Download CrowdSec repository installer
+  ansible.builtin.get_url:
+    url: "{{ ingress_crowdsec_repo_script_url }}"
+    dest: /tmp/install-crowdsec-repo.sh
+    mode: "0755"
+  when: not _ingress_crowdsec_repo.stat.exists
+  tags:
+    - crowdsec
+    - repo
+
+- name: Configure CrowdSec apt repository
+  ansible.builtin.command:
+    argv:
+      - /bin/sh
+      - /tmp/install-crowdsec-repo.sh
+  when: not _ingress_crowdsec_repo.stat.exists
+  tags:
+    - crowdsec
+    - repo
+
+- name: Install CrowdSec agent package
+  ansible.builtin.apt:
+    name:
+      - crowdsec
+    state: present
+    update_cache: true
+  tags:
+    - crowdsec
+    - packages
+
+- name: Write CrowdSec agent local config
+  ansible.builtin.template:
+    src: crowdsec-config.yaml.local.j2
+    dest: /etc/crowdsec/config.yaml.local
+    mode: "0644"
+  notify: Restart crowdsec
+  tags:
+    - crowdsec
+    - config
+
+- name: Write CrowdSec Traefik acquisition config
+  ansible.builtin.template:
+    src: crowdsec-traefik-acquis.yaml.j2
+    dest: /etc/crowdsec/acquis.d/traefik.yaml
+    mode: "0644"
+  notify: Restart crowdsec
+  tags:
+    - crowdsec
+    - config
+
+- name: Write CrowdSec AppSec acquisition config
+  ansible.builtin.template:
+    src: crowdsec-appsec-acquis.yaml.j2
+    dest: /etc/crowdsec/acquis.d/appsec.yaml
+    mode: "0644"
+  when: ingress_crowdsec_appsec_enabled
+  notify: Restart crowdsec
+  tags:
+    - crowdsec
+    - config
+
+- name: Check installed CrowdSec collections
+  ansible.builtin.command:
+    argv:
+      - cscli
+      - collections
+      - list
+      - -o
+      - raw
+  register: _ingress_crowdsec_collections
+  changed_when: false
+  tags:
+    - crowdsec
+    - config
+
+- name: Install CrowdSec collections
+  ansible.builtin.command:
+    argv:
+      - cscli
+      - collections
+      - install
+      - "{{ crowdsec_collection }}"
+  loop: "{{ ingress_crowdsec_collections }}"
+  loop_control:
+    loop_var: crowdsec_collection
+    label: "{{ crowdsec_collection }}"
+  when: crowdsec_collection not in _ingress_crowdsec_collections.stdout
+  notify: Restart crowdsec
+  tags:
+    - crowdsec
+    - config
+
+- name: Check CrowdSec agent LAPI credentials target
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -q
+      - "{{ ingress_crowdsec_lapi_host }}"
+      - /etc/crowdsec/local_api_credentials.yaml
+  register: _ingress_lapi_credentials
+  changed_when: false
+  failed_when: false
+  tags:
+    - crowdsec
+    - config
+
+- name: Register ingress node with remote CrowdSec LAPI
+  ansible.builtin.command:
+    argv:
+      - cscli
+      - lapi
+      - register
+      - --machine
+      - "{{ inventory_hostname }}"
+      - --url
+      - "http://{{ ingress_crowdsec_lapi_host }}"
+      - --token
+      - "{{ ingress_crowdsec_registration_token | trim }}"
+      - --file
+      - /etc/crowdsec/local_api_credentials.yaml
+  when: _ingress_lapi_credentials.rc != 0
+  notify: Restart crowdsec
+  tags:
+    - crowdsec
+    - register

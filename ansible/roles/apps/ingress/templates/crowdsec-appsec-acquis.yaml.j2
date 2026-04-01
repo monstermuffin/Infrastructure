@@ -1,0 +1,10 @@
+---
+source: appsec
+listen_addr: {{ ingress_crowdsec_appsec_listen_addr }}
+path: {{ ingress_crowdsec_appsec_path }}
+appsec_configs:
+{% for appsec_config in ingress_crowdsec_appsec_configs %}
+  - {{ appsec_config }}
+{% endfor %}
+labels:
+  type: appsec

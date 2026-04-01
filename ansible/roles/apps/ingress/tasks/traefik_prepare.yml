@@ -1,0 +1,63 @@
+---
+- name: Ensure ingress directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ ingress_base_dir }}"
+    - "{{ ingress_traefik_dir }}"
+    - "{{ ingress_traefik_config_dir }}"
+    - "{{ ingress_traefik_dynamic_dir }}"
+    - "{{ ingress_traefik_log_dir }}"
+    - "{{ ingress_traefik_cert_dir }}"
+    - "{{ ingress_traefik_plugin_dir }}"
+  tags:
+    - config
+    - traefik
+
+- name: Check for Traefik TLS certificate
+  ansible.builtin.stat:
+    path: "{{ ingress_traefik_cert_dir }}/traefik.crt"
+  register: _ingress_traefik_cert
+  tags:
+    - config
+    - traefik
+
+- name: Generate Traefik self-signed TLS certificate
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - req
+      - -x509
+      - -nodes
+      - -days
+      - "3650"
+      - -newkey
+      - rsa:2048
+      - -keyout
+      - "{{ ingress_traefik_cert_dir }}/traefik.key"
+      - -out
+      - "{{ ingress_traefik_cert_dir }}/traefik.crt"
+      - -subj
+      - /CN=traefik-proxy/O=AAH Ingress
+  when: not _ingress_traefik_cert.stat.exists
+  notify: Restart traefik service
+  tags:
+    - config
+    - traefik
+
+- name: Set Traefik certificate permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - "{{ ingress_traefik_cert_dir }}/traefik.crt"
+    - "{{ ingress_traefik_cert_dir }}/traefik.key"
+  tags:
+    - config
+    - traefik

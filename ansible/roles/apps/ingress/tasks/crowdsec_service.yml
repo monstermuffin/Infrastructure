@@ -1,0 +1,10 @@
+---
+- name: Ensure CrowdSec service is enabled and started
+  ansible.builtin.systemd:
+    name: crowdsec
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags:
+    - crowdsec
+    - service

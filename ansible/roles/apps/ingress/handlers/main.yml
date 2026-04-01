@@ -1,0 +1,11 @@
+---
+- name: Restart crowdsec
+  ansible.builtin.systemd:
+    name: crowdsec
+    state: restarted
+
+- name: Restart traefik service
+  ansible.builtin.systemd:
+    name: traefik.service
+    state: restarted
+  failed_when: false

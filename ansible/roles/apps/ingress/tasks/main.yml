@@ -1,0 +1,17 @@
+---
+- name: Preflight validation
+  ansible.builtin.import_tasks: preflight.yml
+  tags:
+    - always
+
+- name: Traefik directories and TLS
+  ansible.builtin.import_tasks: traefik_prepare.yml
+
+- name: CrowdSec agent
+  ansible.builtin.import_tasks: crowdsec_agent.yml
+
+- name: Traefik configuration
+  ansible.builtin.import_tasks: traefik_config.yml
+
+- name: CrowdSec systemd
+  ansible.builtin.import_tasks: crowdsec_service.yml

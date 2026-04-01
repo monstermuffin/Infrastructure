@@ -1,0 +1,104 @@
+http:
+  middlewares:
+    crowdsec:
+      plugin:
+        crowdsec-bouncer:
+          Enabled: true
+          LogLevel: "{{ ingress_log_level }}"
+          CrowdsecMode: "{{ ingress_crowdsec_mode }}"
+          CrowdsecLapiScheme: "{{ ingress_crowdsec_lapi_scheme }}"
+          CrowdsecLapiHost: "{{ ingress_crowdsec_lapi_host }}"
+          CrowdsecLapiKey: "{{ ingress_crowdsec_bouncer_api_key | trim }}"
+          ForwardedHeadersCustomName: "{{ ingress_crowdsec_forwarded_headers_custom_name }}"
+          ForwardedHeadersTrustedIPs:
+{% for cidr in ingress_forwarded_headers_trusted_ips %}
+            - "{{ cidr }}"
+{% endfor %}
+{% if ingress_crowdsec_appsec_enabled %}
+          CrowdsecAppsecEnabled: true
+          CrowdsecAppsecScheme: "{{ ingress_crowdsec_appsec_scheme }}"
+          CrowdsecAppsecHost: "{{ ingress_crowdsec_appsec_host }}"
+          CrowdsecAppsecPath: "{{ ingress_crowdsec_appsec_path }}"
+          CrowdsecAppsecFailureBlock: {{ ingress_crowdsec_appsec_failure_block | lower }}
+          CrowdsecAppsecUnreachableBlock: {{ ingress_crowdsec_appsec_unreachable_block | lower }}
+          CrowdsecAppsecBodyLimit: {{ ingress_crowdsec_appsec_body_limit }}
+{% endif %}
+          HTTPTimeoutSeconds: {{ ingress_crowdsec_http_timeout_seconds }}
+          UpdateIntervalSeconds: {{ ingress_crowdsec_update_interval_seconds }}
+{% if _ingress_oidc_required %}
+    oidc:
+      plugin:
+        traefikoidc:
+          providerURL: "{{ ingress_oidc_issuer }}"
+          clientID: "{{ ingress_oidc_client_id }}"
+          clientSecret: "{{ ingress_oidc_client_secret | trim }}"
+          sessionEncryptionKey: "{{ ingress_oidc_session_secret | trim }}"
+          sessionMaxAge: {{ ingress_oidc_cookie_lifetime }}
+          cookieDomain: "{{ ingress_oidc_cookie_domain }}"
+          sessionSliding: {{ ingress_oidc_session_sliding | lower }}
+          sessionRefresh: {{ ingress_oidc_session_refresh | lower }}
+          callbackURL: "{{ ingress_oidc_callback_path }}"
+          logoutURL: "{{ ingress_oidc_callback_path }}/logout"
+          postLogoutRedirectURI: "{{ ingress_oidc_post_logout_redirect }}"
+          scopes: {{ ingress_oidc_scope | to_json }}
+          enablePKCE: {{ ingress_oidc_enable_pkce | lower }}
+          refreshGracePeriodSeconds: {{ ingress_oidc_refresh_grace_period }}
+          rateLimit: {{ ingress_oidc_rate_limit }}
+          forceHTTPS: {{ ingress_oidc_force_https | lower }}
+          logLevel: "{{ ingress_log_level | lower }}"
+{% endif %}
+
+  routers:
+{% for route in ingress_routes %}
+{% set route_name = route.name | default(route.hostname | regex_replace('[^A-Za-z0-9]+', '-')) %}
+{% if route.oidc_enabled | default(false) and route.exempt_paths is defined and route.exempt_paths | length > 0 %}
+    {{ route_name }}-exempt:
+      rule: "Host(`{{ route.hostname }}`) && ({% for path in route.exempt_paths %}PathPrefix(`{{ path }}`){% if not loop.last %} || {% endif %}{% endfor %})"
+      entryPoints:
+        - "{{ ingress_entrypoint_name }}"
+      middlewares:
+        - crowdsec
+      service: {{ route_name }}
+      priority: 50
+      tls: {}
+
+    {{ route_name }}-protected:
+      rule: "Host(`{{ route.hostname }}`)"
+      entryPoints:
+        - "{{ ingress_entrypoint_name }}"
+      middlewares:
+        - crowdsec
+        - oidc
+      service: {{ route_name }}
+      priority: 10
+      tls: {}
+{% elif route.oidc_enabled | default(false) %}
+    {{ route_name }}:
+      rule: "Host(`{{ route.hostname }}`)"
+      entryPoints:
+        - "{{ ingress_entrypoint_name }}"
+      middlewares:
+        - crowdsec
+        - oidc
+      service: {{ route_name }}
+      tls: {}
+{% else %}
+    {{ route_name }}:
+      rule: "Host(`{{ route.hostname }}`)"
+      entryPoints:
+        - "{{ ingress_entrypoint_name }}"
+      middlewares:
+        - crowdsec
+      service: {{ route_name }}
+      tls: {}
+{% endif %}
+{% endfor %}
+
+  services:
+{% for route in ingress_routes %}
+{% set route_name = route.name | default(route.hostname | regex_replace('[^A-Za-z0-9]+', '-')) %}
+    {{ route_name }}:
+      loadBalancer:
+        servers:
+          - url: "{{ route.service_url }}"
+{% endfor %}

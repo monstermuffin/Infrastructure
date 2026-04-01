@@ -1,0 +1,45 @@
+---
+- name: Determine whether any routes require OIDC
+  ansible.builtin.set_fact:
+    _ingress_oidc_required: "{{ ingress_routes | selectattr('oidc_enabled', 'defined') | selectattr('oidc_enabled') | list | length > 0 }}"
+  tags:
+    - always
+
+- name: Validate ingress routes are defined
+  ansible.builtin.assert:
+    that:
+      - ingress_routes | length > 0
+      - ingress_crowdsec_lapi_host | length > 0
+      - ingress_crowdsec_registration_token | trim | length >= 32
+      - ingress_crowdsec_bouncer_api_key | trim | length > 0
+    fail_msg: "Define ingress_routes and a valid ingress_crowdsec_* configuration before deploying ingress."
+  tags:
+    - always
+
+- name: Validate route fields
+  ansible.builtin.assert:
+    that:
+      - route_item.hostname is defined
+      - route_item.hostname | length > 0
+      - route_item.service_url is defined
+      - route_item.service_url | length > 0
+    fail_msg: "Each ingress route requires hostname and service_url."
+  loop: "{{ ingress_routes }}"
+  loop_control:
+    loop_var: route_item
+    label: "{{ route_item.hostname | default('missing-hostname') }}"
+  tags:
+    - always
+
+- name: Validate OIDC settings when protected routes exist
+  ansible.builtin.assert:
+    that:
+      - ingress_oidc_issuer | length > 0
+      - ingress_oidc_cookie_domain | length > 0
+      - ingress_oidc_client_id | length > 0
+      - ingress_oidc_client_secret | trim | length > 0
+      - ingress_oidc_session_secret | trim | length >= 32
+    fail_msg: "OIDC-protected routes require ingress_oidc_* variables and a session secret of at least 32 characters."
+  when: _ingress_oidc_required
+  tags:
+    - always
