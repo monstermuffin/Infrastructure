@@ -1,0 +1,24 @@
+---
+- name: Create scratch drive mount point directories
+  ansible.builtin.file:
+    path: "{{ item.mount }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ pve_scratch_drives }}"
+  loop_control:
+    label: "{{ item.mount }}"
+
+- name: Configure fstab entries for scratch drives
+  ansible.posix.mount:
+    src: "{{ item.device }}"
+    path: "{{ item.mount }}"
+    fstype: "{{ item.fstype | default(pve_scratch_fstype) }}"
+    opts: "{{ item.opts | default(pve_scratch_drive_opts) }}"
+    state: mounted
+    dump: "0"
+    passno: "2"
+  loop: "{{ pve_scratch_drives }}"
+  loop_control:
+    label: "{{ item.mount }}"

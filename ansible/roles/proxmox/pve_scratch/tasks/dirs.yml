@@ -1,0 +1,12 @@
+---
+- name: Create scratch subdirectories with configured modes
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop: "{{ pve_scratch_dirs }}"
+  loop_control:
+    label: "{{ item.path }} ({{ item.mode }})"
+  tags:
+    - scratch
+    - dirs

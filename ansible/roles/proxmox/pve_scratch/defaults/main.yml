@@ -1,0 +1,17 @@
+---
+# Drives:
+#   device: /dev/disk/by-id/wwn-0x...
+#   mount:  /mnt/scratch0
+#   fstype: xfs
+#   opts:   defaults,nofail
+pve_scratch_drives: []
+
+pve_scratch_fstype: xfs
+pve_scratch_drive_opts: "defaults,nofail"
+
+# mergerfs pool. Sources from pve_scratch_drives mount points.
+pve_scratch_pool_mount: /mnt/scratch
+pve_scratch_pool_opts: "defaults,allow_other,use_ino,category.create=mfs,minfreespace=50G,nofail"
+
+# Subdirectories to create inside the pool with explicit modes.
+pve_scratch_dirs: []

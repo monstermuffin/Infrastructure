@@ -1,0 +1,37 @@
+---
+- name: Gather facts if not already gathered
+  ansible.builtin.setup:
+  when: ansible_distribution is not defined
+
+- name: Skip scratch role — no drives configured for this host
+  ansible.builtin.meta: end_host
+  when: pve_scratch_drives | length == 0
+
+- name: Install mergerfs
+  ansible.builtin.apt:
+    name: mergerfs
+    state: present
+    update_cache: false
+  tags:
+    - scratch
+    - packages
+    - install
+
+- name: Configure scratch drives in fstab
+  ansible.builtin.include_tasks: drives.yml
+  tags:
+    - scratch
+    - drives
+
+- name: Configure mergerfs pool in fstab
+  ansible.builtin.include_tasks: pool.yml
+  tags:
+    - scratch
+    - pool
+
+- name: Create scratch subdirectories
+  ansible.builtin.include_tasks: dirs.yml
+  when: pve_scratch_dirs | length > 0
+  tags:
+    - scratch
+    - dirs

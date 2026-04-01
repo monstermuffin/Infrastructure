@@ -1,0 +1,18 @@
+---
+- name: Create mergerfs pool mount point
+  ansible.builtin.file:
+    path: "{{ pve_scratch_pool_mount }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure fstab entry for mergerfs pool
+  ansible.posix.mount:
+    src: "{{ pve_scratch_drives | map(attribute='mount') | join(':') }}"
+    path: "{{ pve_scratch_pool_mount }}"
+    fstype: fuse.mergerfs
+    opts: "{{ pve_scratch_pool_opts }}"
+    state: mounted
+    dump: "0"
+    passno: "0"
