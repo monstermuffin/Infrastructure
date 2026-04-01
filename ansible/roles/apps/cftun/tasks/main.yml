@@ -1,0 +1,7 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - cftun_tunnel_token | length > 0
+    fail_msg: "cftun_tunnel_token must be set (get it from: terraform output -raw aah_tunnel_token)"
+  tags: [config, cftun]

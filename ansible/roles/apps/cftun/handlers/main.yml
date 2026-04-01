@@ -1,0 +1,2 @@
+---
+# Token changes are handled by the podman_app role redeploying the Quadlet unit - cftun does NOT need to be restarted as local config is not used because reasons.
