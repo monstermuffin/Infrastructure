@@ -1,0 +1,54 @@
+---
+- name: Ensure PostgreSQL is enabled and started
+  ansible.builtin.systemd:
+    name: postgresql
+    enabled: true
+    state: started
+
+- name: Check if CrowdSec PostgreSQL role exists
+  become_user: postgres
+  ansible.builtin.command:
+    argv:
+      - psql
+      - -tAc
+      - "SELECT 1 FROM pg_roles WHERE rolname='{{ crowdsec_lapi_db_user }}'"
+  register: _crowdsec_pg_role
+  changed_when: false
+
+- name: Create CrowdSec PostgreSQL role
+  become_user: postgres
+  ansible.builtin.command:
+    argv:
+      - psql
+      - -c
+      - "CREATE USER {{ crowdsec_lapi_db_user }} WITH PASSWORD '{{ crowdsec_lapi_db_password | trim | replace(\"'\", \"''\") }}';"
+  when: _crowdsec_pg_role.stdout.strip() != '1'
+
+- name: Ensure CrowdSec PostgreSQL role password is current
+  become_user: postgres
+  ansible.builtin.command:
+    argv:
+      - psql
+      - -c
+      - "ALTER USER {{ crowdsec_lapi_db_user }} WITH PASSWORD '{{ crowdsec_lapi_db_password | trim | replace(\"'\", \"''\") }}';"
+  changed_when: false
+
+- name: Check if CrowdSec database exists
+  become_user: postgres
+  ansible.builtin.command:
+    argv:
+      - psql
+      - -tAc
+      - "SELECT 1 FROM pg_database WHERE datname='{{ crowdsec_lapi_db_name }}'"
+  register: _crowdsec_pg_db
+  changed_when: false
+
+- name: Create CrowdSec database
+  become_user: postgres
+  ansible.builtin.command:
+    argv:
+      - createdb
+      - -O
+      - "{{ crowdsec_lapi_db_user }}"
+      - "{{ crowdsec_lapi_db_name }}"
+  when: _crowdsec_pg_db.stdout.strip() != '1'

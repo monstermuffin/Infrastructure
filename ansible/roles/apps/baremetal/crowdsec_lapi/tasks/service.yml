@@ -1,0 +1,61 @@
+---
+- name: Write CrowdSec LAPI local config
+  ansible.builtin.template:
+    src: config.yaml.local.j2
+    dest: /etc/crowdsec/config.yaml.local
+    mode: "0644"
+
+- name: Enable and start CrowdSec service
+  ansible.builtin.systemd:
+    name: crowdsec
+    enabled: true
+    state: restarted
+    daemon_reload: true
+
+- name: Check existing CrowdSec bouncers
+  ansible.builtin.command:
+    argv:
+      - cscli
+      - bouncers
+      - list
+      - -o
+      - raw
+  register: _crowdsec_lapi_bouncers
+  changed_when: false
+
+- name: Check existing CrowdSec machines
+  ansible.builtin.command:
+    argv:
+      - cscli
+      - machines
+      - list
+      - -o
+      - raw
+  register: _crowdsec_lapi_machines
+  changed_when: false
+
+- name: Create shared Traefik bouncer key
+  ansible.builtin.command:
+    argv:
+      - cscli
+      - bouncers
+      - add
+      - "{{ crowdsec_traefik_bouncer_name }}"
+      - --key
+      - "{{ crowdsec_traefik_bouncer_api_key | trim }}"
+  when: crowdsec_traefik_bouncer_name not in _crowdsec_lapi_bouncers.stdout
+
+- name: Create CrowdSec Web UI machine account
+  ansible.builtin.command:
+    argv:
+      - cscli
+      - machines
+      - add
+      - "{{ crowdsec_web_ui_machine_name }}"
+      - --password
+      - "{{ crowdsec_web_ui_machine_password | trim }}"
+      - -f
+      - /dev/null
+  when:
+    - crowdsec_web_ui_enabled
+    - crowdsec_web_ui_machine_name not in _crowdsec_lapi_machines.stdout

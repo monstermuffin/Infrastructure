@@ -1,0 +1,29 @@
+db_config:
+  type: postgresql
+  user: "{{ crowdsec_lapi_db_user }}"
+  password: "{{ crowdsec_lapi_db_password | trim }}"
+  db_name: "{{ crowdsec_lapi_db_name }}"
+  host: "{{ crowdsec_lapi_db_host }}"
+  port: {{ crowdsec_lapi_db_port }}
+  sslmode: "{{ crowdsec_lapi_db_sslmode }}"
+
+crowdsec_service:
+  enable: false
+
+api:
+  server:
+    enable: true
+    listen_uri: "{{ crowdsec_lapi_listen_uri }}"
+    auto_registration:
+      enabled: true
+      token: "{{ crowdsec_lapi_registration_token | trim }}"
+      allowed_ranges:
+{% for cidr in crowdsec_lapi_allowed_ranges %}
+        - "{{ cidr }}"
+{% endfor %}
+
+prometheus:
+  enabled: true
+  level: aggregated
+  listen_addr: "{{ crowdsec_lapi_prometheus_listen_addr }}"
+  listen_port: {{ crowdsec_lapi_prometheus_listen_port }}

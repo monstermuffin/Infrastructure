@@ -1,0 +1,28 @@
+---
+crowdsec_lapi_enabled: false
+
+crowdsec_lapi_repo_script_url: https://install.crowdsec.net
+crowdsec_lapi_repo_list_path: /etc/apt/sources.list.d/crowdsec_crowdsec.list
+
+crowdsec_lapi_packages:
+  - crowdsec
+  - postgresql
+
+crowdsec_lapi_db_name: crowdsec
+crowdsec_lapi_db_user: crowdsec
+crowdsec_lapi_db_password: ""
+crowdsec_lapi_db_host: 127.0.0.1
+crowdsec_lapi_db_port: 5432
+crowdsec_lapi_db_sslmode: disable
+
+crowdsec_lapi_listen_uri: 0.0.0.0:8080
+crowdsec_lapi_prometheus_listen_addr: 0.0.0.0
+crowdsec_lapi_prometheus_listen_port: 6060
+crowdsec_lapi_registration_token: ""
+crowdsec_lapi_allowed_ranges: []
+
+crowdsec_traefik_bouncer_name: aah-traefik
+crowdsec_traefik_bouncer_api_key: ""
+crowdsec_web_ui_enabled: false
+crowdsec_web_ui_machine_name: crowdsec-web-ui
+crowdsec_web_ui_machine_password: ""

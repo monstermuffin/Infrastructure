@@ -1,0 +1,6 @@
+---
+- name: Install CrowdSec LAPI packages
+  ansible.builtin.apt:
+    name: "{{ crowdsec_lapi_packages }}"
+    state: present
+    update_cache: true

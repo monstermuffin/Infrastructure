@@ -1,0 +1,44 @@
+---
+- name: Preflight check
+  ansible.builtin.fail:
+    msg: >
+      CrowdSec LAPI role is not enabled. Set 'crowdsec_lapi_enabled: true' to enable depl.
+  when: not crowdsec_lapi_enabled
+  tags: always
+
+- name: Validate CrowdSec LAPI settings
+  ansible.builtin.assert:
+    that:
+      - crowdsec_lapi_db_password | trim | length > 0
+      - crowdsec_lapi_registration_token | trim | length >= 32
+      - crowdsec_lapi_allowed_ranges | length > 0
+      - crowdsec_traefik_bouncer_api_key | trim | length > 0
+      - not crowdsec_web_ui_enabled or crowdsec_web_ui_machine_name | length > 0
+      - not crowdsec_web_ui_enabled or crowdsec_web_ui_machine_password | trim | length > 0
+    fail_msg: "Set crowdsec_lapi_db_password, crowdsec_lapi_registration_token (>=32 chars), crowdsec_lapi_allowed_ranges, and crowdsec_traefik_bouncer_api_key before deploying CrowdSec."
+  tags:
+    - always
+
+- name: Configure CrowdSec repository
+  ansible.builtin.import_tasks: repo.yml
+  tags:
+    - crowdsec
+    - repo
+
+- name: Install CrowdSec and PostgreSQL packages
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - crowdsec
+    - packages
+
+- name: Configure PostgreSQL
+  ansible.builtin.import_tasks: postgresql.yml
+  tags:
+    - crowdsec
+    - postgresql
+
+- name: Configure CrowdSec LAPI
+  ansible.builtin.import_tasks: service.yml
+  tags:
+    - crowdsec
+    - config

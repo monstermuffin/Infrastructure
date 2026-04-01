@@ -1,0 +1,29 @@
+---
+- name: Install repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Check CrowdSec repository state
+  ansible.builtin.stat:
+    path: "{{ crowdsec_lapi_repo_list_path }}"
+  register: _crowdsec_lapi_repo
+
+- name: Download CrowdSec repository installer
+  ansible.builtin.get_url:
+    url: "{{ crowdsec_lapi_repo_script_url }}"
+    dest: /tmp/install-crowdsec-repo.sh
+    mode: "0755"
+  when: not _crowdsec_lapi_repo.stat.exists
+
+- name: Configure CrowdSec apt repository
+  ansible.builtin.command:
+    argv:
+      - /bin/sh
+      - /tmp/install-crowdsec-repo.sh
+  when: not _crowdsec_lapi_repo.stat.exists
