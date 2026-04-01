@@ -1,0 +1,7 @@
+---
+- name: "{{ _app_name }} | Stop and disable service"
+  ansible.builtin.systemd:
+    name: "{{ _app_name }}.service"
+    state: stopped
+    enabled: false
+  failed_when: false

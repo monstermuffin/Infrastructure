@@ -1,0 +1,77 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description={{ _app.description | default(_app_name | title) }}
+After=network-online.target{% for dep in _app.after | default([]) %} {{ dep }}{% endfor %}
+
+Wants=network-online.target
+{% for dep in _app.requires | default([]) %}
+Requires={{ dep }}
+{% endfor %}
+
+[Container]
+Image={{ _app.image }}:{{ _app.tag | default('latest') }}
+ContainerName={{ _app.container_name | default(_app_name) }}
+{% if _app.user is defined %}
+User={{ _app.user }}
+{% endif %}
+
+{% if _app.network_mode is defined %}
+Network={{ _app.network_mode }}
+{% elif _app.network is defined %}
+Network={{ _app.network }}
+{% endif %}
+{% if (_app.network_mode | default('')) != 'host' %}
+{%   if _app.ports is defined %}
+{%     for port in _app.ports %}
+PublishPort={{ port }}
+{%     endfor %}
+{%   elif _app.port is defined %}
+PublishPort={{ _app.port }}:{{ _app.container_port | default(_app.port) }}
+{%   endif %}
+{% endif %}
+
+{% for vol in _app.volumes | default([]) %}
+Volume={{ vol }}
+{% endfor %}
+
+{% for path in _app.tmpfs | default([]) %}
+Tmpfs={{ path }}
+{% endfor %}
+
+{% for key, value in (_app.env | default({})).items() %}
+Environment="{{ key }}={{ ((value | string) | replace('\\', '\\\\') | replace('"', '\\"')) | replace('%', '%%') }}"
+{% endfor %}
+
+{% if _app.exec is defined %}
+Exec={{ _app.exec }}
+{% endif %}
+
+{% for device in _app.devices | default([]) %}
+AddDevice={{ device }}
+{% endfor %}
+
+{% for cap in _app.cap_add | default([]) %}
+AddCapability={{ cap }}
+{% endfor %}
+
+{% if _app.shm_size is defined %}
+ShmSize={{ _app.shm_size }}
+{% endif %}
+
+{% if _app.privileged | default(false) or _app.security_label_disable | default(false) %}
+SecurityLabelDisable=true
+{% endif %}
+
+{% for label, value in (_app.labels | default({})).items() %}
+Label={{ label }}={{ value }}
+{% endfor %}
+
+[Service]
+Restart={{ _app.restart | default('always') }}
+{% if _app.restart_sec is defined %}
+RestartSec={{ _app.restart_sec }}
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

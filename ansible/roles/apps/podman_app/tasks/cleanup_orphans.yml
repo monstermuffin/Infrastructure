@@ -1,0 +1,16 @@
+---
+- name: Find existing Quadlet files
+  ansible.builtin.find:
+    paths: /etc/containers/systemd
+    patterns: "*.container"
+  register: _existing_quadlets
+
+- name: Remove orphaned apps
+  ansible.builtin.include_tasks: remove_app.yml
+  vars:
+    _orphan_name: "{{ quadlet_file.path | basename | regex_replace('\\.container$', '') }}"
+  loop: "{{ _existing_quadlets.files }}"
+  loop_control:
+    loop_var: quadlet_file
+    label: "{{ quadlet_file.path | basename }}"
+  when: (quadlet_file.path | basename | regex_replace('\\.container$', '')) not in podman_apps

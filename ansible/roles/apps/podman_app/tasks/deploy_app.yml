@@ -1,0 +1,164 @@
+---
+- name: "{{ _app_name }} | Inspect bind mount sources"
+  ansible.builtin.stat:
+    path: "{{ vol | split(':') | first }}"
+  register: _podman_bind_mount_sources
+  loop: "{{ _app.volumes | default([]) }}"
+  loop_control:
+    loop_var: vol
+    label: "{{ vol | split(':') | first }}"
+  when: (vol | split(':') | first) is match('^/(?!(dev|proc|sys|run|tmp|mnt)(/|$))')
+
+- name: "{{ _app_name }} | Create bind mount directories"
+  ansible.builtin.file:
+    path: >-
+      {{
+        (
+          vol | split(':') | first
+          if not (
+            not mount_source.stat.exists and
+            (vol | split(':') | first | basename is search('\\.'))
+          )
+          else
+          (vol | split(':') | first | dirname)
+        )
+      }}
+    state: directory
+  loop: "{{ _podman_bind_mount_sources.results | default([]) }}"
+  loop_control:
+    loop_var: mount_source
+    label: "{{ mount_source.vol | split(':') | first }}"
+  vars:
+    vol: "{{ mount_source.vol }}"
+  when:
+    - mount_source.stat is defined
+    - not (mount_source.stat.exists and mount_source.stat.isreg | default(false))
+    - mount_source.stat.exists
+    - (mount_source.stat.mode | default('')) in ['1777', '01777']
+
+- name: "{{ _app_name }} | Create managed bind mount directories"
+  ansible.builtin.file:
+    path: >-
+      {{
+        (
+          vol | split(':') | first
+          if not (
+            not mount_source.stat.exists and
+            (vol | split(':') | first | basename is search('\\.'))
+          )
+          else
+          (vol | split(':') | first | dirname)
+        )
+      }}
+    state: directory
+    owner: "{{ _app.uid | default(0) }}"
+    group: "{{ _app.gid | default(0) }}"
+    mode: '0755'
+  loop: "{{ _podman_bind_mount_sources.results | default([]) }}"
+  loop_control:
+    loop_var: mount_source
+    label: "{{ mount_source.vol | split(':') | first }}"
+  vars:
+    vol: "{{ mount_source.vol }}"
+  when:
+    - mount_source.stat is defined
+    - not (mount_source.stat.exists and mount_source.stat.isreg | default(false))
+    - not (mount_source.stat.exists and (mount_source.stat.mode | default('')) in ['1777', '01777'])
+
+- name: "{{ _app_name }} | Get current image digest"
+  ansible.builtin.command:
+    argv:
+      - podman
+      - image
+      - inspect
+      - "--format={{ '{{' }}.Id{{ '}}' }}"
+      - "{{ _app.image }}:{{ _app.tag | default('latest') }}"
+  register: _image_id_before
+  changed_when: false
+  failed_when: false
+  tags: image
+
+- name: "{{ _app_name }} | Pull image"
+  ansible.builtin.command:
+    cmd: podman pull {{ _app.image }}:{{ _app.tag | default('latest') }}
+  register: _pull_result
+  changed_when: false
+  tags: image
+
+- name: "{{ _app_name }} | Get new image digest"
+  ansible.builtin.command:
+    argv:
+      - podman
+      - image
+      - inspect
+      - "--format={{ '{{' }}.Id{{ '}}' }}"
+      - "{{ _app.image }}:{{ _app.tag | default('latest') }}"
+  register: _image_id_after
+  changed_when: false
+  tags: image
+
+# Image changed if: digest differs, or image didn't exist before
+- name: "{{ _app_name }} | Set image changed fact"
+  ansible.builtin.set_fact:
+    _image_changed: "{{ _image_id_before.rc | default(1) != 0 or _image_id_before.stdout != _image_id_after.stdout }}"
+  tags: image
+
+- name: "{{ _app_name }} | Deploy Quadlet file"
+  ansible.builtin.template:
+    src: app.container.j2
+    dest: /etc/containers/systemd/{{ _app_name }}.container
+    mode: '0644'
+  register: _quadlet_result
+
+- name: "{{ _app_name }} | Reload systemd daemon"
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: _quadlet_result.changed
+
+# Stop explicitly before starting when changes require a restart, using `state: restarted`
+# causes Netavark to accumulate stale nftables DNAT rules (bug?)
+- name: "{{ _app_name }} | Stop service before restart"
+  ansible.builtin.systemd:
+    name: "{{ _app_name }}.service"
+    state: stopped
+  when:
+    - _app.service_start | default(true)
+    - _quadlet_result.changed or _image_changed
+  failed_when: false
+
+- name: "{{ _app_name }} | Enable and start service"
+  ansible.builtin.systemd:
+    name: "{{ _app_name }}.service"
+    enabled: "{{ _app.service_enable | default(true) }}"
+    state: started
+  when: _app.service_start | default(true)
+
+- name: "{{ _app_name }} | Reload Podman network rules"
+  ansible.builtin.command:
+    cmd: podman network reload --all
+  changed_when: false
+  when:
+    - _app.service_start | default(true)
+    - _quadlet_result.changed or _image_changed
+
+- name: "{{ _app_name }} | Wait for service port"
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ _app.port }}"
+    delay: 2
+    timeout: 90
+  when:
+    - _app.service_start | default(true)
+    - _app.port is defined
+    - _quadlet_result.changed or _image_changed
+
+- name: "{{ _app_name }} | Get service status"
+  ansible.builtin.systemd:
+    name: "{{ _app_name }}.service"
+  register: _service_status
+
+- name: "{{ _app_name }} | Display service status"
+  ansible.builtin.debug:
+    msg:
+      - "Service: {{ _app_name }}.service → {{ _service_status.status.ActiveState }}"
+      - "Web UI: http://{{ ansible_host | default(inventory_hostname) }}:{{ _app.port | default('(no port)') }}"

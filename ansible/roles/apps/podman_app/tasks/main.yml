@@ -1,0 +1,56 @@
+---
+- name: Deploy enabled apps
+  ansible.builtin.include_tasks: deploy_app.yml
+  vars:
+    _app_name: "{{ app_item.key }}"
+    _app: "{{ app_item.value }}"
+  loop: "{{ podman_apps | dict2items }}"
+  loop_control:
+    loop_var: app_item
+    label: "{{ app_item.key }}"
+  when: app_item.value.enabled | default(false)
+  tags:
+    - deploy
+    - podman
+
+- name: Stop and disable apps with enabled false
+  ansible.builtin.include_tasks: disable_app.yml
+  vars:
+    _app_name: "{{ app_item.key }}"
+    _app: "{{ app_item.value }}"
+  loop: "{{ podman_apps | dict2items }}"
+  loop_control:
+    loop_var: app_item
+    label: "{{ app_item.key }}"
+  when: not (app_item.value.enabled | default(false))
+  tags:
+    - deploy
+    - podman
+
+- name: Clean up orphaned apps not in podman_apps
+  ansible.builtin.include_tasks: cleanup_orphans.yml
+  tags:
+    - deploy
+    - cleanup
+    - podman
+
+- name: Discover LXC context for Proxmox note (VMID, runtime, node)
+  ansible.builtin.include_tasks: "{{ role_path }}/../../lxc/common/tasks/discover_lxc_context.yml"
+  tags:
+    - note
+
+- name: Update Proxmox container notes
+  ansible.builtin.include_tasks: note_app.yml
+  vars:
+    _app_name: "{{ app_item.key }}"
+    _app: "{{ app_item.value }}"
+  loop: "{{ podman_apps | dict2items }}"
+  loop_control:
+    loop_var: app_item
+    label: "{{ app_item.key }}"
+  when:
+    - app_item.value.enabled | default(false)
+    - proxmox_vmid is defined
+    - proxmox_node is defined
+  tags:
+    - note

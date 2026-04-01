@@ -1,0 +1,13 @@
+---
+- name: "{{ _app_name }} | Update Proxmox container note"
+  ansible.builtin.include_tasks: "{{ role_path }}/../../lxc/common/tasks/update_proxmox_note.yml"
+  vars:
+    lxc_note_vmid: "{{ proxmox_vmid }}"
+    lxc_note_node: "{{ proxmox_node_fqdn | default(proxmox_node) }}"
+    lxc_note_app_name: "{{ _app.display_name | default(_app_name | title) }}"
+    lxc_note_web_url: "http://{{ inventory_hostname }}:{{ _app.port }}"
+    lxc_note_properties:
+      Image: "{{ _app.image }}:{{ _app.tag | default('latest') }}"
+      Runtime: "{{ proxmox_runtime | default('Unknown') }}"
+      OS: "{{ proxmox_os | default(ansible_distribution ~ ' ' ~ ansible_distribution_major_version ~ ' (' ~ (ansible_distribution_release | capitalize) ~ ')') }}"
+  when: _app.port is defined
