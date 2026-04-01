@@ -7,5 +7,6 @@ This repo is a rewrite of my infrastructure, starting from scratch with many cha
 
 ## TODO
 
+- [ ] Understand Claude's solution to lxc selection.
 - [ ] Fix/Understand why `netavark` is accumulating stale nftables DNAT rules when `state: restarted` is used, or any kind of redeploy happens.
   - Current 'workaround' is rebooting the LXC.

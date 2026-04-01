@@ -10,8 +10,6 @@
 # VMID and runtime are skipped if already defined. Node facts are refreshed from
 # cluster state because containers may have migrated since inventory was built.
 
-# TODO: Get Claude to explain how in the goddamn fuck this works.
-
 - name: "LXC context | Read VMID from cgroup"
   ansible.builtin.shell: |
     grep -oP '(?<=/lxc/)\d+' /proc/self/cgroup | head -1
