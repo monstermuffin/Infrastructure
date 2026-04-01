@@ -1,0 +1,16 @@
+---
+# NFS mount configuration for pve02.aah.muffn.io
+#
+# PBS on this export expects the TrueNAS NFS share to map all client access to `backup:backup` (UID/GID 34).
+
+pve_nfs_enabled: true
+
+pve_nfs_sources:
+  aah_fs02:
+    server: "aah-fs02"
+    export: "/mnt/pool-01/pbs-data"
+
+pve_nfs_mounts:
+  - name: pbs-data
+    source: aah_fs02
+    mountpoint: "/mnt/aah-fs02/pbs-data"
