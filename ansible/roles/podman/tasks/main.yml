@@ -11,6 +11,14 @@
     - podman
     - packages
 
+- name: Configure Podman networks
+  ansible.builtin.import_tasks: networks.yml
+  when: podman_networks | length > 0
+  tags:
+    - podman
+    - network
+    - setup
+
 - name: Create application user
   ansible.builtin.import_tasks: configure_user.yml
   when: podman_user is defined
