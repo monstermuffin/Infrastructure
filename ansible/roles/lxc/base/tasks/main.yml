@@ -1,0 +1,12 @@
+---
+- name: Configure APT sources
+  ansible.builtin.import_tasks: apt_sources.yml
+  tags:
+    - apt
+    - setup
+
+- name: Install base packages
+  ansible.builtin.import_tasks: packages.yml
+  tags:
+    - packages
+    - setup

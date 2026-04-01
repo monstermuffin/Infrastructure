@@ -1,0 +1,10 @@
+---
+
+lxc_base_packages:
+  - curl
+  - ca-certificates
+  - htop
+
+# Packages installed when /dev/dri/renderD128 present
+lxc_base_igpu_packages:
+  - vainfo

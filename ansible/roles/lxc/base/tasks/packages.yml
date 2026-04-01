@@ -1,0 +1,16 @@
+---
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ lxc_base_packages }}"
+    state: present
+
+- name: Check if iGPU device is present
+  ansible.builtin.stat:
+    path: /dev/dri/renderD128
+  register: _igpu_device
+
+- name: Install iGPU packages
+  ansible.builtin.apt:
+    name: "{{ lxc_base_igpu_packages }}"
+    state: present
+  when: _igpu_device.stat.exists

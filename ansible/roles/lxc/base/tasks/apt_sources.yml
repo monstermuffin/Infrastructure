@@ -1,0 +1,19 @@
+---
+# Debian Trixie (and newer) uses deb822 format
+# Both stanzas (main + security) need non-free so the iHD GPU driver and
+# other non-free packages are available from all mirrors.
+- name: Enable non-free apt repositories
+  ansible.builtin.replace:
+    path: /etc/apt/sources.list.d/debian.sources
+    regexp: '^Components:.*$'
+    replace: 'Components: contrib main non-free non-free-firmware'
+  when:
+    - ansible_facts['os_family'] == 'Debian'
+    - ansible_facts['distribution_major_version'] | int >= 13
+  register: _apt_sources_changed
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: true
+    # Force refresh if sources just changed, otherwise respect 1h cache.
+    cache_valid_time: "{{ 0 if _apt_sources_changed.changed | default(false) else 3600 }}"

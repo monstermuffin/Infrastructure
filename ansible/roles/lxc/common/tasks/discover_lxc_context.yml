@@ -1,0 +1,133 @@
+---
+# Auto-discover LXC context (VMID, runtime, Proxmox node) from the container.
+#
+# - proxmox_vmid:  read from /proc/self/cgroup (the kernel always knows the LXC path)
+# - proxmox_runtime: detected by checking which container engine is installed
+# - proxmox_node: live node resolved from Proxmox cluster resources when possible;
+#                 otherwise falls back to host_vars or pve_lxcs matching by VMID.
+# - proxmox_node_fqdn: normalized delegate host for Proxmox operations.
+#
+# VMID and runtime are skipped if already defined. Node facts are refreshed from
+# cluster state because containers may have migrated since inventory was built.
+
+# TODO: Get Claude to explain how in the goddamn fuck this works.
+
+- name: "LXC context | Read VMID from cgroup"
+  ansible.builtin.shell: |
+    grep -oP '(?<=/lxc/)\d+' /proc/self/cgroup | head -1
+  register: _cgroup_vmid
+  changed_when: false
+  when: proxmox_vmid is not defined
+
+- name: "LXC context | Set VMID fact"
+  ansible.builtin.set_fact:
+    proxmox_vmid: "{{ _cgroup_vmid.stdout | int }}"
+  when:
+    - proxmox_vmid is not defined
+    - _cgroup_vmid.stdout | default('') | length > 0
+
+- name: "LXC context | Detect container runtime"
+  ansible.builtin.shell: |
+    if command -v podman >/dev/null 2>&1; then
+      echo "Podman rootful (system Quadlet)"
+    elif command -v docker >/dev/null 2>&1; then
+      echo "Docker"
+    else
+      echo "Unknown"
+    fi
+  register: _detected_runtime
+  changed_when: false
+  when: proxmox_runtime is not defined
+
+- name: "LXC context | Set runtime fact"
+  ansible.builtin.set_fact:
+    proxmox_runtime: "{{ _detected_runtime.stdout }}"
+  when:
+    - proxmox_runtime is not defined
+    - _detected_runtime.stdout is defined
+
+- name: "LXC context | Find Proxmox node from pve_lxcs in hostvars"
+  ansible.builtin.set_fact:
+    proxmox_node: "{{ item.key }}"
+  # Guard the loop expression itself: Ansible evaluates `loop` before checking `when` per item,
+  # so hostvars | dict2items would always run and trigger lazy vault decryption for non-play hosts.
+  # Returning [] when proxmox_node is already defined (e.g. from dynamic inventory) avoids this.
+  loop: >-
+    {{
+      [] if (proxmox_node is defined or proxmox_vmid is not defined)
+      else (hostvars | dict2items | selectattr('value.pve_lxcs', 'defined') | list)
+    }}
+  when:
+    - proxmox_node is not defined
+    - proxmox_vmid is defined
+    - item.value.pve_lxcs.values() | selectattr('vmid', 'equalto', proxmox_vmid | int) | list | length > 0
+
+- name: "LXC context | Set Proxmox node delegate host"
+  ansible.builtin.set_fact:
+    proxmox_node_fqdn: >-
+      {{
+        proxmox_node_fqdn
+        if (proxmox_node_fqdn is defined and proxmox_node_fqdn | length > 0)
+        else (
+          proxmox_node
+          if (proxmox_node is defined and '.' in proxmox_node)
+          else (
+            proxmox_node ~ '.' ~ pve_cluster_domain
+            if (
+              proxmox_node is defined and
+              pve_cluster_domain is defined and
+              pve_cluster_domain | length > 0
+            )
+            else proxmox_node
+          )
+        )
+      }}
+  when: proxmox_node is defined or proxmox_node_fqdn is defined
+
+- name: "LXC context | Query live container node from cluster resources"
+  become: true
+  ansible.builtin.command:
+    cmd: pvesh get /cluster/resources --type vm --output-format json
+  register: _proxmox_cluster_resources
+  changed_when: false
+  delegate_to: "{{ proxmox_node_fqdn | default(proxmox_node) }}"
+  when:
+    - proxmox_vmid is defined
+    - proxmox_node is defined or proxmox_node_fqdn is defined
+
+- name: "LXC context | Parse live container node from cluster resources"
+  ansible.builtin.set_fact:
+    _proxmox_live_node: >-
+      {{
+        ((_proxmox_cluster_resources.stdout | from_json)
+        | selectattr('type', 'equalto', 'lxc')
+        | selectattr('vmid', 'equalto', proxmox_vmid | int)
+        | list | first | default({})).node | default('')
+      }}
+  when:
+    - _proxmox_cluster_resources is defined
+    - _proxmox_cluster_resources.stdout | default('') | length > 0
+
+- name: "LXC context | Refresh Proxmox node facts from live cluster state"
+  ansible.builtin.set_fact:
+    proxmox_node: "{{ _proxmox_live_node }}"
+    proxmox_node_fqdn: >-
+      {{
+        _proxmox_live_node
+        if '.' in _proxmox_live_node
+        else (
+          _proxmox_live_node ~ '.' ~ pve_cluster_domain
+          if (pve_cluster_domain is defined and pve_cluster_domain | length > 0)
+          else (
+            _proxmox_live_node ~ '.' ~ ((proxmox_node_fqdn | default(proxmox_node)).split('.', 1)[1])
+            if (
+              (proxmox_node_fqdn | default(proxmox_node)) is string and
+              '.' in (proxmox_node_fqdn | default(proxmox_node))
+            )
+            else _proxmox_live_node
+          )
+        )
+      }}
+  when:
+    - _proxmox_live_node is defined
+    - _proxmox_live_node | length > 0
