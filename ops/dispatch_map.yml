@@ -5,9 +5,22 @@
 
 rules:
 
+  # group_vars/all.yml — base keys/users applied to all LXCs
+  - pattern: "ansible/inventory/group_vars/all.yml"
+    playbook: "ansible/playbooks/lxc/manage.yml"
+
+  # lxc/base role changes — re-apply base config to all running LXCs
+  - pattern: "ansible/roles/lxc/**"
+    playbook: "ansible/playbooks/lxc/manage.yml"
+
   # aah-cluster01 LXC definitions (pve03+pve04 HA pair)
   - pattern: "ansible/inventory/group_vars/aah-cluster01/lxc*.yml"
     playbook: "ansible/playbooks/pve/provision_lxc.yml"
+    limit: "aah-cluster01"
+
+  # aah-cluster01 CIFS mounts
+  - pattern: "ansible/inventory/group_vars/aah-cluster01/cifs.yml"
+    playbook: "ansible/playbooks/pve/cifs_mount.yml"
     limit: "aah-cluster01"
 
   # Standalone node lxc.yml
