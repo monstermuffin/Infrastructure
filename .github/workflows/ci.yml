@@ -15,7 +15,8 @@ jobs:
         run: pip install ansible ansible-lint yamllint
 
       - name: yamllint
-        run: yamllint .
+        run: |
+          git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint
         working-directory: ansible
 
       - name: ansible-lint
