@@ -7,6 +7,9 @@ podman_networks:
     gateway: 10.89.0.1
 
 ingress_route_specs:
+  cic:
+    service_port: 3000
+    oidc_enabled: false
   qbit:
     service_port: 8081
     oidc_enabled: false
