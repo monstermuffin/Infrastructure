@@ -1,0 +1,11 @@
+---
+# Manage guest OS configuration on running LXCs.
+
+- name: Manage running LXCs
+  hosts: proxmox_all_running
+  gather_facts: true
+  vars:
+    ansible_user: "{{ lxc_manage_user | default('ansible') }}"
+  become: true
+  roles:
+    - lxc/base

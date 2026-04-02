@@ -1,0 +1,4 @@
+---
+all:
+  children:
+    lxc_bootstrap_targets: {}

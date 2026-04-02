@@ -5,6 +5,7 @@
 # Use --limit to target the Proxmox host(s), e.g. --limit pve04.aah.muffn.io
 # Use -e target=<name|fqdn> to target one LXC, e.g. -e target=vlmcsd
 # Use -e target=tag:<tag> to target LXCs by tag, e.g. -e target=tag:app_vlmcsd
+# New containers get bootstrap keys injected into root during pct create.
 
 - name: Initialize global LXC selector state
   hosts: localhost
@@ -29,6 +30,19 @@
   gather_facts: false
   roles:
     - pve_lxc_provision
+
+- name: Bootstrap selected LXCs
+  hosts: lxc_bootstrap_targets
+  gather_facts: true
+  vars:
+    ansible_user: root
+  pre_tasks:
+    - name: Wait for LXC SSH to become reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+        sleep: 5
+  roles:
+    - lxc/base
 
 - name: Validate requested LXC selector
   hosts: localhost

@@ -474,6 +474,20 @@
   failed_when: _lxc_start.rc != 0 and 'already running' not in (_lxc_start.stderr | default(''))
   when: _lxc.start | default(true) and not (_lxc.ha.enabled | default(false) | bool)
 
+- name: "Register LXC for guest bootstrap — {{ _lxc_name }}"
+  ansible.builtin.add_host:
+    name: "{{ _lxc.hostname | default(_lxc_name) }}"
+    groups: "{{ ['lxc_bootstrap_targets'] + group_names }}"
+    ansible_host: >-
+      {{
+        ((_lxc.network_ip | default('')) | regex_replace('/.*', ''))
+        if (_lxc.network_ip | default('dhcp')) != 'dhcp'
+        else (_lxc.hostname | default(_lxc_name))
+      }}
+    ansible_user: root
+    ansible_python_interpreter: /usr/bin/python3
+  when: _lxc.start | default(true)
+
 - name: "Check if HA resource exists — {{ _lxc_name }}"
   become: true
   ansible.builtin.command:
