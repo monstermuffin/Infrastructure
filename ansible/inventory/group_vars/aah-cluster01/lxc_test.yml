@@ -1,0 +1,26 @@
+---
+pve_lxcs_test:
+  test01:
+    vmid: 130
+    hostname: test01.aah.muffn.io
+    node: pve03
+    cores: 1
+    memory: 512
+    swap: 512
+    disk: "4G"
+    storage: "local-zfs"
+    network_ip: "10.82.7.130/24"
+    network_gw: "10.82.7.1"
+    network_vlan: 707
+    unprivileged: true
+    onboot: false
+    start: true
+    runtime: podman
+    tags:
+      - ansible
+      - site_aah
+    features: "{{ lxc_features_podman }}"
+    ha:
+      enabled: false
+    replication:
+      enabled: false
