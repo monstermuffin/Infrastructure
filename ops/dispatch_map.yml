@@ -1,0 +1,71 @@
+---
+# Maps changed file paths to playbook+limit pairs.
+# Rules evaluated stateful style, first match wins.
+# limit is auto-extracted from path if not set (see dispatch.py).
+
+rules:
+
+  # group_vars/all.yml — base keys/users applied to all LXCs
+  - pattern: "ansible/inventory/group_vars/all.yml"
+    playbook: "ansible/playbooks/lxc/manage.yml"
+
+  # lxc/base role changes — re-apply base config to all running LXCs
+  - pattern: "ansible/roles/lxc/**"
+    playbook: "ansible/playbooks/lxc/manage.yml"
+
+  # aah-cluster01 LXC definitions (pve03+pve04 HA pair)
+  - pattern: "ansible/inventory/group_vars/aah-cluster01/lxc*.yml"
+    playbook: "ansible/playbooks/pve/provision_lxc.yml"
+    limit: "aah-cluster01"
+
+  # aah-cluster01 CIFS mounts
+  - pattern: "ansible/inventory/group_vars/aah-cluster01/cifs.yml"
+    playbook: "ansible/playbooks/pve/cifs_mount.yml"
+    limit: "aah-cluster01"
+
+  # Standalone node lxc.yml
+  - pattern: "ansible/inventory/host_vars/pve*/lxc.yml"
+    playbook: "ansible/playbooks/pve/provision_lxc.yml"
+
+  - pattern: "ansible/inventory/host_vars/pve*/**"
+    playbook: "ansible/playbooks/pve/system_config.yml"
+
+  - pattern: "ansible/inventory/host_vars/pve*.yml"
+    playbook: "ansible/playbooks/pve/system_config.yml"
+
+  - pattern: "ansible/inventory/host_vars/frigate*"
+    playbook: "ansible/playbooks/lxc/deploy_frigate_docker.yml"
+
+  - pattern: "ansible/inventory/host_vars/pbs*"
+    playbook: "ansible/playbooks/lxc/deploy_pbs.yml"
+
+  - pattern: "ansible/inventory/host_vars/pdm*"
+    playbook: "ansible/playbooks/lxc/deploy_pdm.yml"
+
+  - pattern: "ansible/inventory/host_vars/crowdsec*"
+    playbook: "ansible/playbooks/lxc/deploy_crowdsec_lapi.yml"
+
+  # Generic fallback for all other LXC host_vars
+  - pattern: "ansible/inventory/host_vars/*.yml"
+    playbook: "ansible/playbooks/lxc/deploy_podman_app.yml"
+
+  # Ingress stack
+  - pattern: "ansible/inventory/group_vars/tag_app_ingress_aah/**"
+    playbook: "ansible/playbooks/app/ingress.yml"
+    limit: "tag_app_ingress_aah"
+
+  - pattern: "ansible/inventory/group_vars/tag_app_ingress_aah"
+    playbook: "ansible/playbooks/app/ingress.yml"
+    limit: "tag_app_ingress_aah"
+
+  - pattern: "ansible/inventory/group_vars/tag_app_cftun_aah.yml"
+    playbook: "ansible/playbooks/app/ingress.yml"
+    limit: "tag_app_cftun_aah"
+
+  - pattern: "ansible/inventory/group_vars/proxmox.yml"
+    playbook: "ansible/playbooks/pve/post_install.yml"
+    limit: "proxmox"
+
+  # Changed playbook runs itself directly
+  - pattern: "ansible/playbooks/**/*.yml"
+    action: playbook_self
