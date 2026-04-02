@@ -3,10 +3,11 @@
   "extends": [
     "config:recommended"
   ],
+  "stabilityDays": 3,
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Match removate tags for container images",
+      "description": "Match renovate tags for container images",
       "fileMatch": [
         "(^|/)ansible/inventory/.+\\.ya?ml$",
         "(^|/)ansible/roles/.+/defaults/main\\.yml$"
@@ -18,10 +19,41 @@
   ],
   "packageRules": [
     {
-      "matchDatasources": ["docker"],
-      "matchPackagePatterns": ["ghcr.io/home-operations/.*"],
+      "description": "Security - automerge immediately",
+      "priority": 100,
+      "matchCategories": ["security"],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "0 days",
+      "stabilityDays": 0,
+      "labels": ["renovate", "security"]
+    },
+    {
+      "description": "Patch - automerge after 1 day",
+      "priority": 50,
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "1 day",
+      "stabilityDays": 0,
+      "labels": ["renovate", "patch"]
+    },
+    {
+      "description": "Minor - automerge after 7 days",
+      "priority": 40,
+      "matchUpdateTypes": ["minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "7 days",
+      "stabilityDays": 0,
+      "labels": ["renovate", "minor"]
+    },
+    {
+      "description": "Major - manual review",
+      "priority": 10,
+      "matchUpdateTypes": ["major"],
       "automerge": false,
-      "labels": ["renovate", "container"]
+      "labels": ["renovate", "needs-review"]
     }
   ]
 }
