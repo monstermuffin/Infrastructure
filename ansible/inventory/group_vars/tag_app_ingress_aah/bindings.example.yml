@@ -1,6 +1,15 @@
 ---
 # Example bindings for reference.
 
+ingress_route_specs:
+  appname:
+    service_port: 8080
+    oidc_enabled: true
+    exempt_paths: ["/api"]
+  otherapp:
+    service_port: 3000
+    oidc_enabled: false
+
 ingress_route_bindings:
   radarr:
     hostname: radarr.example.com

@@ -1,62 +1,4 @@
 ---
-podman_enabled: true
-
-podman_networks:
-  ingress:
-    subnet: 10.89.0.0/29
-    gateway: 10.89.0.1
-
-ingress_route_specs:
-  cic:
-    service_port: 3000
-    oidc_enabled: false
-  qbit:
-    service_port: 8081
-    oidc_enabled: false
-  prowlarr:
-    service_port: 9696
-    oidc_enabled: true
-    exempt_paths: ["/api"]
-  tautulli:
-    service_port: 8181
-    oidc_enabled: false
-  sabnzbd:
-    service_port: 8080
-    oidc_enabled: true
-    exempt_paths: ["/api"]
-  sonarr:
-    service_port: 8989
-    oidc_enabled: true
-    exempt_paths: ["/api"]
-  radarr:
-    service_port: 7878
-    oidc_enabled: true
-    exempt_paths: ["/api"]
-  requests:
-    service_port: 5055
-    oidc_enabled: false
-  zipline:
-    service_port: 3000
-    oidc_enabled: false
-  privatebin:
-    service_port: 8080
-    oidc_enabled: false
-  shelfmark:
-    service_port: 8084
-    oidc_enabled: false
-  grimmory:
-    service_port: 6060
-    oidc_enabled: false
-  beszel:
-    service_port: 8090
-    oidc_enabled: false
-  changedetection:
-    service_port: 5011
-    oidc_enabled: true
-  paperless:
-    service_port: 8084
-    oidc_enabled: false
-
 ingress_crowdsec_registration_token: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           64656133666431353462643931313961353335626536333964343534343263323762663439386633
@@ -112,38 +54,6 @@ ingress_oidc_session_secret: !vault |
           37656635346237356337356337303535333361323833626431393736343365346136393637656431
           66326135613438313931303630326435666463366561393464346130386663663362633037653637
           37663731396165643634
-
-podman_apps:
-  traefik:
-    enabled: true
-    image: ghcr.io/traefik/traefik
-    # renovate: datasource=docker depName=ghcr.io/traefik/traefik
-    tag: v3.6.12
-    description: AAH ingress Traefik proxy
-    container_name: traefik-proxy
-    network: ingress
-    volumes:
-      - /opt/ingress/traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
-      - /opt/ingress/traefik/config/dynamic:/etc/traefik/dynamic:ro
-      - /opt/ingress/traefik/certs:/etc/traefik/certs:ro
-      - /opt/ingress/traefik/plugins-storage:/plugins-storage
-      - /opt/ingress/traefik/logs:/var/log/traefik
-    exec: --configFile=/etc/traefik/traefik.yml
-
-  cloudflared:
-    enabled: true
-    image: cloudflare/cloudflared
-    # renovate: datasource=docker depName=cloudflare/cloudflared
-    tag: "2026.3.0"
-    description: Cloudflare Tunnel connector
-    network: ingress
-    after:
-      - traefik.service
-    requires:
-      - traefik.service
-    env:
-      TUNNEL_TOKEN: "{{ cftun_tunnel_token | trim }}"
-    exec: --no-autoupdate tunnel run
 
 cftun_tunnel_token: !vault |
           $ANSIBLE_VAULT;1.1;AES256

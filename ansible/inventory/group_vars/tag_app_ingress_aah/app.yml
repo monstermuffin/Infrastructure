@@ -1,0 +1,39 @@
+---
+podman_enabled: true
+
+podman_networks:
+  ingress:
+    subnet: 10.89.0.0/29
+    gateway: 10.89.0.1
+
+podman_apps:
+  traefik:
+    enabled: true
+    image: ghcr.io/traefik/traefik
+    # renovate: datasource=docker depName=ghcr.io/traefik/traefik
+    tag: v3.6.12
+    description: AAH ingress Traefik proxy
+    container_name: traefik-proxy
+    network: ingress
+    volumes:
+      - /opt/ingress/traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /opt/ingress/traefik/config/dynamic:/etc/traefik/dynamic:ro
+      - /opt/ingress/traefik/certs:/etc/traefik/certs:ro
+      - /opt/ingress/traefik/plugins-storage:/plugins-storage
+      - /opt/ingress/traefik/logs:/var/log/traefik
+    exec: --configFile=/etc/traefik/traefik.yml
+
+  cloudflared:
+    enabled: true
+    image: cloudflare/cloudflared
+    # renovate: datasource=docker depName=cloudflare/cloudflared
+    tag: "2026.3.0"
+    description: Cloudflare Tunnel connector
+    network: ingress
+    after:
+      - traefik.service
+    requires:
+      - traefik.service
+    env:
+      TUNNEL_TOKEN: "{{ cftun_tunnel_token | trim }}"
+    exec: --no-autoupdate tunnel run
