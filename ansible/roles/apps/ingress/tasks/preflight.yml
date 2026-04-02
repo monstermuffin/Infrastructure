@@ -1,4 +1,13 @@
 ---
+- name: Set flag to compose routes from specs and bindings
+  ansible.builtin.set_fact:
+    _ingress_compose_routes: true
+  when:
+    - ingress_routes | length == 0
+    - ingress_route_specs | length > 0
+  tags:
+    - always
+
 - name: Validate split ingress route inputs
   ansible.builtin.assert:
     that:
@@ -13,9 +22,7 @@
   loop_control:
     loop_var: route_spec
     label: "{{ route_spec.key }}"
-  when:
-    - ingress_routes | length == 0
-    - ingress_route_specs | length > 0
+  when: _ingress_compose_routes | default(false)
   tags:
     - always
 
@@ -47,9 +54,7 @@
   loop_control:
     loop_var: route_spec
     label: "{{ route_spec.key }}"
-  when:
-    - ingress_routes | length == 0
-    - ingress_route_specs | length > 0
+  when: _ingress_compose_routes | default(false)
   tags:
     - always
 
