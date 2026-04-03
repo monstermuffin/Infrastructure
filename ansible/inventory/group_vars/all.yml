@@ -3,7 +3,7 @@ root_authorized_keys: |
   ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDZoTAFu8kWMNXD5iGLuAOMZpCWthDc4S/45jokrAc2q muffin@mbp.internal.muffn.io
 
 ansible_authorized_keys: |
-  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDKO8yrc2rO/BqbUYVDJ8SMJ8rj5VnQgyr/pew12oQWw semaphore-ansible
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDKO8yrc2rO/BqbUYVDJ8SMJ8rj5VnQgyr/pew12oQWw ansible-deploy
   ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDZoTAFu8kWMNXD5iGLuAOMZpCWthDc4S/45jokrAc2q muffin@mbp.internal.muffn.io
 
 muffin_authorized_keys: |
