@@ -1,0 +1,29 @@
+---
+pve_lxcs_rembg01:
+  rembg01:
+    vmid: 127
+    hostname: rembg01.aah.muffn.io
+    node: pve02
+    cores: 2
+    memory: 1024
+    swap: 512
+    disk: "16G"
+    storage: "local-zfs"
+    network_ip: "10.82.10.127/24"
+    network_gw: "10.82.10.1"
+    network_vlan: 710
+    unprivileged: true
+    runtime: podman
+    tags:
+      - ansible
+      - site_aah
+      - podman_app
+      - app_rembg
+    features:
+      nesting: true
+      keyctl: true
+    devices:
+      - path: /dev/dri/renderD128
+        mode: "0666"
+      - path: /dev/dri/card0
+        mode: "0666"

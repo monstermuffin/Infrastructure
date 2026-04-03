@@ -1,0 +1,33 @@
+---
+pve_lxcs_plex01:
+  plex01:
+    vmid: 125
+    hostname: plex01.aah.muffn.io
+    node: pve02
+    cores: 8
+    memory: 8192
+    swap: 512
+    disk: "512G"
+    storage: "local-zfs"
+    network_ip: "10.82.10.125/24"
+    network_gw: "10.82.10.1"
+    network_vlan: 710
+    unprivileged: true
+    runtime: podman
+    tags:
+      - ansible
+      - site_aah
+      - podman_app
+      - app_plex
+    features:
+      nesting: true
+      keyctl: true
+    devices:
+      - path: /dev/dri/renderD128
+        mode: "0666"
+      - path: /dev/dri/card0
+        mode: "0666"
+    bind_mounts:
+      - host_path: /mnt/aah-fs01/media
+        lxc_path: /mnt/media
+        shared: true

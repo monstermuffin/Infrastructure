@@ -1,0 +1,27 @@
+---
+pve_lxcs_pbs01:
+  pbs01:
+    vmid: 202
+    hostname: pbs01.aah.muffn.io
+    node: pve02
+    cores: 4
+    memory: 8192
+    swap: 512
+    disk: "128G"
+    network_ip: "10.82.2.202/24"
+    network_gw: "10.82.2.1"
+    network_vlan: 702
+    unprivileged: false
+    runtime: baremetal
+    tags:
+      - ansible
+      - site_aah
+      - baremetal_app
+      - pbs_aah
+      - app_pbs
+    features:
+      nesting: true
+      keyctl: false
+    bind_mounts:
+      - host_path: /mnt/aah-fs02/pbs-data
+        lxc_path: /mnt/pbs-data
