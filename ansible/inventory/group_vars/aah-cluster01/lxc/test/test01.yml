@@ -1,5 +1,5 @@
 ---
-pve_lxcs_test:
+pve_lxcs_test01:
   test01:
     vmid: 238
     hostname: test01.aah.muffn.io

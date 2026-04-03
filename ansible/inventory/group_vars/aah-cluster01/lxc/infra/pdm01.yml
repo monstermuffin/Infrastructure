@@ -1,0 +1,25 @@
+---
+pve_lxcs_pdm01:
+  pdm01:
+    vmid: 201
+    hostname: pdm01.aah.muffn.io
+    node: pve03
+    cores: 4
+    memory: 2048
+    swap: 512
+    disk: "32G"
+    network_ip: "10.82.2.201/24"
+    network_gw: "10.82.2.1"
+    network_vlan: 702
+    unprivileged: true
+    runtime: baremetal
+    tags:
+      - ansible
+      - site_aah
+      - baremetal_app
+      - app_pdm
+    features:
+      nesting: true
+      keyctl: false
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

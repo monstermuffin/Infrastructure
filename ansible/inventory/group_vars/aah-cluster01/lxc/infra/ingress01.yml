@@ -1,0 +1,24 @@
+---
+pve_lxcs_ingress01:
+  ingress01:
+    vmid: 103
+    hostname: ingress01.aah.muffn.io
+    node: pve03
+    cores: 2
+    memory: 1024
+    swap: 512
+    disk: "16G"
+    network_ip: "10.82.3.106/24"
+    network_gw: "10.82.3.100"
+    network_vlan: 703
+    unprivileged: true
+    runtime: podman
+    tags:
+      - ansible
+      - site_aah
+      - podman_app
+      - app_ingress
+      - app_ingress_aah
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

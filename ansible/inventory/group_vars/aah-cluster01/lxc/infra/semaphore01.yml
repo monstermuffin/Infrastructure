@@ -1,0 +1,25 @@
+---
+pve_lxcs_semaphore01:
+  semaphore01:
+    vmid: 107
+    hostname: semaphore01.aah.muffn.io
+    node: pve03
+    cores: 1
+    memory: 1024
+    swap: 512
+    disk: "8G"
+    storage: "local-zfs"
+    network_ip: "10.82.7.107/24"
+    network_gw: "10.82.7.1"
+    network_vlan: 707
+    unprivileged: true
+    onboot: true
+    runtime: podman
+    tags:
+      - ansible
+      - site_aah
+      - podman_app
+      - app_semaphore
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

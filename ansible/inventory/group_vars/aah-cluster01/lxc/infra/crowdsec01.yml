@@ -1,0 +1,26 @@
+---
+pve_lxcs_crowdsec01:
+  crowdsec01:
+    vmid: 202
+    hostname: crowdsec01.aah.muffn.io
+    node: pve04
+    cores: 2
+    memory: 2048
+    swap: 512
+    disk: "16G"
+    network_ip: "10.82.7.103/24"
+    network_gw: "10.82.7.1"
+    network_vlan: 707
+    unprivileged: true
+    runtime: baremetal
+    tags:
+      - ansible
+      - site_aah
+      - baremetal_app
+      - app_crowdsec
+      - app_crowdsec_aah
+    features:
+      nesting: true
+      keyctl: false
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

@@ -1,0 +1,27 @@
+---
+pve_lxcs_runner01:
+  runner01:
+    vmid: 108
+    hostname: runner01.aah.muffn.io
+    node: pve03
+    cores: 2
+    memory: 2048
+    swap: 512
+    disk: "16G"
+    storage: "local-zfs"
+    network_ip: "10.82.7.108/24"
+    network_gw: "10.82.7.1"
+    network_vlan: 707
+    unprivileged: true
+    onboot: true
+    start: true
+    runtime: baremetal
+    tags:
+      - ansible
+      - site_aah
+      - app_github_runner
+    features:
+      nesting: true
+      keyctl: false
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"
