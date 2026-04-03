@@ -4,7 +4,7 @@ pve_lxcs_test01:
     vmid: 238
     hostname: test01.aah.muffn.io
     node: pve03
-    cores: 2
+    cores: 4
     memory: 512
     swap: 512
     disk: "4G"
