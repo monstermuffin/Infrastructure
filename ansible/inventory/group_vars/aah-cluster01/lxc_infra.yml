@@ -19,6 +19,7 @@ pve_lxcs_infra:
     tags:
       - ansible
       - site_aah
+      - app_github_runner
     features:
       nesting: true
       keyctl: false
