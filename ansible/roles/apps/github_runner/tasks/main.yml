@@ -9,6 +9,7 @@
       - python3
       - python3-venv
       - python3-yaml
+      - python3-requests
       - pipx
     state: present
     update_cache: true
@@ -32,6 +33,26 @@
     HOME: "{{ github_runner_home }}"
     PIPX_HOME: "{{ github_runner_home }}/.local/pipx"
     PIPX_BIN_DIR: "{{ github_runner_home }}/.local/bin"
+  tags: [packages, install]
+
+- name: Check if requests is in ansible pipx venv
+  ansible.builtin.command:
+    cmd: "{{ github_runner_home }}/.local/pipx/venvs/ansible/bin/python3 -c 'import requests'"
+  become_user: "{{ github_runner_user }}"
+  register: _requests_check
+  failed_when: false
+  changed_when: false
+  tags: [packages, install]
+
+- name: Inject requests into ansible pipx venv
+  ansible.builtin.command:
+    cmd: pipx inject ansible requests
+  become_user: "{{ github_runner_user }}"
+  environment:
+    HOME: "{{ github_runner_home }}"
+    PIPX_HOME: "{{ github_runner_home }}/.local/pipx"
+    PIPX_BIN_DIR: "{{ github_runner_home }}/.local/bin"
+  when: _requests_check.rc != 0
   tags: [packages, install]
 
 - name: Get latest runner version
