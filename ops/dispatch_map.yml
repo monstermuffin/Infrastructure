@@ -13,10 +13,12 @@ rules:
   - pattern: "ansible/roles/lxc/**"
     playbook: "ansible/playbooks/lxc/manage.yml"
 
-  # aah-cluster01 LXC definitions (pve03+pve04 HA pair)
-  - pattern: "ansible/inventory/group_vars/aah-cluster01/lxc*.yml"
+  # aah-cluster01 LXC definitions — per-LXC files under lxc/<category>/
+  - pattern: "ansible/inventory/group_vars/aah-cluster01/lxc/**/*.yml"
     playbook: "ansible/playbooks/pve/provision_lxc.yml"
     limit: "aah-cluster01"
+    extra_vars:
+      pve_lxc_target: "{stem}"
 
   # aah-cluster01 CIFS mounts
   - pattern: "ansible/inventory/group_vars/aah-cluster01/cifs.yml"

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import fnmatch
 import subprocess
 import sys
 from pathlib import Path
@@ -39,6 +38,11 @@ def extract_limit(path: str, rule: dict) -> str | None:
     return None
 
 
+def _expand_template(val: str, path: str) -> str:
+    # Expand {stem} to the filename stem (e.g. runner01 from .../runner01.yml).
+    return val.replace("{stem}", Path(path).stem)
+
+
 def get_workdir(rule: dict, path: str) -> Path:
     # Explicit 'workdir' field in the rule takes precedence. Otherwise inferred from the top-level directory of the playbook or changed file path.
     if "workdir" in rule:
@@ -65,6 +69,8 @@ def build_command(rule: dict, path: str) -> tuple[Path, str] | None:
     cmd = f"ansible-playbook {playbook.removeprefix(prefix)}"
     if limit:
         cmd += f" --limit '{limit}'"
+    for key, val in rule.get("extra_vars", {}).items():
+        cmd += f" -e {key}={_expand_template(val, path)}"
     return workdir, cmd
 
 
@@ -84,7 +90,7 @@ def main(dry_run: bool = False) -> None:
 
     for path in changed:
         for rule in rules:
-            if fnmatch.fnmatch(path, rule["pattern"]):
+            if Path(path).match(rule["pattern"]):
                 result = build_command(rule, path)
                 if result:
                     workdir, cmd = result
