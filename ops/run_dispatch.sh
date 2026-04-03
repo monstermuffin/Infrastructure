@@ -1,19 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
-# Only run on pushes to main
-if [ "${PUSHED_REF:-}" != "refs/heads/main" ]; then
-  echo "Skipping dispatch: push was to ${PUSHED_REF:-unknown}, not refs/heads/main"
-  exit 0
-fi
-
 # Unlock git-crypt and write vault password file
 echo "$GIT_CRYPT_KEY" | base64 -d | git-crypt unlock -
 echo "$VAULT_PASSWORD" > /tmp/.vault_password
 chmod 600 /tmp/.vault_password
 
-GITHUB_REPO="monstermuffin/Infrastructure"
 SHA=$(git rev-parse HEAD)
+LAST_SHA_FILE="/opt/semaphore/config/last_dispatched_sha"
+LAST_SHA=$(cat "$LAST_SHA_FILE" 2>/dev/null || echo "")
+
+# Skip if we've already processed this commit (e.g. branch delete fires same SHA)
+if [ "$SHA" = "$LAST_SHA" ]; then
+  echo "Skipping dispatch: commit $SHA already processed"
+  exit 0
+fi
+
+GITHUB_REPO="monstermuffin/Infrastructure"
 CONTEXT="ansible/dispatch"
 
 post_status() {
@@ -30,6 +33,7 @@ post_status() {
 post_status "pending" "Ansible dispatch running..."
 
 if python3 ops/dispatch.py && bash /tmp/dispatch_cmds.sh; then
+  echo "$SHA" > "$LAST_SHA_FILE"
   post_status "success" "Ansible dispatch succeeded"
 else
   post_status "failure" "Ansible dispatch failed"
