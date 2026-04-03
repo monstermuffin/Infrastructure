@@ -1,0 +1,7 @@
+---
+- name: Deploy GitHub Actions runner
+  hosts: "{{ target | default('runner01.aah.muffn.io') }}"
+  become: true
+  gather_facts: true
+  roles:
+    - apps/github_runner

@@ -45,6 +45,9 @@ rules:
   - pattern: "ansible/inventory/host_vars/crowdsec*"
     playbook: "ansible/playbooks/lxc/deploy_crowdsec_lapi.yml"
 
+  - pattern: "ansible/inventory/host_vars/runner*"
+    playbook: "ansible/playbooks/lxc/deploy_github_runner.yml"
+
   # Generic fallback for all other LXC host_vars
   - pattern: "ansible/inventory/host_vars/*.yml"
     playbook: "ansible/playbooks/lxc/deploy_podman_app.yml"
