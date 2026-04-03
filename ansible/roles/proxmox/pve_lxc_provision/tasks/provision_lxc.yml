@@ -501,7 +501,7 @@
     ansible_ssh_common_args: >-
       -o StrictHostKeyChecking=no
       -o UserKnownHostsFile=/dev/null
-  when: _lxc.start | default(true)
+  when: not _lxc_exists and _lxc.start | default(true)
 
 - name: "Check if HA resource exists — {{ _lxc_name }}"
   become: true
@@ -549,7 +549,7 @@
   retries: 30
   delay: 5
   changed_when: false
-  when: _lxc.start | default(true)
+  when: not _lxc_exists and _lxc.start | default(true)
 
 - name: "Ensure root SSH directory exists in container — {{ _lxc_name }}"
   become: true
@@ -557,7 +557,7 @@
     cmd: "pct exec {{ _lxc.vmid }} -- install -d -m 700 /root/.ssh"
   delegate_to: "{{ _lxc_delegate_host }}"
   changed_when: false
-  when: _lxc.start | default(true)
+  when: not _lxc_exists and _lxc.start | default(true)
 
 - name: "Ensure root SSH path ownership is correct in container — {{ _lxc_name }}"
   become: true
@@ -565,7 +565,7 @@
     cmd: "pct exec {{ _lxc.vmid }} -- chown root:root /root /root/.ssh"
   delegate_to: "{{ _lxc_delegate_host }}"
   changed_when: false
-  when: _lxc.start | default(true)
+  when: not _lxc_exists and _lxc.start | default(true)
 
 - name: "Push bootstrap SSH public keys into container temp path — {{ _lxc_name }}"
   become: true
@@ -574,7 +574,7 @@
   delegate_to: "{{ _lxc_delegate_host }}"
   register: _lxc_push_bootstrap_keys
   changed_when: _lxc_push_bootstrap_keys.rc == 0
-  when: _lxc.start | default(true)
+  when: not _lxc_exists and _lxc.start | default(true)
 
 - name: "Install bootstrap SSH public keys for root in container — {{ _lxc_name }}"
   become: true
@@ -582,7 +582,7 @@
     cmd: "pct exec {{ _lxc.vmid }} -- install -o root -g root -m 600 /tmp/ansible_lxc_ssh_keys.pub /root/.ssh/authorized_keys"
   delegate_to: "{{ _lxc_delegate_host }}"
   changed_when: false
-  when: _lxc.start | default(true)
+  when: not _lxc_exists and _lxc.start | default(true)
 
 - name: "Remove temp bootstrap SSH key file from container — {{ _lxc_name }}"
   become: true
@@ -590,7 +590,7 @@
     cmd: "pct exec {{ _lxc.vmid }} -- rm -f /tmp/ansible_lxc_ssh_keys.pub"
   delegate_to: "{{ _lxc_delegate_host }}"
   changed_when: false
-  when: _lxc.start | default(true)
+  when: not _lxc_exists and _lxc.start | default(true)
 
 - name: "Display provisioning result — {{ _lxc_name }}"
   ansible.builtin.debug:
