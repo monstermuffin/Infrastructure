@@ -24,4 +24,3 @@ podman_package_version_podman_compose_trixie: "1.3.0-1"
 
 # renovate: suite=trixie depName=crun
 podman_package_version_crun_trixie: "1.21-1"
-
