@@ -30,12 +30,22 @@ post_status() {
     > /dev/null
 }
 
-post_status "pending" "Ansible dispatch running..."
+post_status "pending" "Dispatch running..."
 
-if python3 ops/dispatch.py && bash /tmp/dispatch_cmds.sh; then
+run_ansible() {
+  python3 ops/dispatch.py && bash /tmp/dispatch_cmds.sh
+}
+
+run_terraform() {
+  python3 ops/gen_lxc_dns.py
+  terraform -chdir=tf init -backend-config="path=/opt/github-runner/terraform.tfstate" -reconfigure -input=false
+  terraform -chdir=tf apply -auto-approve -var-file=terraform.tfvars
+}
+
+if run_ansible && run_terraform; then
   echo "$SHA" > "$LAST_SHA_FILE"
-  post_status "success" "Ansible dispatch succeeded"
+  post_status "success" "Dispatch succeeded"
 else
-  post_status "failure" "Ansible dispatch failed"
+  post_status "failure" "Dispatch failed"
   exit 1
 fi

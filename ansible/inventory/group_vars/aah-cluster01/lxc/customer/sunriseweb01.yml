@@ -1,0 +1,24 @@
+---
+pve_lxcs_sunriseweb01:
+  sunriseweb01:
+    vmid: 140
+    hostname: sunriseweb01.aah.muffn.io
+    node: pve04
+    cores: 2
+    memory: 2048
+    swap: 512
+    disk: "32G"
+    storage: "local-zfs"
+    network_ip: "10.82.10.140/24"
+    network_gw: "10.82.10.1"
+    network_vlan: 710
+    unprivileged: true
+    runtime: podman
+    tags:
+      - ansible
+      - site_aah
+      - podman_app
+      - app_wordpress
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

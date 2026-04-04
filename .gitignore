@@ -32,6 +32,9 @@ ansible/playbooks/lxc/configure_frigate.yml
 ansible/playbooks/lxc/deploy_frigate_docker.yml
 ansible/playbooks/lxc/deploy_technitium_docker.yml
 
-# Terraform - not ready yet
-tf/
+# Terraform
 tf_old/
+tf/.terraform/
+tf/terraform.tfstate
+tf/terraform.tfstate.backup
+tf/lxc_dns.auto.tfvars.json

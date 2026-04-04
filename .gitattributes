@@ -2,3 +2,5 @@
 ansible/inventory/group_vars/*/bindings.yml filter=git-crypt diff=git-crypt
 ansible/inventory/host_vars/*/bindings.yml filter=git-crypt diff=git-crypt
 ansible/inventory/host_vars/*/*/bindings.yml filter=git-crypt diff=git-crypt
+tf/terraform.tfvars filter=git-crypt diff=git-crypt
+tf/cloudflare.tf filter=git-crypt diff=git-crypt

@@ -1,0 +1,10 @@
+# Cloudflare
+cloudflare_api_token  = "cloudflare-api-token"
+cloudflare_account_id = "cloudflare-account-id"
+
+# Technitium
+technitium_aah_server_url = "http://10.82.7.102:5380"
+technitium_aah_api_token  = "technitium-api-token"
+
+# technitium_lcy_server_url = "http://10.83.7.x:5380"
+# technitium_lcy_api_token  = "lcy-api-token"
