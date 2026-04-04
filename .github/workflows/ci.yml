@@ -22,7 +22,7 @@ jobs:
 
       - name: yamllint
         run: |
-          . .venv/bin/activate
+          . $GITHUB_WORKSPACE/.venv/bin/activate
           while IFS= read -r -d '' file; do
             printf 'yamllint %s\n' "$file"
             python -c "import pathlib, sys; from yamllint.decoder import detect_encoding; data = pathlib.Path(sys.argv[1]).read_bytes(); encoding = detect_encoding(data); print(f'encoding={encoding} bytes={len(data)} file={sys.argv[1]}'); data.decode(encoding)" "$file"
@@ -32,7 +32,7 @@ jobs:
 
       - name: ansible-lint
         run: |
-          . .venv/bin/activate
+          . $GITHUB_WORKSPACE/.venv/bin/activate
           ansible-lint
         working-directory: ansible
 
