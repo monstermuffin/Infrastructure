@@ -1,0 +1,7 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+# Tracked encrypted via repo-root .gitattributes (git-crypt)
+!terraform.tfvars

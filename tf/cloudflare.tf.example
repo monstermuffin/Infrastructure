@@ -1,0 +1,75 @@
+# ---------------------------------------------------------------------------
+# Cloudflare Zero Trust tunnel ingress + DNS (example)
+#
+# Copy to cloudflare.tf and customize routes. cloudflare.tf is git-crypt encrypted;
+# this example stays plaintext as a layout reference.
+# ---------------------------------------------------------------------------
+
+locals {
+  aah_routes = [
+    {
+      hostname = "app.example.com"
+      zone     = "example.com"
+      service  = "https://traefik-proxy:8443"
+      origin_request = {
+        no_tls_verify = true
+      }
+    },
+    # {
+    #   hostname = "other.example.org"
+    #   zone     = "example.org"
+    #   service  = "http://internal-service:8080"
+    # },
+  ]
+}
+
+data "cloudflare_zone" "zones" {
+  for_each = toset([for r in local.aah_routes : r.zone])
+  filter = {
+    name = each.key
+    account = {
+      id = var.cloudflare_account_id
+    }
+  }
+}
+
+resource "cloudflare_zero_trust_tunnel_cloudflared" "aah" {
+  account_id = var.cloudflare_account_id
+  name       = "aah-tunnel"
+  config_src = "cloudflare"
+}
+
+data "cloudflare_zero_trust_tunnel_cloudflared_token" "aah" {
+  account_id = var.cloudflare_account_id
+  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.aah.id
+}
+
+resource "cloudflare_zero_trust_tunnel_cloudflared_config" "aah" {
+  account_id = var.cloudflare_account_id
+  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.aah.id
+  config = {
+    ingress = concat(
+      [
+        for r in local.aah_routes : merge(
+          {
+            hostname = r.hostname
+            service  = r.service
+          },
+          try(r.origin_request, null) != null ? { origin_request = r.origin_request } : {}
+        )
+      ],
+      [{ service = "http_status:404" }]
+    )
+  }
+}
+
+resource "cloudflare_dns_record" "aah_tunnel" {
+  for_each = { for r in local.aah_routes : r.hostname => r }
+
+  zone_id = data.cloudflare_zone.zones[each.value.zone].zone_id
+  name    = each.key
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.aah.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
