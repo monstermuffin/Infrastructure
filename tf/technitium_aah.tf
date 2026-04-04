@@ -18,7 +18,7 @@ resource "technitium_server_settings" "aah" {
   randomize_name        = true
   log_queries           = true
   enable_blocking       = false
-  forwarders            = ["1.1.1.1:853", "1.0.0.1:853"]
+  forwarders            = ["9.9.9.9:853", "149.112.112.112:853"]
   forwarder_protocol    = "Tls"
   serve_stale           = true
 }
