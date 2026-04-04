@@ -17,6 +17,7 @@ pve_lxcs_wgtun01:
       - ansible
       - site_aah
       - app_wgtun
+      - podman_app
     features: "{{ lxc_features_podman }}"
     devices:
       - path: /dev/net/tun
