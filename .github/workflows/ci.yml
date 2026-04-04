@@ -36,6 +36,8 @@ jobs:
       - name: ansible-lint
         run: |
           . $GITHUB_WORKSPACE/.venv/bin/activate
+          mkdir -p secrets
+          echo "dummy" > secrets/.vault_password
           ansible-lint
         working-directory: ansible
 
