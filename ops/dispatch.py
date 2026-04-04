@@ -44,7 +44,14 @@ def extract_limit(path: str, rule: dict) -> str | None:
 
 def _expand_template(val: str, path: str) -> str:
     # Expand {stem} to the filename stem (e.g. runner01 from .../runner01.yml).
-    return val.replace("{stem}", Path(path).stem)
+    val = val.replace("{stem}", Path(path).stem)
+    # Expand {group} to the group name immediately under group_vars/ in the path.
+    parts = Path(path).parts
+    if "group_vars" in parts:
+        idx = parts.index("group_vars")
+        if idx + 1 < len(parts):
+            val = val.replace("{group}", parts[idx + 1])
+    return val
 
 
 def get_workdir(rule: dict, path: str) -> Path:

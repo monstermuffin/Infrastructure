@@ -10,7 +10,7 @@ SHA=$(git rev-parse HEAD)
 LAST_SHA_FILE="/opt/github-runner/last_dispatched_sha"
 LAST_SHA=$(cat "$LAST_SHA_FILE" 2>/dev/null || echo "")
 
-# Skip if we've already processed this commit (e.g. branch delete fires same SHA)
+# Skip if already processed commit
 if [ "$SHA" = "$LAST_SHA" ]; then
   echo "Skipping dispatch: commit $SHA already processed"
   exit 0
