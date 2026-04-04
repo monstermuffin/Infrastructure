@@ -1,0 +1,16 @@
+---
+podman_enabled: true
+
+podman_apps:
+  technitium:
+    enabled: true
+    image: technitium/dns-server
+    # renovate: datasource=docker depName=technitium/dns-server
+    tag: 14.3.0
+    description: Technitium DNS Server
+    network_mode: host
+    port: 5380
+    volumes:
+      - /opt/technitium:/etc/dns
+    env:
+      TZ: Europe/London

@@ -1,0 +1,24 @@
+---
+pve_lxcs_technitium01:
+  technitium01:
+    vmid: 102
+    hostname: technitium01.aah.muffn.io
+    node: pve04
+    cores: 2
+    memory: 2048
+    swap: 512
+    disk: "16G"
+    network_ip: "10.82.7.82/24"
+    network_gw: "10.82.7.1"
+    network_vlan: 707
+    unprivileged: true
+    runtime: podman
+    tags:
+      - ansible
+      - site_aah
+      - podman_app
+      - app_technitium
+      - app_technitium_aah
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"
