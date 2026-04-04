@@ -29,7 +29,7 @@ def git_changed_files() -> list[str]:
 
 def extract_limit(path: str, rule: dict) -> str | None:
     if rule.get("limit"):
-        return rule["limit"]
+        return _expand_template(rule["limit"], path)
 
     if path.startswith("ansible/inventory/host_vars/"):
         remainder = path.removeprefix("ansible/inventory/host_vars/")
