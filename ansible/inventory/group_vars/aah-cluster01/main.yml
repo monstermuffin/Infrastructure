@@ -1,14 +1,6 @@
 ---
 # aah-cluster01: pve03 + pve04 HA cluster
 
-pve_scratch_dirs:
-  - path: /mnt/scratch/downloads
-    mode: "1777"
-  - path: /mnt/scratch/downloads/torrents
-    mode: "1777"
-  - path: /mnt/scratch/bookdrop
-    mode: "1777"
-
 # Domain for SSH delegation to nodes
 pve_cluster_domain: "aah.muffn.io"
 

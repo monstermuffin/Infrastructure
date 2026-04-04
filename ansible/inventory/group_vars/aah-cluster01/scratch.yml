@@ -1,0 +1,8 @@
+---
+pve_scratch_dirs:
+  - path: /mnt/scratch/downloads
+    mode: "1777"
+  - path: /mnt/scratch/downloads/torrents
+    mode: "1777"
+  - path: /mnt/scratch/bookdrop
+    mode: "1777"
