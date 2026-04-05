@@ -29,7 +29,7 @@ podman_apps:
     enabled: true
     image: postgres
     # renovate: datasource=docker depName=postgres
-    tag: "16"
+    tag: "18"
     container_name: zipline-postgres
     network: zipline
     uid: 999
