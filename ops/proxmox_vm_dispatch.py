@@ -151,8 +151,20 @@ def _all_vm_control_planes() -> set[str]:
     return plane_ids
 
 
+def _is_linux_vm(doc: dict) -> bool:
+    """Return True for VMs that can be SSH-bootstrapped (i.e. not Windows)."""
+    os_value = doc.get("operating_system", "")
+    return not str(os_value).lower().startswith("win")
+
+
 def command_changed_names(args: argparse.Namespace) -> int:
-    names = sorted({_vm_name(path, doc) for path, doc, _ in _changed_vm_info(args.base, args.head)})
+    names = sorted(
+        {
+            _vm_name(path, doc)
+            for path, doc, _ in _changed_vm_info(args.base, args.head)
+            if _is_linux_vm(doc)
+        }
+    )
     print(",".join(names))
     return 0
 
