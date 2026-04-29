@@ -27,6 +27,7 @@ agent:
 
 tags:
   - app_seafile
+  - os_linux
   - os_trixie
   - site_aah
   - vm_app

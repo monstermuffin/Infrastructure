@@ -5,6 +5,11 @@ description: >-
 node_name: pve04
 vm_id: 109
 
+bios: ovmf
+operating_system: win11
+
+boot_interface: sata0
+
 cpu:
   cores: 4
 
@@ -16,14 +21,32 @@ network:
   ipv4_address: 10.82.7.109/24
   ipv4_gateway: 10.82.7.1
   vlan_id: 707
+  model: e1000e
 
 disks:
-  - interface: scsi0
+  - interface: sata0
     datastore_id: local-zfs
     size_gb: 128
+    from_image: false
+    discard: ignore
+    iothread: false
+
+efidisk:
+  datastore_id: local-zfs
+  type: 4m
+  pre_enrolled_keys: false
+
+tpm_state:
+  datastore_id: local-zfs
+  version: v2.0
+
+vga:
+  type: virtio
+  memory: 128
 
 agent:
   enabled: true
+  timeout: 15m
 
 tags:
   - app_prtg

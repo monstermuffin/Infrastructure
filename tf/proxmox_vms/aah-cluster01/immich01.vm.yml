@@ -27,8 +27,9 @@ agent:
 
 tags:
   - app_immich
-  - podman_app
+  - os_linux
   - os_trixie
+  - podman_app
   - site_aah
   - vm_app
 

@@ -54,6 +54,7 @@ locals {
       model    = "virtio"
       firewall = false
     }
+    bios = "seabios"
     disk = {
       backup      = true
       discard     = "on"
@@ -62,6 +63,10 @@ locals {
       iothread    = true
       replicate   = true
       ssd         = true
+    }
+    vga = {
+      memory = null
+      type   = "serial0"
     }
     cloud_init = {
       admin_authorized_keys = []
@@ -96,7 +101,7 @@ locals {
     operating_system = "l26"
     scsi_hardware    = "virtio-scsi-single"
     started          = true
-    tags             = ["ansible", "os_linux"]
+    tags             = ["ansible"]
   }
 
   proxmox_vms = {
@@ -163,10 +168,15 @@ locals {
           )))
         }
       )
-      agent       = merge(local.proxmox_vm_defaults.agent, try(doc.agent, {}))
-      startup     = try(doc.startup, null)
-      ha          = merge(local.proxmox_vm_defaults.ha, try(doc.ha, {}))
-      replication = merge(
+      bios           = coalesce(try(doc.bios, null), local.proxmox_vm_defaults.bios)
+      boot_interface = try(doc.boot_interface, null)
+      efidisk        = try(doc.efidisk, null)
+      tpm_state      = try(doc.tpm_state, null)
+      vga            = merge(local.proxmox_vm_defaults.vga, try(doc.vga, {}))
+      agent          = merge(local.proxmox_vm_defaults.agent, try(doc.agent, {}))
+      startup        = try(doc.startup, null)
+      ha             = merge(local.proxmox_vm_defaults.ha, try(doc.ha, {}))
+      replication    = merge(
         local.proxmox_vm_defaults.replication,
         try(doc.replication, {}),
         {
@@ -195,6 +205,7 @@ locals {
   proxmox_vm_download_groups = {
     for _, vm in local.proxmox_vms :
     "${vm.image.node_name}:${vm.image.datastore_id}:${vm.image.file_name}" => vm.image...
+    if length([for disk in vm.disks : disk if disk.from_image]) > 0
   }
 
   proxmox_vm_downloads = {
@@ -204,7 +215,10 @@ locals {
 
   proxmox_vm_boot_disk_interface = {
     for name, vm in local.proxmox_vms :
-    name => one([for disk in vm.disks : disk.interface if disk.from_image])
+    name => coalesce(
+      vm.boot_interface,
+      one([for disk in vm.disks : disk.interface if disk.from_image])
+    )
   }
 
   proxmox_vm_download_key = {
@@ -303,7 +317,10 @@ check "proxmox_vm_required_shape" {
     condition = alltrue([
       for vm in values(local.proxmox_vms) :
       length(vm.disks) > 0 &&
-      length([for disk in vm.disks : disk if disk.from_image]) == 1 &&
+      (
+        try(vm.boot_interface, null) != null ||
+        length([for disk in vm.disks : disk if disk.from_image]) == 1
+      ) &&
       length(vm.dns.zone) > 0 &&
       (
         length(vm.cloud_init.ssh_authorized_keys) > 0 ||
@@ -323,7 +340,7 @@ check "proxmox_vm_required_shape" {
         vm.agent.enabled
       )
     ])
-    error_message = "Each Proxmox VM needs a FQDN hostname, at least one disk, exactly one image-backed boot disk, bootstrap login material, admin-user SSH keys when snippet-based admin bootstrap is enabled, and a replication target when replication is enabled."
+    error_message = "Each Proxmox VM needs a FQDN hostname, at least one disk, either a boot_interface or exactly one image-backed boot disk, bootstrap login material, admin-user SSH keys when snippet-based admin bootstrap is enabled, and a replication target when replication is enabled."
   }
 }
 
@@ -356,6 +373,7 @@ resource "proxmox_virtual_environment_file" "cloud_init_user_data" {
 resource "proxmox_virtual_environment_vm" "vm" {
   for_each = local.proxmox_vms
 
+  bios        = each.value.bios
   name        = each.value.name
   description = each.value.description
   node_name   = each.value.node_name
@@ -454,10 +472,29 @@ resource "proxmox_virtual_environment_vm" "vm" {
     }
   }
 
+  dynamic "efi_disk" {
+    for_each = each.value.efidisk != null ? [each.value.efidisk] : []
+    content {
+      datastore_id      = efi_disk.value.datastore_id
+      file_format       = try(efi_disk.value.file_format, "raw")
+      pre_enrolled_keys = try(efi_disk.value.pre_enrolled_keys, false)
+      type              = try(efi_disk.value.type, "4m")
+    }
+  }
+
+  dynamic "tpm_state" {
+    for_each = each.value.tpm_state != null ? [each.value.tpm_state] : []
+    content {
+      datastore_id = tpm_state.value.datastore_id
+      version      = try(tpm_state.value.version, "v2.0")
+    }
+  }
+
   serial_device {}
 
   vga {
-    type = "serial0"
+    memory = each.value.vga.memory
+    type   = each.value.vga.type
   }
 
   lifecycle {
