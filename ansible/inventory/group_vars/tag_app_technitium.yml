@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: technitium/dns-server
     # renovate: datasource=docker depName=technitium/dns-server
-    tag: 14.3.0
+    tag: 15.0.0
     description: Technitium DNS Server
     network_mode: host
     port: 5380
