@@ -6,31 +6,23 @@ on:
     paths-ignore:
       - "**/*.example.*"
       - "**/*.example"
-  pull_request:
-    branches: [main]
-    types: [closed]
-    paths-ignore:
-      - "**/*.example.*"
-      - "**/*.example"
   workflow_dispatch:
 
 jobs:
   dispatch:
     name: Deploy Dispatch
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.pull_request.merged == true
     runs-on: [self-hosted, linux, aah]
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request' && (github.event.pull_request.merge_commit_sha || github.sha) || github.ref }}
 
       - name: Validate LXC inventory identifiers
         run: python3 ops/lxc_inventory.py --check-duplicates
 
       - name: Run dispatch
         env:
-          BEFORE_SHA: ${{ github.event_name == 'push' && github.event.before || github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+          BEFORE_SHA: ${{ github.event.before }}
           GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
           VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
         run: bash ops/run_dispatch.sh
