@@ -1,0 +1,48 @@
+name: manstest01.aah.muffn.io
+hostname: manstest01.aah.muffn.io
+description: >-
+  MANS Trixie testing
+node_name: pve04
+vm_id: 230
+
+cpu:
+  cores: 2
+
+memory:
+  dedicated: 2048
+  floating: 2048
+
+network:
+  ipv4_address: 10.82.7.230/24
+  ipv4_gateway: 10.82.7.1
+  vlan_id: 707
+
+disks:
+  - interface: scsi0
+    datastore_id: local-zfs
+    size_gb: 20
+  - interface: scsi1
+    datastore_id: local-zfs
+    size_gb: 8
+  - interface: scsi2
+    datastore_id: local-zfs
+    size_gb: 8
+  - interface: scsi3
+    datastore_id: local-zfs
+    size_gb: 8
+  - interface: scsi4
+    datastore_id: local-zfs
+    size_gb: 8
+  - interface: scsi5
+    datastore_id: local-zfs
+    size_gb: 8
+
+agent:
+  enabled: true
+
+tags:
+  - app_mans_test
+  - os_linux
+  - os_trixie
+  - site_aah
+  - vm_test
