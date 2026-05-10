@@ -176,7 +176,7 @@ jobs:
       - name: Stub git-crypt encrypted TF files
         if: ${{ steps.scope.outputs.ci_skip != 'true' && steps.scope.outputs.has_tf == 'true' }}
         run: |
-          find tf -maxdepth 2 -name "*.tf" | while IFS= read -r f; do
+          find tf -maxdepth 2 \( -name "*.tf" -o -name "*.tfvars" \) | while IFS= read -r f; do
             if python3 -c "import sys; data=open(sys.argv[1],'rb').read(10); sys.exit(0 if data.startswith(b'\x00GITCRYPT') else 1)" "$f" 2>/dev/null; then
               printf '# git-crypt encrypted (stubbed for CI)\n' > "$f"
               printf 'stubbing git-crypt file: %s\n' "$f"
