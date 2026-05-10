@@ -187,6 +187,11 @@ rules:
     playbook: "ansible/playbooks/app/ingress.yml"
     limit: "tag_app_ingress"
 
+  # wgtun role (defaults, tasks, templates) — used for Renovate updates to qBittorrent/VueTorrent
+  - pattern: "ansible/roles/apps/wgtun/**"
+    playbook: "ansible/playbooks/lxc/deploy_wgtun.yml"
+    limit: "wgtun01.aah.muffn.io"
+
   - pattern: "ansible/inventory/group_vars/tag_podman_app.yml"
     playbook: "ansible/playbooks/lxc/update_podman_packages.yml"
     limit: "tag_podman_app"
