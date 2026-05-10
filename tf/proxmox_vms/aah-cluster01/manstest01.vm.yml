@@ -1,7 +1,6 @@
 name: manstest01.aah.muffn.io
 hostname: manstest01.aah.muffn.io
-description: >-
-  MANS Trixie testing
+description: MANS Trixie testing VM.
 node_name: pve04
 vm_id: 230
 
