@@ -66,21 +66,36 @@
 - name: Install qBittorrent support packages
   ansible.builtin.apt:
     name:
-      - git
+      - unzip
     state: present
     update_cache: true
   when: wgtun_qbittorrent_altui_enabled
   tags: [qbittorrent, config, theme]
 
-- name: Clone VueTorrent
-  ansible.builtin.git:
-    repo: "{{ wgtun_qbittorrent_altui_repo }}"
-    dest: "{{ wgtun_qbittorrent_altui_dir_host }}"
-    version: "{{ wgtun_qbittorrent_altui_version }}"
-    single_branch: true
-    force: true
-    update: true
+- name: Download VueTorrent release zip
+  ansible.builtin.get_url:
+    url: "https://github.com/VueTorrent/VueTorrent/releases/download/{{ wgtun_qbittorrent_altui_version }}/vuetorrent.zip"
+    dest: "/tmp/vuetorrent-{{ wgtun_qbittorrent_altui_version }}.zip"
+    mode: "0644"
+  register: _vuetorrent_zip
   when: wgtun_qbittorrent_altui_enabled
+  tags: [qbittorrent, config, theme]
+
+- name: Remove stale VueTorrent directory on version change
+  ansible.builtin.file:
+    path: "{{ wgtun_qbittorrent_altui_dir_host }}"
+    state: absent
+  when: wgtun_qbittorrent_altui_enabled and _vuetorrent_zip.changed
+  tags: [qbittorrent, config, theme]
+
+- name: Extract VueTorrent
+  ansible.builtin.unarchive:
+    src: "/tmp/vuetorrent-{{ wgtun_qbittorrent_altui_version }}.zip"
+    dest: "{{ wgtun_config_dir }}/qbittorrent"
+    remote_src: true
+    creates: "{{ wgtun_qbittorrent_altui_dir_host }}/public/index.html"
+  when: wgtun_qbittorrent_altui_enabled
+  notify: Stop qbittorrent
   tags: [qbittorrent, config, theme]
 
 - name: Ensure qBittorrent.conf exists
@@ -92,7 +107,7 @@
     group: "{{ wgtun_qbittorrent_gid }}"
     mode: "0644"
     force: false
-  notify: Restart qbittorrent
+  notify: Stop qbittorrent
   tags: [qbittorrent, config]
 
 - name: Ensure qBittorrent Preferences section exists
@@ -101,64 +116,7 @@
     regexp: '^\[Preferences\]$'
     line: "[Preferences]"
     insertbefore: BOF
-  notify: Restart qbittorrent
-  tags: [qbittorrent, config]
-
-- name: Enable qBittorrent alternative WebUI
-  ansible.builtin.lineinfile:
-    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
-    regexp: '^WebUI\\AlternativeUIEnabled='
-    line: 'WebUI\AlternativeUIEnabled=true'
-    insertafter: '^\[Preferences\]$'
-  when: wgtun_qbittorrent_altui_enabled
-  notify: Restart qbittorrent
-  tags: [qbittorrent, config, theme]
-
-- name: Set qBittorrent alternative WebUI root folder
-  ansible.builtin.lineinfile:
-    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
-    regexp: '^WebUI\\RootFolder='
-    line: 'WebUI\RootFolder={{ wgtun_qbittorrent_altui_dir_container }}'
-    insertafter: '^\[Preferences\]$'
-  when: wgtun_qbittorrent_altui_enabled
-  notify: Restart qbittorrent
-  tags: [qbittorrent, config, theme]
-
-- name: Set qBittorrent Host header validation
-  ansible.builtin.lineinfile:
-    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
-    regexp: '^WebUI\\HostHeaderValidation='
-    line: 'WebUI\HostHeaderValidation={{ wgtun_qbittorrent_host_header_validation | ternary("true", "false") }}'
-    insertafter: '^\[Preferences\]$'
-  notify: Restart qbittorrent
-  tags: [qbittorrent, config]
-
-- name: Set qBittorrent auth subnet whitelist state
-  ansible.builtin.lineinfile:
-    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
-    regexp: '^WebUI\\AuthSubnetWhitelistEnabled='
-    line: 'WebUI\AuthSubnetWhitelistEnabled={{ wgtun_qbittorrent_auth_subnet_whitelist_enabled | ternary("true", "false") }}'
-    insertafter: '^\[Preferences\]$'
-  notify: Restart qbittorrent
-  tags: [qbittorrent, config]
-
-- name: Set qBittorrent auth subnet whitelist
-  ansible.builtin.lineinfile:
-    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
-    regexp: '^WebUI\\AuthSubnetWhitelist='
-    line: 'WebUI\AuthSubnetWhitelist={{ wgtun_qbittorrent_auth_subnet_whitelist }}'
-    insertafter: '^\[Preferences\]$'
-  when: wgtun_qbittorrent_auth_subnet_whitelist | length > 0
-  notify: Restart qbittorrent
-  tags: [qbittorrent, config]
-
-- name: Remove qBittorrent auth subnet whitelist when unset
-  ansible.builtin.lineinfile:
-    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
-    regexp: '^WebUI\\AuthSubnetWhitelist='
-    state: absent
-  when: wgtun_qbittorrent_auth_subnet_whitelist | length == 0
-  notify: Restart qbittorrent
+  notify: Stop qbittorrent
   tags: [qbittorrent, config]
 
 - name: Ensure qBittorrent state ownership
@@ -171,4 +129,75 @@
   loop:
     - "{{ wgtun_qbittorrent_state_dir }}"
     - "{{ wgtun_qbittorrent_cache_dir }}"
+  notify: Stop qbittorrent
   tags: [qbittorrent, config]
+
+- name: Flush handlers to stop qBittorrent before WebUI config
+  ansible.builtin.meta: flush_handlers
+  tags: [qbittorrent, config, theme]
+
+- name: Stop qbittorrent before applying WebUI config
+  ansible.builtin.systemd:
+    name: qbittorrent.service
+    state: stopped
+  changed_when: false
+  failed_when: false
+  tags: [qbittorrent, config, theme]
+
+- name: Enable qBittorrent alternative WebUI
+  ansible.builtin.lineinfile:
+    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
+    regexp: '^WebUI\\AlternativeUIEnabled='
+    line: 'WebUI\AlternativeUIEnabled=true'
+    insertafter: '^\[Preferences\]$'
+  when: wgtun_qbittorrent_altui_enabled
+  tags: [qbittorrent, config, theme]
+
+- name: Set qBittorrent alternative WebUI root folder
+  ansible.builtin.lineinfile:
+    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
+    regexp: '^WebUI\\RootFolder='
+    line: 'WebUI\RootFolder={{ wgtun_qbittorrent_altui_dir_container }}'
+    insertafter: '^\[Preferences\]$'
+  when: wgtun_qbittorrent_altui_enabled
+  tags: [qbittorrent, config, theme]
+
+- name: Set qBittorrent Host header validation
+  ansible.builtin.lineinfile:
+    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
+    regexp: '^WebUI\\HostHeaderValidation='
+    line: 'WebUI\HostHeaderValidation={{ wgtun_qbittorrent_host_header_validation | ternary("true", "false") }}'
+    insertafter: '^\[Preferences\]$'
+  tags: [qbittorrent, config]
+
+- name: Set qBittorrent auth subnet whitelist state
+  ansible.builtin.lineinfile:
+    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
+    regexp: '^WebUI\\AuthSubnetWhitelistEnabled='
+    line: 'WebUI\AuthSubnetWhitelistEnabled={{ wgtun_qbittorrent_auth_subnet_whitelist_enabled | ternary("true", "false") }}'
+    insertafter: '^\[Preferences\]$'
+  tags: [qbittorrent, config]
+
+- name: Set qBittorrent auth subnet whitelist
+  ansible.builtin.lineinfile:
+    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
+    regexp: '^WebUI\\AuthSubnetWhitelist='
+    line: 'WebUI\AuthSubnetWhitelist={{ wgtun_qbittorrent_auth_subnet_whitelist }}'
+    insertafter: '^\[Preferences\]$'
+  when: wgtun_qbittorrent_auth_subnet_whitelist | length > 0
+  tags: [qbittorrent, config]
+
+- name: Remove qBittorrent auth subnet whitelist when unset
+  ansible.builtin.lineinfile:
+    path: "{{ wgtun_qbittorrent_state_dir }}/qBittorrent.conf"
+    regexp: '^WebUI\\AuthSubnetWhitelist='
+    state: absent
+  when: wgtun_qbittorrent_auth_subnet_whitelist | length == 0
+  tags: [qbittorrent, config]
+
+- name: Ensure qbittorrent is started
+  ansible.builtin.systemd:
+    name: qbittorrent.service
+    state: started
+  changed_when: false
+  tags: [qbittorrent, config, theme]
