@@ -1,5 +1,5 @@
 ---
-- name: Stop qbittorrent
+- name: Restart qbittorrent
   ansible.builtin.systemd:
     name: qbittorrent.service
-    state: stopped
+    state: restarted

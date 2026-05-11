@@ -6,6 +6,7 @@ wgtun_qbittorrent_gid: 65534
 wgtun_qbittorrent_state_dir: "{{ wgtun_config_dir }}/qbittorrent/qBittorrent"
 wgtun_qbittorrent_cache_dir: "{{ wgtun_config_dir }}/qbittorrent/.cache/qBittorrent"
 wgtun_qbittorrent_altui_enabled: true
+wgtun_qbittorrent_altui_repo: https://github.com/VueTorrent/VueTorrent.git
 # renovate: datasource=github-releases depName=VueTorrent/VueTorrent
 wgtun_qbittorrent_altui_version: v2.33.0
 wgtun_qbittorrent_altui_dir_host: "{{ wgtun_config_dir }}/qbittorrent/vuetorrent"
