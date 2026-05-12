@@ -21,3 +21,6 @@ podman_apps:
       INGEST_DIR: /books
       SEARCH_MODE: direct
       USING_TOR: "false"
+      HIDE_LOCAL_AUTH: "true"
+      DISABLE_LOCAL_AUTH: "true"
+      OIDC_AUTO_REDIRECT: "true"
