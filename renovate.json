@@ -59,6 +59,12 @@
       ]
     },
     {
+      "description": "Immich postgres - pin to pg14",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["ghcr.io/immich-app/postgres"],
+      "allowedVersions": "/^14-/"
+    },
+    {
       "description": "Security - automerge immediately",
       "prPriority": 100,
       "matchCategories": ["security"],

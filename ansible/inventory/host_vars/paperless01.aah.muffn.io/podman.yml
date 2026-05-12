@@ -36,7 +36,7 @@ podman_apps:
   paperless-redis:
     enabled: true
     image: redis
-    # renovate: datasource=docker depName=redis
+    # renovate: datasource=docker depName=redis versioning=regex:^(?<major>7)(\.(?<minor>\d+)(\.(?<patch>\d+))?)?(-.*)?$
     tag: "7"
     container_name: paperless-redis
     network: paperless
