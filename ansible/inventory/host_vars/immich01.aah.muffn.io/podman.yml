@@ -57,7 +57,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/immich-app/postgres
     # renovate: datasource=docker depName=ghcr.io/immich-app/postgres
-    tag: 14-vectorchord0.4.2-pgvectors0.2.0
+    tag: 16-vectorchord0.4.2-pgvectors0.2.0
     container_name: immich-postgres
     network: immich
     volumes:
