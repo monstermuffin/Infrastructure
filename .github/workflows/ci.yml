@@ -31,6 +31,7 @@ jobs:
           if printf '%s\n' "$MSG" | grep -qiE '\[(skip ci|ci skip)\]'; then
             echo "ci_skip=true" >> "$GITHUB_OUTPUT"
             echo "has_ansible_yml=false" >> "$GITHUB_OUTPUT"
+            echo "has_ansible_yml_lintable=false" >> "$GITHUB_OUTPUT"
             echo "has_tf=false" >> "$GITHUB_OUTPUT"
             echo "has_lxc_inv=false" >> "$GITHUB_OUTPUT"
             echo "::notice title=CI skipped::Commit message contains [skip ci] or [ci skip]; lint and validation were not run."
@@ -94,10 +95,33 @@ jobs:
 
           sort -u /tmp/ansible_yml_paths.txt -o /tmp/ansible_yml_paths.txt
 
+          : > /tmp/ansible_yml_lintable_paths.txt
+          crypt_check='import sys; data=open(sys.argv[1],"rb").read(10); sys.exit(0 if data.startswith(b"\x00GITCRYPT") else 1)'
+          while IFS= read -r rel; do
+            [[ -z "$rel" ]] && continue
+            f="$GITHUB_WORKSPACE/ansible/$rel"
+            [[ -f "$f" ]] || continue
+            if python -c "$crypt_check" "$f" 2>/dev/null; then
+              continue
+            fi
+            printf '%s\n' "$rel" >> /tmp/ansible_yml_lintable_paths.txt
+          done < /tmp/ansible_yml_paths.txt
+          sort -u /tmp/ansible_yml_lintable_paths.txt -o /tmp/ansible_yml_lintable_paths.txt
+
           if [[ -s /tmp/ansible_yml_paths.txt ]]; then
             echo "has_ansible_yml=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_ansible_yml=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -s /tmp/ansible_yml_lintable_paths.txt ]]; then
+            echo "has_ansible_yml_lintable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_ansible_yml_lintable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ -s /tmp/ansible_yml_paths.txt ]] && [[ ! -s /tmp/ansible_yml_lintable_paths.txt ]]; then
+            echo "::notice title=ansible-lint skipped in CI::All Ansible YAML paths in this change set are git-crypt encrypted."
           fi
 
           if [[ "$tf_changes" == true ]]; then
@@ -113,7 +137,7 @@ jobs:
           fi
 
           echo "Changed files in diff: ${#ALL_CHANGES[@]}"
-          echo "Ansible YAML to lint: $(wc -l </tmp/ansible_yml_paths.txt) path(s)"
+          echo "Ansible YAML paths: $(wc -l </tmp/ansible_yml_paths.txt) (ansible-lint: $(wc -l </tmp/ansible_yml_lintable_paths.txt) after excluding git-crypt)"
 
       - name: Install Python tooling
         if: ${{ steps.scope.outputs.ci_skip != 'true' && (steps.scope.outputs.has_ansible_yml == 'true' || steps.scope.outputs.has_lxc_inv == 'true') }}
@@ -139,7 +163,7 @@ jobs:
         working-directory: ansible
 
       - name: Install Ansible Galaxy requirements
-        if: ${{ steps.scope.outputs.ci_skip != 'true' && steps.scope.outputs.has_ansible_yml == 'true' }}
+        if: ${{ steps.scope.outputs.ci_skip != 'true' && steps.scope.outputs.has_ansible_yml_lintable == 'true' }}
         run: |
           set -euo pipefail
           . $GITHUB_WORKSPACE/.venv/bin/activate
@@ -153,13 +177,13 @@ jobs:
         working-directory: ansible
 
       - name: ansible-lint
-        if: ${{ steps.scope.outputs.ci_skip != 'true' && steps.scope.outputs.has_ansible_yml == 'true' }}
+        if: ${{ steps.scope.outputs.ci_skip != 'true' && steps.scope.outputs.has_ansible_yml_lintable == 'true' }}
         run: |
           set -euo pipefail
           . $GITHUB_WORKSPACE/.venv/bin/activate
           mkdir -p secrets
           echo "dummy" > secrets/.vault_password
-          mapfile -t files < /tmp/ansible_yml_paths.txt
+          mapfile -t files < /tmp/ansible_yml_lintable_paths.txt
           ansible-lint "${files[@]}"
         working-directory: ansible
 
