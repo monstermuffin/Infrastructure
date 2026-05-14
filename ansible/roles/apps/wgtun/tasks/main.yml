@@ -12,7 +12,7 @@
     - "{{ wgtun_config_dir }}/gluetun/auth"
     - "{{ wgtun_config_dir }}/qbittorrent"
     - "{{ wgtun_config_dir }}/firefox"
-  tags: [directories, setup]
+  tags: [directories, setup, deploy, gluetun]
 
 - name: Create filebrowser config directory
   ansible.builtin.file:
@@ -38,6 +38,17 @@
               defaultEnabled: true
   tags: [filebrowser, config]
 
+- name: Require non-empty Gluetun HTTP control API key (qsticky / auth config)
+  ansible.builtin.assert:
+    that:
+      - wgtun_gluetun_apikey is defined
+      - (wgtun_gluetun_apikey | string | trim | length) > 0
+    fail_msg: >-
+      wgtun_gluetun_apikey is unset or empty. Define it (vaulted) under host_vars for this host
+      (see inventory/host_vars/<inventory_hostname>/wgtun.yml). If you use --tags deploy, ensure
+      this role's Gluetun auth task is not skipped — it is tagged deploy.
+  tags: [auth, config, gluetun, deploy]
+
 - name: Deploy gluetun auth config
   ansible.builtin.template:
     src: gluetun_auth.toml.j2
@@ -45,7 +56,7 @@
     owner: root
     group: root
     mode: "0640"
-  tags: [auth, config, gluetun]
+  tags: [auth, config, gluetun, deploy]
 
 - name: Create qBittorrent state directories
   ansible.builtin.file:
