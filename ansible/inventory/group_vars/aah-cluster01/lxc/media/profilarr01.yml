@@ -1,0 +1,24 @@
+---
+pve_lxcs_profilarr01:
+  profilarr01:
+    vmid: 145
+    hostname: profilarr01.aah.muffn.io
+    node: pve03
+    cores: 2
+    memory: 1024
+    swap: 512
+    disk: "16G"
+    network_ip: "10.82.10.145/24"
+    network_gw: "10.82.10.1"
+    network_vlan: 710
+    unprivileged: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_aah
+      - podman_app
+      - app_profilarr
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"
