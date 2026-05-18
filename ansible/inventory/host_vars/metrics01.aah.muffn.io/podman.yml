@@ -9,7 +9,7 @@ podman_apps:
     enabled: true
     image: victoriametrics/victoria-metrics
     # renovate: datasource=docker depName=victoriametrics/victoria-metrics
-    tag: v1.142.0
+    tag: v1.143.0
     ports:
       - 8428:8428
       - 2003:2003
