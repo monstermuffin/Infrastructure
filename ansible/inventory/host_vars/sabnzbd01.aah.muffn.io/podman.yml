@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/home-operations/sabnzbd
     # renovate: datasource=docker depName=ghcr.io/home-operations/sabnzbd
-    tag: 5.0.1
+    tag: 5.0.3
     port: 8080
     uid: 65534
     gid: 65533
