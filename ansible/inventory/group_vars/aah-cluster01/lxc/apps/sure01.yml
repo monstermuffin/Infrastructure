@@ -1,0 +1,24 @@
+---
+pve_lxcs_sure01:
+  sure01:
+    vmid: 146
+    hostname: sure01.aah.muffn.io
+    node: pve03
+    cores: 2
+    memory: 4096
+    swap: 512
+    disk: "32G"
+    network_ip: "10.82.10.146/24"
+    network_gw: "10.82.10.1"
+    network_vlan: 710
+    unprivileged: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_aah
+      - podman_app
+      - app_sure
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"
