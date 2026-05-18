@@ -9,7 +9,7 @@ podman_apps:
     enabled: true
     image: mariadb
     # renovate: datasource=docker depName=mariadb
-    tag: "11.8.6"
+    tag: "12.2.2"
     container_name: sunrise-db
     network: sunrise
     uid: 999
