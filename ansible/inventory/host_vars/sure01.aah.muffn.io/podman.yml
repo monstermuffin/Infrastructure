@@ -38,7 +38,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/we-promise/sure
     # renovate: datasource=docker depName=ghcr.io/we-promise/sure versioning=loose
-    tag: 0.7.0-hotfix.3
+    tag: 0.7.1-alpha.9
     container_name: sure-web
     port: 3000
     network: sure
@@ -109,7 +109,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/we-promise/sure
     # renovate: datasource=docker depName=ghcr.io/we-promise/sure versioning=loose
-    tag: 0.7.0-hotfix.3
+    tag: 0.7.1-alpha.9
     container_name: sure-worker
     network: sure
     exec: bundle exec sidekiq
