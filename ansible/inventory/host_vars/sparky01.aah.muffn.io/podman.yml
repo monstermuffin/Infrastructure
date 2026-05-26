@@ -15,7 +15,7 @@ podman_apps:
     uid: 999
     gid: 999
     volumes:
-      - /opt/sparky/postgres:/var/lib/postgresql/data
+      - /opt/sparky/postgres:/var/lib/postgresql
     env:
       POSTGRES_DB: sparkyfitness
       POSTGRES_USER: sparky
