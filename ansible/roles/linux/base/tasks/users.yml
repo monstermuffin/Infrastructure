@@ -55,7 +55,7 @@
   ansible.builtin.user:
     name: "{{ linux_base_admin_user }}"
     state: present
-    shell: /bin/bash
+    shell: /bin/zsh
     create_home: true
     groups: "{{ linux_base_admin_user_groups | reject('equalto', '') | join(',') }}"
     append: true
@@ -131,6 +131,18 @@
         group: root
         mode: '0644'
       notify: Reload systemd daemon
+
+    - name: Configure /run/podman directory to be group-accessible via tmpfiles.d
+      ansible.builtin.copy:
+        dest: /etc/tmpfiles.d/podman-group.conf
+        content: "d /run/podman 0750 root podman - -\n"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Apply tmpfiles.d entry to fix /run/podman permissions immediately
+      ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/podman-group.conf
+      changed_when: false
 
     - name: Enable and start podman socket
       ansible.builtin.systemd:
