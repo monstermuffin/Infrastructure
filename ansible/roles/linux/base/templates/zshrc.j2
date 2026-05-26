@@ -1,0 +1,112 @@
+# ~/.zshrc — Ansible managed
+
+# --- History ---
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_ALL_DUPS
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_SPACE
+setopt HIST_VERIFY
+setopt EXTENDED_HISTORY
+
+# --- Navigation ---
+setopt AUTO_CD
+setopt AUTO_PUSHD
+setopt PUSHD_IGNORE_DUPS
+setopt PUSHD_SILENT
+
+# --- Completion ---
+autoload -Uz compinit
+compinit -d "${HOME}/.cache/zcompdump-${ZSH_VERSION}"
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:descriptions' format '%B%d%b'
+
+# --- Key bindings (emacs mode) ---
+bindkey -e
+bindkey '^[[H'  beginning-of-line
+bindkey '^[[F'  end-of-line
+bindkey '^[[3~' delete-char
+bindkey '^R'    history-incremental-search-backward
+
+# --- Plugins ---
+[[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
+  source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+[[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
+  source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# zsh-history-substring-search: must be sourced AFTER syntax-highlighting,
+# and its bindings set AFTER sourcing.
+if [[ -f /usr/share/zsh-history-substring-search/zsh-history-substring-search.zsh ]]; then
+  source /usr/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+  bindkey '^[[A' history-substring-search-up
+  bindkey '^[[B' history-substring-search-down
+else
+  # Fall back to prefix-only search if plugin is absent
+  bindkey '^[[A' history-beginning-search-backward
+  bindkey '^[[B' history-beginning-search-forward
+fi
+
+# --- fzf — fuzzy finder ---
+[[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]] && \
+  source /usr/share/doc/fzf/examples/key-bindings.zsh
+[[ -f /usr/share/doc/fzf/examples/completion.zsh ]] && \
+  source /usr/share/doc/fzf/examples/completion.zsh
+
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --cycle'
+# Ctrl+T preview: use bat if available, fall back to cat
+if command -v batcat &>/dev/null || command -v bat &>/dev/null; then
+  export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers {} 2>/dev/null'"
+fi
+
+# --- Podman socket (Docker-group equivalent) ---
+# Points podman at the system socket so commands like `podman ps` work without sudo
+# when the user is in the `podman` group.
+if [[ -S /run/podman/podman.sock ]]; then
+  export CONTAINER_HOST="unix:///run/podman/podman.sock"
+fi
+
+# --- Aliases ---
+# eza — modern ls with icons and git status
+if command -v eza &>/dev/null; then
+  alias ls='eza --icons'
+  alias ll='eza -lah --icons --git'
+  alias la='eza -a --icons'
+  alias l='eza -1 --icons'
+  alias lt='eza --tree --icons -L 2'
+  alias llt='eza --tree -lah --icons -L 2'
+else
+  alias ll='ls -lah --color=auto'
+  alias la='ls -A --color=auto'
+  alias l='ls -CF --color=auto'
+fi
+
+# bat — syntax-highlighted cat (Debian installs binary as batcat)
+if command -v batcat &>/dev/null; then
+  alias bat='batcat'
+  alias cat='batcat --paging=never'
+elif command -v bat &>/dev/null; then
+  alias cat='bat --paging=never'
+fi
+
+alias grep='grep --color=auto'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias reload='exec zsh'
+alias df='df -h'
+alias du='du -h'
+alias free='free -h'
+
+# --- Fastfetch on login ---
+# Only runs on login shells (SSH sessions, console login) — not on every terminal tab
+if [[ -o login ]] && command -v fastfetch &>/dev/null; then
+  fastfetch --config /etc/fastfetch/config.jsonc
+fi
+
+# --- Starship prompt ---
+command -v starship &>/dev/null && eval "$(starship init zsh)"

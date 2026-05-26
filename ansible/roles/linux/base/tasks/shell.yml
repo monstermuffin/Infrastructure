@@ -1,0 +1,211 @@
+---
+- name: Install zsh and plugins
+  ansible.builtin.apt:
+    name:
+      - zsh
+      - zsh-autosuggestions
+      - zsh-syntax-highlighting
+    state: present
+  tags:
+    - shell
+    - zsh
+
+- name: Create zsh-history-substring-search directory
+  ansible.builtin.file:
+    path: /usr/share/zsh-history-substring-search
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - shell
+    - zsh
+
+- name: Install zsh-history-substring-search
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/zsh-users/zsh-history-substring-search/master/zsh-history-substring-search.zsh"
+    dest: /usr/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - shell
+    - zsh
+
+- name: Set zsh as default shell for admin user
+  ansible.builtin.user:
+    name: "{{ linux_base_admin_user }}"
+    shell: /bin/zsh
+  when: linux_base_manage_admin_user | bool
+  tags:
+    - shell
+    - zsh
+
+- name: Check installed Starship version
+  ansible.builtin.command: starship --version
+  register: _linux_base_starship_installed
+  changed_when: false
+  failed_when: false
+  tags:
+    - shell
+    - starship
+
+- name: Set installed Starship version fact
+  ansible.builtin.set_fact:
+    _linux_base_starship_installed_version: >-
+      {{ _linux_base_starship_installed.stdout_lines[0] | regex_search('(\d+\.\d+\.\d+)') | default('0') }}
+  when: _linux_base_starship_installed.rc == 0
+  tags:
+    - shell
+    - starship
+
+- name: Get latest Starship release from GitHub API
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/starship/starship/releases/latest
+    return_content: true
+    headers:
+      Accept: application/vnd.github+json
+  register: _linux_base_starship_release
+  delegate_to: localhost
+  run_once: true
+  become: false
+  tags:
+    - shell
+    - starship
+
+- name: Set Starship version fact
+  ansible.builtin.set_fact:
+    _linux_base_starship_version: "{{ (_linux_base_starship_release.json.tag_name | regex_replace('^v', '')) }}"
+  tags:
+    - shell
+    - starship
+
+- name: Set Starship architecture
+  ansible.builtin.set_fact:
+    _linux_base_starship_arch: >-
+      {%- if ansible_architecture == 'x86_64' -%}x86_64-unknown-linux-musl
+      {%- elif ansible_architecture == 'aarch64' -%}aarch64-unknown-linux-musl
+      {%- else -%}unknown{%- endif -%}
+  tags:
+    - shell
+    - starship
+
+- name: Fail if architecture is unsupported
+  ansible.builtin.fail:
+    msg: "starship: unsupported architecture '{{ ansible_architecture }}'"
+  when: _linux_base_starship_arch == 'unknown'
+  tags:
+    - shell
+    - starship
+
+- name: Download and install Starship
+  when: >
+    _linux_base_starship_installed.rc != 0
+    or (_linux_base_starship_installed_version | default('0')) != _linux_base_starship_version
+  tags:
+    - shell
+    - starship
+  block:
+    - name: Create Starship temp directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: starship
+      register: _linux_base_starship_tmpdir
+
+    - name: Download Starship tarball
+      ansible.builtin.get_url:
+        url: "https://github.com/starship/starship/releases/download/v{{ _linux_base_starship_version }}/starship-{{ _linux_base_starship_arch }}.tar.gz"
+        dest: "{{ _linux_base_starship_tmpdir.path }}/starship.tar.gz"
+        mode: '0644'
+
+    - name: Extract Starship binary
+      ansible.builtin.unarchive:
+        src: "{{ _linux_base_starship_tmpdir.path }}/starship.tar.gz"
+        dest: "{{ _linux_base_starship_tmpdir.path }}"
+        remote_src: true
+
+    - name: Install Starship binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: "{{ _linux_base_starship_tmpdir.path }}/starship"
+        dest: /usr/local/bin/starship
+        owner: root
+        group: root
+        mode: '0755'
+        remote_src: true
+
+    - name: Clean up Starship temp directory
+      ansible.builtin.file:
+        path: "{{ _linux_base_starship_tmpdir.path }}"
+        state: absent
+
+- name: Create admin user .config directory
+  ansible.builtin.file:
+    path: "/home/{{ linux_base_admin_user }}/.config"
+    state: directory
+    owner: "{{ linux_base_admin_user }}"
+    group: "{{ linux_base_admin_user }}"
+    mode: '0755'
+  when: linux_base_manage_admin_user | bool
+  tags:
+    - shell
+    - starship
+
+- name: Deploy Starship config for admin user
+  ansible.builtin.template:
+    src: starship.toml.j2
+    dest: "/home/{{ linux_base_admin_user }}/.config/starship.toml"
+    owner: "{{ linux_base_admin_user }}"
+    group: "{{ linux_base_admin_user }}"
+    mode: '0644'
+  when: linux_base_manage_admin_user | bool
+  tags:
+    - shell
+    - starship
+
+- name: Deploy .zshrc for admin user
+  ansible.builtin.template:
+    src: zshrc.j2
+    dest: "/home/{{ linux_base_admin_user }}/.zshrc"
+    owner: "{{ linux_base_admin_user }}"
+    group: "{{ linux_base_admin_user }}"
+    mode: '0644'
+  when: linux_base_manage_admin_user | bool
+  tags:
+    - shell
+    - zsh
+
+- name: Clear /etc/motd
+  ansible.builtin.copy:
+    content: ""
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: '0644'
+  when: linux_base_shell_clear_motd | bool
+  tags:
+    - shell
+    - motd
+
+- name: Clear /etc/issue
+  ansible.builtin.copy:
+    content: ""
+    dest: /etc/issue
+    owner: root
+    group: root
+    mode: '0644'
+  when: linux_base_shell_clear_motd | bool
+  tags:
+    - shell
+    - motd
+
+- name: Clear /etc/issue.net
+  ansible.builtin.copy:
+    content: ""
+    dest: /etc/issue.net
+    owner: root
+    group: root
+    mode: '0644'
+  when: linux_base_shell_clear_motd | bool
+  tags:
+    - shell
+    - motd

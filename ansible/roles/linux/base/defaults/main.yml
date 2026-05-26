@@ -12,15 +12,21 @@ linux_base_nameservers: "{{ site_nameservers | default([]) }}"
 linux_base_search_domains: "{{ site_search_domains | default([]) }}"
 
 linux_base_manage_apt_sources: true
+
 linux_base_packages:
+  - bat
   - ca-certificates
   - curl
+  - eza
+  - fzf
   - git
   - htop
   - rsync
   - sudo
   - tmux
   - vim
+  - ncdu
+
 linux_base_extra_packages: []
 linux_base_igpu_packages:
   - vainfo
@@ -50,3 +56,18 @@ linux_base_admin_passwordless_sudo: true
 
 linux_base_admin_group: >-
   {{ 'wheel' if ansible_os_family in ['RedHat', 'Rocky', 'AlmaLinux', 'Fedora'] else 'sudo' }}
+
+# Podman access creates a 'podman' system group, enables the
+# system podman.socket with group-accessible permissions, and adds the admin user to the 'podman' group.
+linux_base_manage_podman_access: true
+
+# Podman rootless support sets up /etc/subuid and /etc/subgid so the admin user
+# can also run their own rootless containers.
+linux_base_podman_rootless: true
+
+# Shell configuration installs zsh, Starship prompt, and deploys .zshrc
+linux_base_manage_shell: true
+linux_base_shell_clear_motd: true
+
+# Fastfetch installs fastfetch from GitHub releases and deploys system config.
+linux_base_manage_fastfetch: true

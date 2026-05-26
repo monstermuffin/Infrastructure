@@ -86,3 +86,81 @@
   when:
     - linux_base_manage_admin_user | bool
     - linux_base_admin_passwordless_sudo | bool
+
+- name: Check if podman is installed
+  ansible.builtin.command: which podman
+  register: _linux_base_podman_bin
+  changed_when: false
+  failed_when: false
+  when: linux_base_manage_podman_access | bool
+
+- name: Configure podman group access
+  when:
+    - linux_base_manage_admin_user | bool
+    - linux_base_manage_podman_access | bool
+    - _linux_base_podman_bin.rc | default(1) == 0
+  block:
+    - name: Create podman system group
+      ansible.builtin.group:
+        name: podman
+        system: true
+        state: present
+
+    - name: Add admin user to podman group
+      ansible.builtin.user:
+        name: "{{ linux_base_admin_user }}"
+        groups: podman
+        append: true
+
+    - name: Create podman socket systemd drop-in directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/podman.socket.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Configure podman socket to be accessible by podman group
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/podman.socket.d/group.conf
+        content: |
+          [Socket]
+          SocketGroup=podman
+          SocketMode=0660
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Reload systemd daemon
+
+    - name: Enable and start podman socket
+      ansible.builtin.systemd:
+        name: podman.socket
+        enabled: true
+        state: started
+        daemon_reload: true
+
+- name: Configure subuid for rootless podman
+  ansible.builtin.lineinfile:
+    path: /etc/subuid
+    regexp: "^{{ linux_base_admin_user }}:"
+    line: "{{ linux_base_admin_user }}:100000:65536"
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - linux_base_manage_admin_user | bool
+    - linux_base_podman_rootless | bool
+
+- name: Configure subgid for rootless podman
+  ansible.builtin.lineinfile:
+    path: /etc/subgid
+    regexp: "^{{ linux_base_admin_user }}:"
+    line: "{{ linux_base_admin_user }}:100000:65536"
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - linux_base_manage_admin_user | bool
+    - linux_base_podman_rootless | bool

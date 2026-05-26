@@ -62,3 +62,22 @@
   tags:
     - users
     - setup
+
+- name: Configure shell (zsh + Starship)
+  ansible.builtin.import_tasks: shell.yml
+  when: linux_base_manage_shell | bool
+  tags:
+    - shell
+    - zsh
+    - starship
+    - setup
+
+- name: Install fastfetch
+  ansible.builtin.import_tasks: fastfetch.yml
+  when:
+    - linux_base_manage_fastfetch | bool
+    - ansible_pkg_mgr == "apt"
+  tags:
+    - fastfetch
+    - shell
+    - setup

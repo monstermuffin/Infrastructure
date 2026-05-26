@@ -1,0 +1,71 @@
+---
+- name: Check if fastfetch is installed
+  ansible.builtin.command: fastfetch --version
+  register: _linux_base_fastfetch_installed
+  changed_when: false
+  failed_when: false
+  tags: fastfetch
+
+- name: Get latest fastfetch release from GitHub API
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest
+    return_content: true
+    headers:
+      Accept: application/vnd.github+json
+  register: _linux_base_fastfetch_release
+  delegate_to: localhost
+  run_once: true
+  become: false
+  tags: fastfetch
+
+- name: Set fastfetch version facts
+  ansible.builtin.set_fact:
+    _linux_base_fastfetch_version: "{{ _linux_base_fastfetch_release.json.tag_name | regex_replace('^v', '') }}"
+    _linux_base_fastfetch_installed_version: >-
+      {{
+        _linux_base_fastfetch_installed.stdout.split()[1] | regex_replace('^v', '')
+        if _linux_base_fastfetch_installed.rc == 0
+        else '0'
+      }}
+  tags: fastfetch
+
+- name: Set fastfetch architecture
+  ansible.builtin.set_fact:
+    _linux_base_fastfetch_arch: >-
+      {%- if ansible_architecture == 'x86_64' -%}amd64
+      {%- elif ansible_architecture == 'aarch64' -%}aarch64
+      {%- else -%}unknown{%- endif -%}
+  tags: fastfetch
+
+- name: Fail if architecture is unsupported
+  ansible.builtin.fail:
+    msg: "fastfetch: unsupported architecture '{{ ansible_architecture }}'"
+  when: _linux_base_fastfetch_arch == 'unknown'
+  tags: fastfetch
+
+- name: Install fastfetch
+  ansible.builtin.apt:
+    deb: "https://github.com/fastfetch-cli/fastfetch/releases/download/{{ _linux_base_fastfetch_version }}/fastfetch-linux-{{ _linux_base_fastfetch_arch }}.deb"
+    state: present
+  when: >
+    _linux_base_fastfetch_installed.rc != 0
+    or _linux_base_fastfetch_installed_version != _linux_base_fastfetch_version
+  tags: fastfetch
+
+- name: Create fastfetch config directory
+  ansible.builtin.file:
+    path: /etc/fastfetch
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: fastfetch
+
+- name: Deploy fastfetch config
+  ansible.builtin.template:
+    src: fastfetch.jsonc.j2
+    dest: /etc/fastfetch/config.jsonc
+    owner: root
+    group: root
+    mode: '0644'
+  tags: fastfetch

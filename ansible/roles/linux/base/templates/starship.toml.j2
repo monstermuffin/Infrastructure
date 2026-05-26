@@ -1,0 +1,241 @@
+# starship.toml — Ansible managed
+# Soft pastel palette with lilac/orchid accents and Nerd Font Symbols preset
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = true
+
+# Line 1: ╭─ [os] ~/path  branch  git  lang  ...  with user@host at 󰥔 time
+# Line 2: ╰─❯
+format = """
+[╭─](bold #ddd6fe) \
+$os\
+$directory\
+$git_branch\
+$git_state\
+$git_status\
+$python\
+$nodejs\
+$golang\
+$rust\
+$docker_context\
+$terraform\
+$package\
+$fill\
+$jobs\
+$cmd_duration\
+$username\
+$hostname\
+$time\
+$line_break\
+[╰─](bold #ddd6fe)\
+$character"""
+
+# Palette:
+#   text      #e2e8f0   dimmed    #94a3b8   subtle    #4a4e69
+#   orchid    #f5d0fe   violet    #d8b4fe   lavender  #ddd6fe
+#   periwink  #c4b5fd   blue      #93c5fd   sky       #7dd3fc
+#   teal      #5eead4   green     #86efac   yellow    #fde68a
+#   peach     #fdba74   pink      #f9a8d4   red       #fca5a5
+
+[os]
+disabled = false
+style    = "#94a3b8"
+format   = "[$symbol ]($style)"
+
+[os.symbols]
+Alpine           = "\uF300 "
+Arch             = "\uF303 "
+CentOS           = "\uF304 "
+Debian           = "\uF306 "
+Fedora           = "\uF30E "
+FreeBSD          = "\uF30C "
+Gentoo           = "\uF30D "
+Kali             = "\uF327 "
+Linux            = "\uF17C "
+Macos            = "\uF179 "
+Manjaro          = "\uF312 "
+Mint             = "\uF30F "
+NixOS            = "\uF313 "
+openSUSE         = "\uF314 "
+Raspbian         = "\uF315 "
+Redhat           = "\uF316 "
+RedHatEnterprise = "\uF316 "
+RockyLinux       = "\uF32B "
+Ubuntu           = "\uF31B "
+Unknown          = "\uF233 "
+Windows          = "\uF17A "
+
+[username]
+style_user  = "#d8b4fe"
+style_root  = "bold #fca5a5"
+format      = "[with ](#94a3b8)[$user]($style)"
+disabled    = false
+show_always = true
+
+[hostname]
+ssh_only = false
+format   = "[@](#94a3b8)[$hostname]($style) "
+style    = "#c4b5fd"
+disabled = false
+
+[directory]
+style             = "bold #e2e8f0"
+format            = "[$path]($style)[$read_only]($read_only_style) "
+truncation_length = 4
+truncate_to_repo  = true
+home_symbol       = "~"
+read_only         = " 󰌾 "
+read_only_style   = "#fca5a5"
+
+[git_branch]
+symbol = " "
+style  = "#c4b5fd"
+format = "[$symbol$branch]($style) "
+
+[git_commit]
+disabled           = false
+commit_hash_length = 4
+style              = "#94a3b8"
+tag_symbol         = "  "
+
+[git_status]
+format     = '([\[$all_status$ahead_behind\]]($style) )'
+style      = "#fde68a"
+conflicted = "=${count}"
+ahead      = "⇡${count}"
+behind     = "⇣${count}"
+diverged   = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked  = "?${count}"
+modified   = "!${count}"
+staged     = "+${count}"
+renamed    = "»${count}"
+deleted    = "✘${count}"
+stashed    = "\\$${count}"
+
+[package]
+symbol   = "󰏗 "
+style    = "#fdba74"
+format   = "[$symbol$version]($style) "
+disabled = false
+
+[cmd_duration]
+min_time = 2_000
+format   = "[$duration](#94a3b8) "
+
+[time]
+disabled    = false
+format      = "[at ](#94a3b8)[󰥔 $time](#94a3b8)"
+time_format = "%H:%M:%S"
+
+[fill]
+symbol = " "
+
+[character]
+success_symbol = "[❯](bold #86efac)"
+error_symbol   = "[❯](bold #fca5a5)"
+vimcmd_symbol  = "[❮](bold #c084fc)"
+
+# --- Language modules ---
+
+[python]
+symbol       = " "
+style        = "#fde68a"
+format       = "[$symbol($version )($virtualenv )]($style)"
+detect_files = ["requirements.txt", ".python-version", "pyproject.toml", "setup.py", "Pipfile"]
+
+[nodejs]
+symbol       = " "
+style        = "#86efac"
+format       = "[$symbol$version]($style) "
+detect_files = ["package.json", ".node-version", ".nvmrc"]
+
+[golang]
+symbol       = " "
+style        = "#5eead4"
+format       = "[$symbol$version]($style) "
+detect_files = ["go.mod"]
+
+[rust]
+symbol       = "󱘗 "
+style        = "#fdba74"
+format       = "[$symbol$version]($style) "
+detect_files = ["Cargo.toml"]
+
+[docker_context]
+symbol       = " "
+style        = "#7dd3fc"
+format       = "[$symbol$context]($style) "
+detect_files = ["docker-compose.yml", "docker-compose.yaml", "Dockerfile"]
+
+[terraform]
+symbol            = "󱁢 "
+style             = "#c4b5fd"
+format            = "[$symbol$workspace]($style) "
+detect_extensions = ["tf", "tfvars"]
+detect_folders    = [".terraform"]
+disabled          = false
+
+[container]
+symbol = " "
+style  = "#fdba74"
+format = "[$symbol$name]($style) "
+
+[git_state]
+style  = "#fde68a"
+format = "\\([$state( $progress_current/$progress_total)]($style)\\) "
+
+[jobs]
+symbol          = "✦"
+style           = "#94a3b8"
+format          = "[$symbol$number]($style) "
+number_threshold = 1
+
+[sudo]
+symbol   = "󰌾 "
+style    = "#fca5a5"
+format   = "[$symbol]($style)"
+disabled = false
+
+[kubernetes]
+symbol   = " "
+style    = "#93c5fd"
+format   = "[$symbol$context( \\($namespace\\))]($style) "
+disabled = false
+
+[c]
+symbol = " "
+style  = "#7dd3fc"
+
+[java]
+symbol = " "
+style  = "#fdba74"
+
+[lua]
+symbol = " "
+style  = "#93c5fd"
+
+[php]
+symbol = " "
+style  = "#c4b5fd"
+
+[ruby]
+symbol = " "
+style  = "#fca5a5"
+
+[scala]
+symbol = " "
+style  = "#fca5a5"
+
+[swift]
+symbol = " "
+style  = "#fdba74"
+
+[zig]
+symbol = " "
+style  = "#fde68a"
+
+[aws]
+disabled = true
+
+[gcloud]
+disabled = true
