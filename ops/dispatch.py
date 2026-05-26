@@ -284,7 +284,7 @@ def main(dry_run: bool = False) -> None:
 
     for status, path in changed:
         for rule in rules:
-            if Path(path).match(rule["pattern"]):
+            if Path(path).full_match(rule["pattern"]):
                 if rule.get("action") == "manual_notice":
                     note = rule.get("note", f"Manual action required for {path}")
                     notices.append(_expand_template(note, path))
