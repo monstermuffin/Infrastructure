@@ -15,6 +15,7 @@ podman_apps:
       - "5800:5800"   # firefox web ui
       - "8081:8080"   # qbittorrent webui
       - "8888:8888"   # gluetun http proxy
+      - "9171:9171"   # qbittorrent-exporter metrics
     volumes:
       - /opt/wgtun/gluetun:/gluetun
     env:
@@ -40,7 +41,7 @@ podman_apps:
       HTTPPROXY: "on"
       HTTPPROXY_STEALTH: "on"
       DISABLE_IPV6: "on"
-      FIREWALL_INPUT_PORTS: "8080,5800,8888"
+      FIREWALL_INPUT_PORTS: "8080,5800,8888,9171"
       TZ: Europe/London
 
   qbittorrent:
@@ -141,18 +142,21 @@ podman_apps:
     image: ghcr.io/esanchezm/prometheus-qbittorrent-exporter
     # renovate: datasource=docker depName=ghcr.io/esanchezm/prometheus-qbittorrent-exporter
     tag: v1.6.0
-    port: 9171
+    network_mode: container:gluetun
     after:
+      - gluetun.service
       - qbittorrent.service
     requires:
+      - gluetun.service
       - qbittorrent.service
     restart: on-failure
     restart_sec: 10
     env:
-      QBITTORRENT_HOST: 10.82.10.117
-      QBITTORRENT_PORT: "8081"
-      QBITTORRENT_USERNAME: admin
-      QBITTORRENT_PASSWORD: !vault |
+      # esanchezm exporter uses QBITTORRENT_USER/PASS (not USERNAME/PASSWORD)
+      QBITTORRENT_HOST: localhost
+      QBITTORRENT_PORT: "8080"
+      QBITTORRENT_USER: admin
+      QBITTORRENT_PASS: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           38306635383637353964373835666162373232383531343534663032346439366338653731366262
           3933383431626161346237613130333839666465373561640a363133373538656535393233663038
