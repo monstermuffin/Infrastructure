@@ -60,7 +60,7 @@ podman_apps:
     enabled: true
     image: dgtlmoon/changedetection.io
     # renovate: datasource=docker depName=dgtlmoon/changedetection.io
-    tag: 0.55.3
+    tag: 0.55.7
     container_name: changedetection-io
     port: 5011
     container_port: 5000
