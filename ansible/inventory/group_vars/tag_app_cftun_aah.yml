@@ -25,7 +25,7 @@ podman_apps:
     enabled: true
     image: cloudflare/cloudflared
     # renovate: datasource=docker depName=cloudflare/cloudflared
-    tag: "2026.5.0"
+    tag: "2026.5.2"
     description: Cloudflare Tunnel connector
     network_mode: host
     env:
