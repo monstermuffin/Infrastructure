@@ -4,6 +4,7 @@
 # Tags:
 #   repo      — configure Proxmox apt repository only
 #   install   — install PDM packages only
+#   upgrade   — upgrade PDM packages to latest available version
 #   service   — manage PDM service only
 
 - name: Deploy Proxmox Datacenter Manager

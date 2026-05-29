@@ -7,3 +7,22 @@
   tags:
     - install
     - packages
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 0
+  when: pdm_upgrade | bool
+  tags:
+    - update
+    - upgrade
+
+- name: Upgrade PDM packages
+  ansible.builtin.apt:
+    name: "{{ pdm_packages }}"
+    state: latest
+    autoremove: true
+  when: pdm_upgrade | bool
+  tags:
+    - update
+    - upgrade

@@ -11,6 +11,8 @@ pdm_packages:
   - proxmox-datacenter-manager
   - proxmox-datacenter-manager-ui
 
+pdm_upgrade: true
+
 pdm_admin_userid: "admin@pdm"
 pdm_admin_comment: "Ansible Admin"
 pdm_admin_password: ""

@@ -17,6 +17,8 @@
   tags:
     - install
     - packages
+    - update
+    - upgrade
 
 - name: Manage PDM service
   ansible.builtin.import_tasks: service.yml

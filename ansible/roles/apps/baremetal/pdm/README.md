@@ -19,6 +19,9 @@ pdm_admin_password: !vault |
 ```bash
 ansible-playbook playbooks/lxc/deploy_pdm.yml
 ansible-playbook playbooks/lxc/deploy_pdm.yml --tags auth
+
+# Upgrade PDM to latest available version
+ansible-playbook playbooks/lxc/deploy_pdm.yml --tags upgrade -e pdm_upgrade=true
 ```
 
 Web UI is at `https://<host>:8443`.
