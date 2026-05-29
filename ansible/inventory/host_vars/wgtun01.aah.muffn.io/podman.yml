@@ -141,7 +141,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/esanchezm/prometheus-qbittorrent-exporter
     # renovate: datasource=docker depName=ghcr.io/esanchezm/prometheus-qbittorrent-exporter
-    tag: v1.6.0
+    tag: v1.7.0
     network_mode: container:gluetun
     after:
       - gluetun.service
