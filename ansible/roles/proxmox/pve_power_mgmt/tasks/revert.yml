@@ -1,0 +1,32 @@
+---
+- name: Disable and stop CPU governor/EPP persistence service
+  ansible.builtin.systemd:
+    name: pve-power-cpu
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: Remove CPU governor/EPP persistence service file
+  ansible.builtin.file:
+    path: /etc/systemd/system/pve-power-cpu.service
+    state: absent
+  notify: Reload systemd daemon
+
+- name: Remove WoL udev rule
+  ansible.builtin.file:
+    path: /etc/udev/rules.d/80-pve-wol.rules
+    state: absent
+  notify: Reload udev rules
+
+- name: Remove USB autosuspend udev rule
+  ansible.builtin.file:
+    path: /etc/udev/rules.d/82-pve-usb-pm.rules
+    state: absent
+  notify: Reload udev rules
+
+- name: Note revert complete
+  ansible.builtin.debug:
+    msg:
+      - "Power management persistence removed."
+      - "CPU governor reverts to kernel default on next reboot."
+      - "WoL state persists until ethtool is run again or NIC is reset."

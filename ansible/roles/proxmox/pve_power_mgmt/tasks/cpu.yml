@@ -1,0 +1,131 @@
+---
+- name: Check if CPU frequency scaling is available
+  ansible.builtin.stat:
+    path: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+  register: _cpufreq_available
+
+- name: Fail if cpufreq not available
+  ansible.builtin.fail:
+    msg: "CPU frequency scaling unavailable — cpufreq driver may not be loaded"
+  when: not _cpufreq_available.stat.exists
+
+- name: Get available scaling governors
+  ansible.builtin.slurp:
+    src: /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors
+  register: _available_governors_raw
+  when: pve_power_mgmt_cpu_governor | length > 0
+
+- name: Set available governors fact
+  ansible.builtin.set_fact:
+    _available_governors: "{{ _available_governors_raw['content'] | b64decode | trim | split(' ') }}"
+  when: pve_power_mgmt_cpu_governor | length > 0
+
+- name: Validate requested governor
+  ansible.builtin.fail:
+    msg: >-
+      Governor '{{ pve_power_mgmt_cpu_governor }}' is not available.
+      Available: {{ _available_governors | join(', ') }}
+  when:
+    - pve_power_mgmt_cpu_governor | length > 0
+    - pve_power_mgmt_cpu_governor not in _available_governors
+
+- name: Read current governor (cpu0)
+  ansible.builtin.slurp:
+    src: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+  register: _current_governor_raw
+  when: pve_power_mgmt_cpu_governor | length > 0
+
+- name: Set governor on all cores
+  ansible.builtin.shell: |
+    set -o pipefail
+    echo '{{ pve_power_mgmt_cpu_governor }}' | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null
+  args:
+    executable: /bin/bash
+  when:
+    - pve_power_mgmt_cpu_governor | length > 0
+    - (_current_governor_raw['content'] | b64decode | trim) != pve_power_mgmt_cpu_governor
+  changed_when: true
+
+- name: Check if EPP is supported
+  ansible.builtin.stat:
+    path: /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+  register: _epp_available
+
+- name: Note EPP not supported
+  ansible.builtin.debug:
+    msg: "EPP (energy_performance_preference) not available on this CPU — skipping"
+  when:
+    - pve_power_mgmt_cpu_epp | length > 0
+    - not _epp_available.stat.exists
+
+- name: Get available EPP options
+  ansible.builtin.slurp:
+    src: /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_available_preferences
+  register: _available_epp_raw
+  when:
+    - _epp_available.stat.exists
+    - pve_power_mgmt_cpu_epp | length > 0
+
+- name: Set available EPP fact
+  ansible.builtin.set_fact:
+    _available_epp: "{{ _available_epp_raw['content'] | b64decode | trim | split(' ') }}"
+  when:
+    - _epp_available.stat.exists
+    - pve_power_mgmt_cpu_epp | length > 0
+
+- name: Validate requested EPP
+  ansible.builtin.fail:
+    msg: >-
+      EPP '{{ pve_power_mgmt_cpu_epp }}' is not available.
+      Available: {{ _available_epp | join(', ') }}
+  when:
+    - _epp_available.stat.exists
+    - pve_power_mgmt_cpu_epp | length > 0
+    - pve_power_mgmt_cpu_epp not in _available_epp
+
+- name: Read current EPP (cpu0)
+  ansible.builtin.slurp:
+    src: /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+  register: _current_epp_raw
+  when:
+    - _epp_available.stat.exists
+    - pve_power_mgmt_cpu_epp | length > 0
+
+- name: Set EPP on all cores
+  ansible.builtin.shell: |
+    set -o pipefail
+    echo '{{ pve_power_mgmt_cpu_epp }}' | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference > /dev/null
+  args:
+    executable: /bin/bash
+  when:
+    - _epp_available.stat.exists
+    - pve_power_mgmt_cpu_epp | length > 0
+    - (_current_epp_raw['content'] | b64decode | trim) != pve_power_mgmt_cpu_epp
+  changed_when: true
+
+- name: Deploy CPU governor/EPP persistence systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/pve-power-cpu.service
+    content: |
+      [Unit]
+      Description=Apply CPU frequency governor and Energy Performance Preference
+      After=sysinit.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      {% if pve_power_mgmt_cpu_governor | length > 0 %}
+      ExecStart=/bin/bash -c 'echo {{ pve_power_mgmt_cpu_governor }} | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null 2>&1 || true'
+      {% endif %}
+      {% if pve_power_mgmt_cpu_epp | length > 0 %}
+      ExecStart=/bin/sh -c 'echo {{ pve_power_mgmt_cpu_epp }} | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference >/dev/null 2>&1 || true'
+      {% endif %}
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: "0644"
+  when:
+    - pve_power_mgmt_cpu_persistent | bool
+    - (pve_power_mgmt_cpu_governor | length > 0) or
+      (_epp_available.stat.exists and pve_power_mgmt_cpu_epp | length > 0)
+  notify: Enable and start CPU service

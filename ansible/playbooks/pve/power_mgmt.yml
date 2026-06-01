@@ -1,0 +1,6 @@
+---
+- name: Manage power settings on Proxmox VE hosts
+  hosts: proxmox
+  gather_facts: true
+  roles:
+    - role: proxmox/pve_power_mgmt

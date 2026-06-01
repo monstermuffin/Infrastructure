@@ -1,0 +1,65 @@
+---
+- name: Ensure ethtool is installed
+  ansible.builtin.apt:
+    name: ethtool
+    state: present
+    cache_valid_time: 86400
+
+# Discover all ethernet interfaces that report WoL support via ethtool
+- name: Discover WoL-capable ethernet interfaces
+  ansible.builtin.shell: |
+    set -o pipefail
+    for iface in $(ls /sys/class/net/); do
+      [ ! -d "/sys/class/net/$iface/device" ] && continue
+      ethtool "$iface" 2>/dev/null | grep -q "Supports Wake-on" && echo "$iface"
+    done
+    true
+  args:
+    executable: /bin/bash
+  register: _discovered_wol_ifaces
+  changed_when: false
+
+- name: Determine interfaces to manage
+  ansible.builtin.set_fact:
+    _wol_managed: >-
+      {{
+        pve_power_mgmt_wol_interfaces
+        if pve_power_mgmt_wol_interfaces | length > 0
+        else _discovered_wol_ifaces.stdout_lines
+      }}
+
+- name: Disable WoL on interfaces (skipping keep list)
+  ansible.builtin.command:
+    cmd: "ethtool -s {{ item }} wol d"
+  loop: "{{ _wol_managed }}"
+  when: item not in pve_power_mgmt_wol_keep_interfaces
+  register: _wol_result
+  changed_when: _wol_result.rc == 0
+  failed_when: _wol_result.rc not in [0, 80]
+
+- name: Build WoL udev rules content
+  ansible.builtin.set_fact:
+    _wol_udev_lines: >-
+      {{
+        _wol_managed
+        | difference(pve_power_mgmt_wol_keep_interfaces)
+        | map('regex_replace', '^(.*)$',
+          'ACTION=="add", SUBSYSTEM=="net", KERNEL=="\1", RUN+="/usr/sbin/ethtool -s %k wol d"')
+        | list
+      }}
+
+- name: Write WoL udev persistence rule
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/80-pve-wol.rules
+    content: |
+      # Managed by Ansible pve_power_mgmt role — do not edit manually
+      {{ _wol_udev_lines | join('\n') }}
+    mode: "0644"
+  when: _wol_udev_lines | length > 0
+  notify: Reload udev rules
+
+- name: Display WoL management summary
+  ansible.builtin.debug:
+    msg:
+      - "WoL disabled on : {{ _wol_managed | difference(pve_power_mgmt_wol_keep_interfaces) }}"
+      - "WoL kept on     : {{ pve_power_mgmt_wol_keep_interfaces }}"

@@ -1,0 +1,17 @@
+---
+- name: Reload udev rules
+  ansible.builtin.shell: |
+    udevadm control --reload-rules
+    udevadm trigger --action=add --subsystem-match=usb
+  changed_when: false
+
+- name: Enable and start CPU service
+  ansible.builtin.systemd:
+    name: pve-power-cpu
+    daemon_reload: true
+    enabled: true
+    state: started
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true

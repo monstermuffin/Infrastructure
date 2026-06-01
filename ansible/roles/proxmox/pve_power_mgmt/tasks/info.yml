@@ -1,0 +1,68 @@
+---
+- name: Read current CPU scaling governor (cpu0)
+  ansible.builtin.slurp:
+    src: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+  register: _info_governor
+  failed_when: false
+  tags:
+    - info
+    - power_info
+
+- name: Read current EPP (cpu0)
+  ansible.builtin.slurp:
+    src: /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+  register: _info_epp
+  failed_when: false
+  tags:
+    - info
+    - power_info
+
+- name: Get WoL state for all ethernet interfaces
+  ansible.builtin.shell: |
+    set -o pipefail
+    for iface in $(ls /sys/class/net/); do
+      if [ -d "/sys/class/net/$iface/device" ]; then
+        wol=$(ethtool "$iface" 2>/dev/null | grep -E "^\s+Wake-on:" | awk '{print $2}')
+        [ -n "$wol" ] && echo "$iface: WoL=$wol"
+      fi
+    done
+    true
+  args:
+    executable: /bin/bash
+  register: _info_wol
+  changed_when: false
+  failed_when: false
+  tags:
+    - info
+    - power_info
+
+- name: Get USB autosuspend state (sample first device)
+  ansible.builtin.shell: |
+    set -o pipefail
+    first=$(ls /sys/bus/usb/devices/ | grep -v ':' | head -1)
+    [ -z "$first" ] && exit 0
+    ctrl=$(cat "/sys/bus/usb/devices/$first/power/control" 2>/dev/null)
+    delay=$(cat "/sys/bus/usb/devices/$first/power/autosuspend_delay_ms" 2>/dev/null)
+    echo "control=$ctrl delay_ms=$delay"
+  args:
+    executable: /bin/bash
+  register: _info_usb
+  changed_when: false
+  failed_when: false
+  tags:
+    - info
+    - power_info
+
+- name: Display power management state
+  ansible.builtin.debug:
+    msg:
+      - "===== Power Management State ====="
+      - "CPU governor : {{ (_info_governor.content | b64decode | trim) if _info_governor.content is defined else 'N/A' }}"
+      - "CPU EPP      : {{ (_info_epp.content | b64decode | trim) if _info_epp.content is defined else 'N/A (not supported)' }}"
+      - "WoL per NIC  :"
+      - "{{ _info_wol.stdout_lines | default(['  (none detected)']) }}"
+      - "USB (sample) : {{ _info_usb.stdout | default('N/A') }}"
+      - "=================================="
+  tags:
+    - info
+    - power_info
