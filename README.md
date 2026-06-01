@@ -1,21 +1,57 @@
-# Infrastructure v2
+# Infrastructure
 
-v1 was a mess and could not be uploaded publically without many breaking changes, was also created at a time when I was learning and so this contributed to the mess.
+A homelab infrastructure repository managing Proxmox VE hosts, LXC containers, and applications via Ansible and Terraform.
 
+## Structure
 
-This repo is a rewrite of my infrastructure, starting from scratch with many changes to the tools and technologies used.
+```
+infra/
+├── ansible/
+│   ├── inventory/          # Hosts, group_vars, host_vars
+│   ├── playbooks/          # Entrypoint playbooks (pve/, lxc/, app/)
+│   └── roles/              # Reusable roles (proxmox/, apps/, linux/)
+├── tf/                     # Terraform for LXC/VM provisioning
+├── ops/                    # CI dispatch scripts
+└── secrets/                # Encrypted secrets (git-crypt)
+```
 
-## Git-Crypt
+## Secrets
 
-Data deemed 'sensitive', such as reconnaissance data, app domain names, etc, stay in dedicated `bindings.yml` inventory files. These files are managed via `git-crypt`.
+Sensitive values (API keys, tokens, domain names, etc.) are split across two mechanisms:
 
-Example files will be provided with example data for reference.
+- **Ansible Vault** — encrypts individual variable values inline with `!vault` tags
+- **git-crypt** — encrypts whole files (e.g. `bindings.yml` files containing app domain names and other recon-adjacent data)
+
+Example files are provided alongside encrypted ones for reference.
+
+## CI / Auto-deploy
+
+Pushes to `main` trigger `ops/dispatch.py`, which diffs changed files against a path→playbook map in `ops/dispatch_map.yml` and runs only the affected playbooks. Secrets are unlocked via `GIT_CRYPT_KEY` and `VAULT_PASSWORD` environment secrets on the runner.
+
+## Monitoring
+
+Metrics are collected by VictoriaMetrics, scraped via a Prometheus-compatible config rendered from a Jinja2 template at deploy time.
+
+To register a scrape target for any host, create a `monitoring.yml` in that host's `host_vars` directory:
+
+```yaml
+# ansible/inventory/host_vars/<hostname>/monitoring.yml
+prometheus_scrape_targets:
+  - job_name: my_exporter
+    targets:
+      - <hostname>:<port>
+    # Optional:
+    scrape_interval: 30s
+    labels:
+      env: homelab
+```
+
+The Prometheus config template iterates `prometheus_scrape_targets` across all hosts in inventory automatically — no changes to the metrics host config are needed. CI redeploys the metrics stack whenever any `monitoring.yml` changes.
 
 ## TODO
 
-- [X] Understand Claude's solution to lxc selection.
 - [ ] Deploy tf config for full VM deployment and management.
 - [ ] Find / Write a tf provider that has full functionality for Proxmox LXC containers.
-- [ ] Tweak Removate config to ensure automerge is doing its thing correctly.
-- [ ] Fix/Understand why `netavark` is accumulating stale nftables DNAT rules when `state: restarted` is used, or any kind of redeploy happens.
-  - Current 'workaround' is rebooting the LXC.
+- [ ] Tweak Renovate config to ensure automerge is doing its thing correctly.
+- [X] Fix/Understand why `netavark` is accumulating stale nftables DNAT rules when `state: restarted` is used, or any kind of redeploy happens.
+  - Resolved by reloading Podman network rules after container restarts.
