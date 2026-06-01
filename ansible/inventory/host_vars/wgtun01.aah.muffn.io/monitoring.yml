@@ -1,0 +1,5 @@
+---
+prometheus_scrape_targets:
+  - job_name: qbittorrent
+    targets:
+      - wgtun01.aah.muffn.io:9171
