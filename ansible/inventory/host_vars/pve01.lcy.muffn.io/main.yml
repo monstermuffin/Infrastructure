@@ -4,3 +4,11 @@ pve_pocketid_enabled: true
 
 # /etc/hosts — management IP for FQDN resolution (standalone)
 pve_system_hosts_ip: "10.83.2.151"
+
+# Power management
+pve_power_mgmt_enabled: true
+pve_power_mgmt_cpu_governor: "powersave"
+pve_power_mgmt_cpu_epp: "balance_power"
+pve_power_mgmt_cpu_persistent: true
+pve_power_mgmt_wol_disable: false
+pve_power_mgmt_usb_autosuspend: true
