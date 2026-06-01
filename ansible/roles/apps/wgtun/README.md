@@ -41,3 +41,7 @@ WebUI\Address=0.0.0.0
 ## VueTorrent
 
 VueTorrent managed as per `/opt/wgtun/qbittorrent/vuetorrent` by cloning the upstream `latest-release` branch and pointing qBittorrent's alternative WebUI to `/config/vuetorrent`.
+
+### qbittorrent-exporter
+
+`ghcr.io/esanchezm/prometheus-qbittorrent-exporter` exposes prometheus metrics on host port `9171` via gluetun. Uses qBittorrent API key (`QBITTORRENT_API_KEY`) for authentication.
