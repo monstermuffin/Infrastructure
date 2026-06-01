@@ -7,9 +7,7 @@ all:
     lcy:
       hosts:
         pve01.lcy.muffn.io:
-          ansible_host: 10.83.2.40
-        # pve02.lcy.muffn.io:
-        #   ansible_host: 10.83.2.30
+          ansible_host: 10.83.2.151
     aah:
       hosts:
         pve02.aah.muffn.io:
@@ -26,7 +24,6 @@ all:
             # pve01.aah.muffn.io:
             pve02.aah.muffn.io:
             pve01.lcy.muffn.io:
-            # pve02.lcy.muffn.io:
         aah-cluster01:
           hosts:
             pve03.aah.muffn.io:

@@ -1,8 +1,8 @@
 ---
-# Dynamic inventory: LCY guests (pve01.lcy primary)
+# Dynamic inventory: LCY guests (pve01.lcy)
 
 plugin: community.proxmox.proxmox
-url: https://10.83.2.40:8006
+url: https://10.83.2.151:8006
 user: root@pam
 password: !vault |
           $ANSIBLE_VAULT;1.1;AES256
