@@ -1,0 +1,6 @@
+---
+pve_system_hostname: pve01
+pve_pocketid_enabled: true
+
+# /etc/hosts — management IP for FQDN resolution (standalone)
+pve_system_hosts_ip: "10.83.2.151"

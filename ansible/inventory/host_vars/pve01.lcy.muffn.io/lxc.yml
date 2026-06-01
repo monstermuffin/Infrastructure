@@ -1,0 +1,22 @@
+---
+pve_lxc_default_ostemplate: "local:vztmpl/muffn-debian-13_amd64.tar.zst"
+pve_lxc_default_network_bridge: "vmbr0"
+pve_lxc_default_storage: "local-zfs"
+
+
+lxc_ha_default:
+  enabled: false
+  state: started
+  max_restart: 1
+  max_relocate: 1
+
+lxc_replication_default:
+  enabled: false
+  schedule: "*/15"
+
+lxc_features_podman:
+  nesting: true
+  keyctl: true
+lxc_features_docker:
+  nesting: true
+  keyctl: false
