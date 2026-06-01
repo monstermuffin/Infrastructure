@@ -140,6 +140,14 @@ rules:
       target: "{host}"
     tags: [setup, image, deploy]
 
+  # Prometheus scrape target declarations — redeploy metrics01 to regenerate scrape config
+  - pattern: "ansible/inventory/host_vars/*/monitoring.yml"
+    playbook: "ansible/playbooks/lxc/deploy_podman_app.yml"
+    limit: "metrics01.aah.muffn.io"
+    extra_vars:
+      target: "metrics01.aah.muffn.io"
+    tags: [setup, image, deploy]
+
   # Fallback for other split host_vars files that self-declare their deploy path
   - pattern: "ansible/inventory/host_vars/*/*.yml"
     action: host_self
