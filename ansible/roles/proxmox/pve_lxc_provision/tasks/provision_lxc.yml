@@ -26,7 +26,7 @@
 
 - name: "Set target node fact — {{ _lxc_name }}"
   ansible.builtin.set_fact:
-    _lxc_current_node: "{{ _lxc_existing[0].node if (_lxc_existing | length) > 0 else _lxc.node }}"
+    _lxc_current_node: "{{ _lxc_existing[0].node if (_lxc_existing | length) > 0 else (_lxc.node | default(inventory_hostname.split('.')[0])) }}"
     _lxc_exists: "{{ (_lxc_existing | length) > 0 }}"
 
 - name: "Set delegate host for container operations — {{ _lxc_name }}"
