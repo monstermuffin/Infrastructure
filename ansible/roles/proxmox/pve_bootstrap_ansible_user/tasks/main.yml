@@ -30,6 +30,23 @@
   tags:
     - ssh
 
+- name: Find Proxmox APT .sources files
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d/
+    patterns: "pve-*.sources,ceph*.sources"
+  register: _bootstrap_proxmox_sources
+  tags:
+    - repos
+
+- name: Disable Proxmox enterprise APT sources
+  ansible.builtin.lineinfile:
+    path: "{{ item.path }}"
+    regexp: '^Enabled:'
+    line: 'Enabled: false'
+  loop: "{{ _bootstrap_proxmox_sources.files }}"
+  when: _bootstrap_proxmox_sources.files | length > 0
+  tags:
+    - repos
 
 - name: Ensure sudo is installed
   ansible.builtin.apt:

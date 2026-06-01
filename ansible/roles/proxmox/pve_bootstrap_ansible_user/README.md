@@ -5,12 +5,18 @@ It does not create a separate admin user.
 
 ## Usage
 
-Run once as root to bootstrap hosts:
+Run once as root to bootstrap hosts (from `ansible/`):
 
 ```bash
-ansible-playbook playbooks/pve/bootstrap.yml -u root
+ansible-playbook playbooks/pve/bootstrap.yml \
+  -e target_hosts=pve02.lcy.muffn.io \
+  -k
 ```
 
+On a fresh install, enterprise Proxmox APT sources are disabled automatically
+before `apt` runs so cache updates do not fail with HTTP 401.
+
+If bootstrap failed partway through, re-run the same command.
 ## Variables
 
 ```yaml
