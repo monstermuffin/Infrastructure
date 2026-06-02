@@ -14,8 +14,14 @@ podman_apps:
     port: 3003
     volumes:
       - model-cache:/cache
+    devices:
+      - /dev/dri/renderD128
     env:
+      IMMICH_LOG_LEVEL: debug
       MPLCONFIGDIR: /tmp/matplotlib
+      MACHINE_LEARNING_OPENVINO_PRECISION: FP16
+      MACHINE_LEARNING_MODEL_TTL: "0"
+      MACHINE_LEARNING_PRELOAD__CLIP: ViT-SO400M-16-SigLIP2-384__webli
       # Pin thread counts to LXC cores // disable ORT affinity in cgroup
       MACHINE_LEARNING_REQUEST_THREADS: "6"
       MACHINE_LEARNING_MODEL_INTRA_OP_THREADS: "2"

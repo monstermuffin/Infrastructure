@@ -5,7 +5,7 @@ pve_lxcs_immich_ml01:
     hostname: immich-ml01.aah.muffn.io
     node: pve02
     cores: 6
-    memory: 4096
+    memory: 8192
     swap: 512
     disk: "16G"
     storage: "local-zfs"
