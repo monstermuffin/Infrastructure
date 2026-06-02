@@ -23,7 +23,7 @@ yaml.add_multi_constructor("", lambda loader, tag, node: loader.construct_scalar
 
 LXC_GLOBS = [
     "ansible/inventory/group_vars/*/lxc/**/*.yml",
-    "ansible/inventory/host_vars/pve*/lxc/*.yml",
+    "ansible/inventory/host_vars/pve*/lxc/**/*.yml",
 ]
 
 
