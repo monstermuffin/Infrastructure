@@ -7,8 +7,6 @@ podman_apps:
     image: ghcr.io/majorfi/immich-stack
     # renovate: datasource=docker depName=ghcr.io/majorfi/immich-stack versioning=loose
     tag: sha-69490da
-    volumes:
-      - /opt/immich-stack/logs:/app/logs
     env:
       API_URL: "http://immich01.aah.muffn.io:2283/api"
       API_KEY: !vault |
@@ -25,7 +23,6 @@ podman_apps:
       REPLACE_STACKS: "true"
       WITH_ARCHIVED: "false"
       WITH_DELETED: "false"
-      LOG_LEVEL: info
+      LOG_LEVEL: debug
       LOG_FORMAT: text
-      LOG_FILE: /app/logs/immich-stack.log
       TZ: Europe/London
