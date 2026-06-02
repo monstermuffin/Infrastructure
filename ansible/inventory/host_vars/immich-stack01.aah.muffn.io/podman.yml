@@ -1,0 +1,31 @@
+---
+podman_enabled: true
+
+podman_apps:
+  immich-stack:
+    enabled: true
+    image: ghcr.io/majorfi/immich-stack
+    # renovate: datasource=docker depName=ghcr.io/majorfi/immich-stack versioning=loose
+    tag: sha-69490da
+    volumes:
+      - /opt/immich-stack/logs:/app/logs
+    env:
+      API_URL: "http://immich01.aah.muffn.io:2283/api"
+      API_KEY: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          35656631336235353665653735653039616639646234336336303235363037663866663264336331
+          3663333964323637616462383139396333613763363764650a616265613364396165633231313533
+          32383838333364656364336433386332343838623139396561393131663865323233636536306234
+          6539616162623263630a663334376433366238303537343962313662666536366234663165653365
+          39323631613764666635303335633265333231623365336364346465386238366234633065393732
+          3734333761663835376532323038363137323862373339373361
+      RUN_MODE: cron
+      CRON_INTERVAL: "3600"
+      PARENT_EXT_PROMOTE: ".jpg,.jpeg,.heic"
+      REPLACE_STACKS: "true"
+      WITH_ARCHIVED: "false"
+      WITH_DELETED: "false"
+      LOG_LEVEL: info
+      LOG_FORMAT: text
+      LOG_FILE: /app/logs/immich-stack.log
+      TZ: Europe/London

@@ -1,0 +1,25 @@
+---
+pve_lxcs_immich_stack01:
+  immich-stack01:
+    vmid: 150
+    hostname: immich-stack01.aah.muffn.io
+    node: pve03
+    cores: 1
+    memory: 1024
+    swap: 256
+    disk: "8G"
+    network_ip: "10.82.10.150/24"
+    network_gw: "10.82.10.1"
+    network_vlan: 710
+    unprivileged: true
+    onboot: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_aah
+      - podman_app
+      - app_immich_stack
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"
