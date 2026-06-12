@@ -1,4 +1,11 @@
 ---
+github_api_headers: >-
+  {{
+    {'Accept': 'application/vnd.github+json'}
+    | combine({'Authorization': 'Bearer ' + lookup('env', 'GITHUB_TOKEN')}
+              if lookup('env', 'GITHUB_TOKEN') else {})
+  }}
+
 root_authorized_keys: |
   ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDZoTAFu8kWMNXD5iGLuAOMZpCWthDc4S/45jokrAc2q muffin@mbp.internal.muffn.io
   ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMRg+tXG3sMK33OShEmoIyswQXFMxMbGiS/0n5Sk+ZSz github-runner@runner01.aah.muffn.io

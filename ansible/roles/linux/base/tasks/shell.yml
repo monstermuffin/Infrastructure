@@ -64,8 +64,7 @@
   ansible.builtin.uri:
     url: https://api.github.com/repos/starship/starship/releases/latest
     return_content: true
-    headers:
-      Accept: application/vnd.github+json
+    headers: "{{ github_api_headers }}"
   register: _linux_base_starship_release
   delegate_to: localhost
   run_once: true

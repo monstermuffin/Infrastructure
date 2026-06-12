@@ -92,6 +92,7 @@
       ansible.builtin.uri:
         url: https://api.github.com/repos/actions/runner/releases/latest
         return_content: true
+        headers: "{{ github_api_headers }}"
       register: _runner_release
 
     - name: Set runner version fact
