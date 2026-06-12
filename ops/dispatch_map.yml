@@ -180,10 +180,6 @@ rules:
     playbook: "ansible/playbooks/app/ingress.yml"
     limit: "tag_app_ingress_aah"
 
-  - pattern: "ansible/inventory/group_vars/tag_app_cftun_aah.yml"
-    playbook: "ansible/playbooks/app/ingress.yml"
-    limit: "tag_app_cftun_aah"
-
   # CrowdSec LAPI
   - pattern: "ansible/roles/apps/baremetal/crowdsec_lapi/**"
     playbook: "ansible/playbooks/lxc/deploy_crowdsec_lapi.yml"
