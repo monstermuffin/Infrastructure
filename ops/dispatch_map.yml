@@ -211,6 +211,23 @@ rules:
   - pattern: "ansible/playbooks/pve/build_lxc_template.yml"
     action: manual_notice
 
+  # TODO: Send to local runner
+  - pattern: "ansible/playbooks/linux/pi.yml"
+    action: manual_notice
+    note: "Pi playbook changed — run manually: ansible-playbook playbooks/linux/pi.yml"
+
+  - pattern: "ansible/inventory/pi.yml"
+    action: noop
+
+  - pattern: "ansible/inventory/host_vars/inky-display*/**"
+    action: noop
+
+  - pattern: "ansible/inventory/host_vars/melodestra-pi*/**"
+    action: noop
+
+  - pattern: "ansible/inventory/group_vars/pi.yml"
+    action: noop
+
   # Changed playbook runs itself directly
   - pattern: "ansible/playbooks/**/*.yml"
     action: playbook_self
