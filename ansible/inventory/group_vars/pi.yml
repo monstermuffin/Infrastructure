@@ -1,0 +1,14 @@
+---
+# Raspberry Pi group defaults.
+
+# Pi OS uses its own apt sources
+linux_base_manage_apt_sources: false
+
+# No Podman on Pis
+linux_base_manage_podman_access: false
+linux_base_podman_rootless: false
+
+linux_base_igpu_packages: []
+
+linux_base_extra_packages:
+  - i2c-tools

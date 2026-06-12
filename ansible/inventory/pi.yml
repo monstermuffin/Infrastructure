@@ -1,0 +1,17 @@
+---
+# Raspberry Pi hosts
+
+all:
+  children:
+    lcy:
+      hosts:
+        inky-display.lcy.muffn.io:
+        melodestra-pi.lcy.muffn.io:
+
+    pi:
+      hosts:
+        inky-display.lcy.muffn.io:
+        melodestra-pi.lcy.muffn.io:
+      vars:
+        ansible_user: ansible
+        ansible_python_interpreter: /usr/bin/python3

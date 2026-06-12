@@ -1,0 +1,25 @@
+---
+# Manage Raspberry Pi hosts.
+#
+# Regular run:
+#   ansible-playbook playbooks/linux/pi.yml
+#   ansible-playbook playbooks/linux/pi.yml --limit inky-display.lcy.muffn.io
+#
+# Bootstrap:
+#   ansible-playbook playbooks/linux/pi.yml --extra-vars "linux_manage_user=pi" --ask-pass --ask-become-pass
+
+- name: Manage Pi hosts
+  hosts: "{{ target | default('pi') }}"
+  gather_facts: false
+  vars:
+    ansible_user: "{{ linux_manage_user | default('ansible') }}"
+  become: true
+
+  pre_tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        sleep: 5
+        timeout: "{{ linux_manage_wait_for_connection_timeout | default(300) }}"
+
+  roles:
+    - linux/base
