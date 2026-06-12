@@ -183,3 +183,43 @@
         - cluster
         - setup
         - verify
+
+    # pvecm qdevice setup writes the nssdb as root. Re-apply correct group
+    # ownership so corosync-qnetd can access it.
+    - name: Fix nssdb directory group ownership on qdevice after pvecm setup
+      ansible.builtin.file:
+        path: /etc/corosync/qnetd/nssdb
+        group: coroqnetd
+        mode: "0770"
+      delegate_to: "{{ _qdevice_delegate }}"
+      tags:
+        - cluster
+        - setup
+
+    - name: Fix nssdb file group ownership on qdevice after pvecm setup
+      ansible.builtin.file:
+        path: "{{ item }}"
+        group: coroqnetd
+        mode: "0660"
+      loop:
+        - /etc/corosync/qnetd/nssdb/cert9.db
+        - /etc/corosync/qnetd/nssdb/key4.db
+        - /etc/corosync/qnetd/nssdb/noise.txt
+        - /etc/corosync/qnetd/nssdb/pkcs11.txt
+        - /etc/corosync/qnetd/nssdb/pwdfile.txt
+        - /etc/corosync/qnetd/nssdb/serial.txt
+      loop_control:
+        label: "{{ item | basename }}"
+      delegate_to: "{{ _qdevice_delegate }}"
+      tags:
+        - cluster
+        - setup
+
+    - name: Restart corosync-qnetd after ownership fix
+      ansible.builtin.systemd:
+        name: corosync-qnetd
+        state: restarted
+      delegate_to: "{{ _qdevice_delegate }}"
+      tags:
+        - cluster
+        - setup

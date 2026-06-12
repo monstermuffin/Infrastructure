@@ -26,6 +26,7 @@ linux_base_packages:
   - tmux
   - vim
   - ncdu
+  - unzip
 
 linux_base_extra_packages: []
 linux_base_igpu_packages:

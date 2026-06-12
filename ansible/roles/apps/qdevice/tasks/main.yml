@@ -8,6 +8,35 @@
     - install
     - qnetd
 
+- name: Fix nssdb directory group ownership so coroqnetd can access it
+  ansible.builtin.file:
+    path: /etc/corosync/qnetd/nssdb
+    group: coroqnetd
+    mode: "0770"
+  notify: Restart corosync-qnetd
+  tags:
+    - service
+    - qnetd
+
+- name: Fix nssdb file group ownership so coroqnetd can read NSS databases
+  ansible.builtin.file:
+    path: "{{ item }}"
+    group: coroqnetd
+    mode: "0660"
+  loop:
+    - /etc/corosync/qnetd/nssdb/cert9.db
+    - /etc/corosync/qnetd/nssdb/key4.db
+    - /etc/corosync/qnetd/nssdb/noise.txt
+    - /etc/corosync/qnetd/nssdb/pkcs11.txt
+    - /etc/corosync/qnetd/nssdb/pwdfile.txt
+    - /etc/corosync/qnetd/nssdb/serial.txt
+  loop_control:
+    label: "{{ item | basename }}"
+  notify: Restart corosync-qnetd
+  tags:
+    - service
+    - qnetd
+
 - name: Enable and start corosync-qnetd
   ansible.builtin.systemd:
     name: corosync-qnetd
