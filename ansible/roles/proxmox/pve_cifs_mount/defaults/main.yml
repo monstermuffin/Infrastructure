@@ -17,6 +17,7 @@ pve_cifs_default_options:
   rsize: 1048576
   wsize: 1048576
   iocharset: utf8
+  echo_interval: 20 # 20 seconds between I/O checks - attempt to block PVE fucking itself when share unavailable
 
 # Sources and mounts should be defined in host_vars/group_vars
 
