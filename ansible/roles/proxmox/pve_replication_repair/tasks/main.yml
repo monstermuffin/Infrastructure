@@ -36,6 +36,7 @@
             )
         )
       }}
+  tags: [check, repair]
 
 - name: Apply job ID filter if specified
   ansible.builtin.set_fact:
