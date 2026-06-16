@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/home-operations/tautulli
     # renovate: datasource=docker depName=ghcr.io/home-operations/tautulli
-    tag: 2.17.1
+    tag: 2.17.2
     port: 8181
     uid: 65534
     gid: 65533
