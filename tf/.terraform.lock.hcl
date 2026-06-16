@@ -60,18 +60,21 @@ provider "registry.terraform.io/cloudflare/cloudflare" {
 }
 
 provider "registry.terraform.io/darkhonor/technitium" {
-  version     = "1.1.0"
+  version     = "1.2.0"
   constraints = "~> 1.1"
   hashes = [
-    "h1:+PIjpgfSqFxA3893Jvd8Xs4xiuoiGr/4Lu4QXOZWW2g=",
-    "h1:bNw8JWh4FIVHKrnOYYr5z5/j9qdbdBD7EntX235Pj/Y=",
-    "h1:vKybEmym2ky5b4J0VX63+ZCKlpAFtxmlc5/JLvSmfoc=",
-    "zh:0855bb0e2a5bd9ec68a6a7cf117980189b2f2030232ef7ae6815c97118eb0908",
-    "zh:1cbca86ce5f77e8aa32f863f2f40046a12b32f4d94860f7f0a03d24a6091ffd4",
-    "zh:268dc7849a9fee58efcfbe662fc4a0f915bb5a4e1f55746228926a02bcbde408",
-    "zh:6e878f8bdf8b468166774766879094d39626bd03995b0942ce156448c22988f9",
-    "zh:7006c9b909905f5fe8cee43610d4676ec555666ff26862b8821122e428327cd3",
-    "zh:97d3c059d8a44d7525232f1471b49f638ea071a85955d82630d1c7682a58dab2",
+    "h1:I7FUz2oRDfARZC4ieaFZmgct1I40MV9/559NB6EESlU=",
+    "h1:UWt4QGwpOYtftg0ErsDB3+ndwsOzFRVGOhatgkAEsy8=",
+    "h1:V6pdOqjJupvbRmlwRXUfdBzlW/51eqfcLju0F7EsBWA=",
+    "h1:a6znL7dGvMIaN3EzH0B5FntRalDweMrR1c+A3PFAYC4=",
+    "h1:cPNolgxafACkqBin9f52GWOIVZOkKQ7y2XnHbbKvmJA=",
+    "h1:tQyKq8/X1wrS+19aZImBm2UbzrM/UXRQkyIlKyYOf2w=",
+    "zh:25b25ff03370ce9597d29e9ed72e4f33a4f516f48cd4f0f7feec6ff45d48aeb0",
+    "zh:4c10e0e8990e76e8f64c96007e90c7852c80e3681ec09f52e32735cb7f733d9c",
+    "zh:b50907cdaeb533f1759ce97a51b51577c9a81520be34312f7a27cc6813293587",
+    "zh:bc31d4177bc8b208a5a6c080fc24754786ec25ad73c5e3aef240d5672d82f2bf",
+    "zh:c727f6ba1122ab6f9067dd2d1ea5b220b39200c3da902bc649a80b6609ff2731",
+    "zh:f04f313a2216e8c0c767adf6f2b2a8a159098a3b2af57273f0892387c5082979",
   ]
 }
 
