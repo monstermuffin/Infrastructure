@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/pocket-id/pocket-id
     # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-    tag: v2.8.0
+    tag: v2.9.0
     port: 1411
     uid: 999
     gid: 1001
