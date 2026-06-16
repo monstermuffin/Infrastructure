@@ -45,7 +45,7 @@ podman_apps:
     enabled: true
     image: seafileltd/seafile-pro-mc
     # renovate: datasource=docker depName=seafileltd/seafile-pro-mc
-    tag: 13.0.22
+    tag: 13.0.24
     port: 8443
     container_port: 443
     network: seafile
