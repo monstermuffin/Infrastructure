@@ -7,7 +7,7 @@ podman_apps:
     display_name: JellyPlex-Watched
     image: luigi311/jellyplex-watched
     # renovate: datasource=docker depName=luigi311/jellyplex-watched
-    tag: 8.5.2
+    tag: 8.5.3
     container_name: jellyplex-watched
     uid: 1000
     gid: 1000
