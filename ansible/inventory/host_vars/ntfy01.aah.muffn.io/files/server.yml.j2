@@ -1,0 +1,14 @@
+base-url: "{{ ntfy_base_url }}"
+listen-http: ":80"
+behind-proxy: true
+upstream-base-url: "https://ntfy.sh"
+auth-default-access: "deny-all"
+cache-duration: "{{ ntfy_cache_duration }}"
+attachment-cache-dir: "/var/cache/ntfy/attachments"
+attachment-total-size-limit: "{{ ntfy_attachment_total_size_limit }}"
+attachment-file-size-limit: "{{ ntfy_attachment_file_size_limit }}"
+attachment-expiry-duration: "{{ ntfy_attachment_expiry_duration }}"
+visitor-request-limit-burst: {{ ntfy_visitor_request_limit_burst }}
+visitor-request-limit-replenish: "{{ ntfy_visitor_request_limit_replenish }}"
+visitor-subscription-limit: {{ ntfy_visitor_subscription_limit }}
+visitor-attachment-total-size-limit: "{{ ntfy_visitor_attachment_total_size_limit }}"

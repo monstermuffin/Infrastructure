@@ -1,0 +1,33 @@
+---
+podman_enabled: true
+
+ntfy_base_url: "https://ntfy.muffn.io"
+ntfy_cache_duration: "24h"
+ntfy_attachment_total_size_limit: "2G"
+ntfy_attachment_file_size_limit: "25m"
+ntfy_attachment_expiry_duration: "3h"
+ntfy_visitor_request_limit_burst: 60
+ntfy_visitor_request_limit_replenish: "5s"
+ntfy_visitor_subscription_limit: 50
+ntfy_visitor_attachment_total_size_limit: "500m"
+
+podman_apps:
+  ntfy:
+    enabled: true
+    image: docker.io/binwiederhier/ntfy
+    # renovate: datasource=docker depName=binwiederhier/ntfy
+    tag: v2.11.0
+    port: 80
+    container_port: 80
+    volumes:
+      - /opt/ntfy/config/server.yml:/etc/ntfy/server.yml:ro
+      - /opt/ntfy/cache:/var/cache/ntfy
+    files:
+      - dest: /opt/ntfy/config/server.yml
+        template_src: server.yml.j2
+        owner: root
+        group: root
+        mode: "0640"
+    exec: serve
+    env:
+      TZ: Europe/London
