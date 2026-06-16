@@ -68,9 +68,8 @@
       "description": "Security - automerge immediately",
       "prPriority": 100,
       "matchCategories": ["security"],
-      // "automerge": true,
-      // "automergeType": "pr",
-      "automerge": false,
+      "automerge": true,
+      "automergeType": "pr",
       "minimumReleaseAge": "0 days",
       "labels": ["renovate", "security"]
     },
@@ -102,14 +101,13 @@
       "labels": ["renovate", "needs-review"]
     },
     {
-      "description": "Podman Debian security - automerge after soak",
+      "description": "Podman Debian security - automerge after short soak",
       "matchDatasources": ["deb"],
       "matchDepNames": ["podman"],
       "matchCategories": ["security"],
       "prPriority": 110,
-      // "automerge": true,
-      // "automergeType": "pr",
-      "automerge": false,
+      "automerge": true,
+      "automergeType": "pr",
       "minimumReleaseAge": "6 hours",
       "labels": ["renovate", "security", "podman-runtime"]
     },
@@ -145,6 +143,40 @@
       "prPriority": 20,
       "automerge": false,
       "labels": ["renovate", "needs-review", "podman-runtime"]
+    },
+    {
+      "description": "HomeOps Apps, automerge after global 3-day soak",
+      "groupName": "arr-apps",
+      "matchDatasources": ["docker"],
+      "matchDepPatterns": ["^ghcr\\.io/home-operations/"],
+      "automerge": true,
+      "automergeType": "pr",
+      "labels": ["renovate", "arr-apps"]
+    },
+    {
+      "description": "Arr tooling, automerge after global 3-day soak",
+      "groupName": "arr-tooling",
+      "matchDatasources": ["docker"],
+      "matchDepNames": [
+        "ghcr.io/recyclarr/recyclarr",
+        "ghcr.io/dictionarry-hub/profilarr",
+        "ghcr.io/dictionarry-hub/profilarr-parser",
+        "luigi311/jellyplex-watched"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "labels": ["renovate", "arr-tooling"]
+    },
+    {
+      "description": "Jellyfin, automerge after global 3-day soak",
+      "groupName": "jellyfin",
+      "matchDatasources": ["docker"],
+      "matchDepNames": [
+        "ghcr.io/jellyfin/jellyfin"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "labels": ["renovate", "jellyfin"]
     }
   ]
 }
