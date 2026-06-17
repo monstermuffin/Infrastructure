@@ -97,6 +97,15 @@ rules:
   - pattern: "ansible/inventory/host_vars/pve*.yml"
     playbook: "ansible/playbooks/pve/system_config.yml"
 
+  # ntfy
+  - pattern: "ansible/inventory/host_vars/ntfy01.aah.muffn.io/podman.yml"
+    playbook: "ansible/playbooks/lxc/configure_ntfy.yml"
+    limit: "ntfy01.aah.muffn.io"
+
+  - pattern: "ansible/inventory/host_vars/ntfy01.aah.muffn.io/files/**"
+    playbook: "ansible/playbooks/lxc/configure_ntfy.yml"
+    limit: "ntfy01.aah.muffn.io"
+
   # Seafile
   - pattern: "ansible/inventory/host_vars/seafile01.aah.muffn.io/meta.yml"
     action: noop
