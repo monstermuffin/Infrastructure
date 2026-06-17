@@ -1,0 +1,41 @@
+---
+- name: Deploy and configure ntfy
+  hosts: ntfy01.aah.muffn.io
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Deploy ntfy container
+      ansible.builtin.include_role:
+        name: "{{ item }}"
+      loop:
+        - linux/base
+        - podman
+        - apps/podman_app
+      tags: [deploy, podman]
+
+    - name: Manage ntfy users
+      tags: [users]
+      block:
+        - name: List existing ntfy users
+          ansible.builtin.command: podman exec ntfy ntfy user list
+          register: ntfy_user_list
+          changed_when: false
+          failed_when: false
+
+        - name: Add ntfy users
+          ansible.builtin.command: >
+            podman exec -e NTFY_PASSWORD={{ item.password | quote }}
+            ntfy ntfy user add --role={{ item.role }} {{ item.username }}
+          loop: "{{ ntfy_users }}"
+          loop_control:
+            label: "{{ item.username }}"
+          no_log: true
+          register: ntfy_user_add
+          changed_when: ntfy_user_add.rc == 0
+          failed_when: ntfy_user_add.rc != 0 and 'already exists' not in ntfy_user_add.stderr
+
+        - name: Grant publisher write access to all topics
+          ansible.builtin.command: >
+            podman exec ntfy ntfy access publisher '*' rw
+          changed_when: false

@@ -3,6 +3,7 @@ listen-http: ":80"
 behind-proxy: true
 upstream-base-url: "https://ntfy.sh"
 auth-default-access: "deny-all"
+auth-file: "/var/cache/ntfy/auth.db"
 cache-duration: "{{ ntfy_cache_duration }}"
 attachment-cache-dir: "/var/cache/ntfy/attachments"
 attachment-total-size-limit: "{{ ntfy_attachment_total_size_limit }}"
