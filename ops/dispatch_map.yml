@@ -75,7 +75,7 @@ rules:
     limit: "{group}"
 
   # Standalone host-specific files — must be before the pve*/** catch-all
-  - pattern: "ansible/inventory/host_vars/pve*/lxc/*.yml"
+  - pattern: "ansible/inventory/host_vars/pve*/lxc/**/*.yml"
     playbook: "ansible/playbooks/pve/provision_lxc.yml"
     priority: 1
     extra_vars:
