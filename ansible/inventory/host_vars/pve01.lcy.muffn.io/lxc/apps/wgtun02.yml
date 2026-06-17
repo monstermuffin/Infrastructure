@@ -1,0 +1,25 @@
+---
+pve_lxcs_wgtun02:
+  wgtun02:
+    vmid: 117
+    hostname: wgtun02.lcy.muffn.io
+    cores: 2
+    memory: 1024
+    swap: 256
+    disk: "8G"
+    network_ip: "10.83.7.117/24"
+    network_gw: "10.83.7.1"
+    network_vlan: 7
+    unprivileged: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_lcy
+      - app_wgtun
+      - podman_app
+    features: "{{ lxc_features_podman }}"
+    devices:
+      - path: /dev/net/tun
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"
