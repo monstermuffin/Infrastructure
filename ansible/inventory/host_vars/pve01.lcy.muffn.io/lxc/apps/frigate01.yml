@@ -1,0 +1,28 @@
+---
+pve_lxcs_frigate01:
+  frigate01:
+    vmid: 114
+    hostname: frigate01.lcy.muffn.io
+    cores: 4
+    memory: 4096
+    swap: 512
+    disk: "500G"
+    network_ip: "10.83.7.114/24"
+    network_gw: "10.83.7.1"
+    network_vlan: 7
+    unprivileged: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_lcy
+      - podman_app
+      - app_frigate
+    features: "{{ lxc_features_podman }}"
+    devices:
+      - path: /dev/dri/renderD128
+        mode: "0666"
+      - path: /dev/dri/card0
+        mode: "0666"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

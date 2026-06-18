@@ -1,0 +1,188 @@
+# Ansible managed
+# Frigate NVR Configuration
+
+# MQTT
+mqtt:
+  host: {{ frigate_mqtt_host }}
+  user: mqtt
+  password: {{ mqtt_pass }}
+
+# Detectors
+detectors:
+  ov:
+    type: openvino
+    device: GPU
+objects:
+  track:
+    - person
+    - dog
+    - cell phone
+    - bird
+    - cat
+    - horse
+
+model:
+  width: 300
+  height: 300
+  input_tensor: nhwc
+  input_pixel_format: bgr
+  path: /openvino-model/ssdlite_mobilenet_v2.xml
+  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
+
+# Hardware accel
+ffmpeg:
+  hwaccel_args: preset-vaapi
+  input_args: preset-rtsp-generic-hwaccel
+
+# Database
+database:
+  path: /media/frigate/frigate.db
+
+go2rtc:
+  streams:
+    camera_master_bedroom:
+      - rtsp://{{ rstp_user_tapo }}:{{ rstp_pass_tapo }}@{{ frigate_camera_ips.master_bedroom }}:554/stream1
+    camera_outside01:
+      - rtsp://{{ rstp_user_tapo }}:{{ rstp_pass_tapo }}@{{ frigate_camera_ips.outside01 }}:554/stream1
+    camera_outside01_sub:
+      - rtsp://{{ rstp_user_tapo }}:{{ rstp_pass_tapo }}@{{ frigate_camera_ips.outside01 }}:554/stream2
+    camera_patio_left_dual:
+      - rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_left }}:554/Streaming/channels/101
+    camera_patio_left_dual_sub:
+      - rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_left }}:554/Streaming/channels/102
+    camera_patio_right_dual:
+      - rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_right }}:554/Streaming/channels/101
+    camera_patio_right_dual_sub:
+      - rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_right }}:554/Streaming/channels/102
+
+live:
+  height: 1080
+  quality: 1
+
+record:
+  enabled: true
+  expire_interval: 60
+  alerts:
+    retain:
+      days: 14
+    pre_capture: 5
+    post_capture: 5
+  detections:
+    retain:
+      days: 14
+    pre_capture: 5
+    post_capture: 5
+  continuous:
+      days: 0
+  motion:
+    days: 3
+snapshots:
+  enabled: true
+  timestamp: false
+  bounding_box: true
+  crop: false
+  retain:
+    default: 31
+    # objects:
+    # person: 15
+
+detect:
+  enabled: true
+  max_disappeared: 25
+  stationary:
+    interval: 50
+    threshold: 50
+    max_frames:
+      default: 3000
+      objects:
+        person: 1000
+
+# Cameras
+cameras:
+
+  camera_corridor:
+    ffmpeg:
+      output_args:
+        record: preset-record-generic
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_corridor?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+            - detect
+
+  camera_master_bedroom:
+    ffmpeg:
+      output_args:
+        record: preset-record-generic
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_office?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+            - detect
+
+  # camera_living_room:
+  #   ffmpeg:
+  #     output_args:
+  #       record: preset-record-generic
+  #     inputs:
+  #       - path: rtsp://127.0.0.1:8554/camera_living_room?video=copy
+  #         input_args: preset-rtsp-restream
+  #         roles:
+  #           - record
+  #           - detect
+
+  camera_outside01:
+    ffmpeg:
+      output_args:
+        record: preset-record-generic
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_outside01?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/camera_outside01_sub?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+
+  camera_patio_left_dual:
+    detect:
+      width: 640
+      height: 288
+      fps: 5
+    ffmpeg:
+      output_args:
+        record: preset-record-generic
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_patio_left_dual
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/camera_patio_left_dual_sub
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+    motion:
+      mask: 0.028,0,0.029,0.05,0.29,0.047,0.289,0
+
+  camera_patio_right_dual:
+    detect:
+      width: 640
+      height: 288
+      fps: 5
+    ffmpeg:
+      output_args:
+        record: preset-record-generic
+      inputs:
+        - path: rtsp://127.0.0.1:8554/camera_patio_right_dual
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/camera_patio_right_dual_sub
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+    motion:
+      mask: 0.028,0,0.029,0.05,0.29,0.047,0.289,0
