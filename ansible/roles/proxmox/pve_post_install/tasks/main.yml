@@ -39,6 +39,15 @@
     - ssh_keys
     - keys
 
+- name: Install Intel GPU tools
+  ansible.builtin.apt:
+    name: intel-gpu-tools
+    state: present
+  when: pve_intel_gpu_tools_install | bool
+  tags:
+    - intel_gpu
+    - packages
+
 - name: Update apt cache
   ansible.builtin.apt:
     update_cache: true

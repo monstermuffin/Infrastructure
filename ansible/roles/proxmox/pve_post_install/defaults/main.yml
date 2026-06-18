@@ -20,6 +20,8 @@ pve_run_apt_upgrade: false
 
 pve_distribution: "{{ ansible_distribution_release }}"
 
+pve_intel_gpu_tools_install: false
+
 # SSH key management
 pve_ssh_keys_manage: true
 pve_root_authorized_keys: "{{ root_authorized_keys | default('', true) }}"

@@ -1,6 +1,7 @@
 ---
 pve_system_hostname: pve02
 pve_pocketid_enabled: true
+pve_intel_gpu_tools_install: true
 
 # /etc/hosts — management IP for FQDN resolution (standalone)
 pve_system_hosts_ip: "10.82.2.152"
