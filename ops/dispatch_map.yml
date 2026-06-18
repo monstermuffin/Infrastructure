@@ -130,9 +130,6 @@ rules:
   - pattern: "ansible/inventory/host_vars/*/podman.yml"
     action: host_self
 
-  - pattern: "ansible/inventory/host_vars/*/frigate.yml"
-    playbook: "ansible/playbooks/lxc/deploy_frigate_docker.yml"
-
   - pattern: "ansible/inventory/host_vars/*/pbs.yml"
     playbook: "ansible/playbooks/lxc/deploy_pbs.yml"
 
@@ -161,8 +158,15 @@ rules:
   - pattern: "ansible/inventory/host_vars/*/*.yml"
     action: host_self
 
-  - pattern: "ansible/inventory/host_vars/frigate*"
-    playbook: "ansible/playbooks/lxc/deploy_frigate_docker.yml"
+  # Frigate01 — Podman-based (new)
+  - pattern: "ansible/inventory/host_vars/frigate01.lcy.muffn.io/podman.yml"
+    action: host_self
+
+  - pattern: "ansible/inventory/host_vars/frigate01.lcy.muffn.io/files/**"
+    playbook: "ansible/playbooks/lxc/deploy_podman_app.yml"
+    extra_vars:
+      target: "frigate01.lcy.muffn.io"
+    tags: [setup, image, deploy]
 
   - pattern: "ansible/inventory/host_vars/pbs*"
     playbook: "ansible/playbooks/lxc/deploy_pbs.yml"
