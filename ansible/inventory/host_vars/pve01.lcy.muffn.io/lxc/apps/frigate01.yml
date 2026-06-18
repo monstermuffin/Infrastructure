@@ -4,7 +4,7 @@ pve_lxcs_frigate01:
     vmid: 114
     hostname: frigate01.lcy.muffn.io
     cores: 4
-    memory: 4096
+    memory: 8192
     swap: 512
     disk: "500G"
     network_ip: "10.83.7.114/24"

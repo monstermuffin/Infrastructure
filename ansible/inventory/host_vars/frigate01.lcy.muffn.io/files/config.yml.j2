@@ -1,17 +1,25 @@
 # Ansible managed
 # Frigate NVR Configuration
 
-# MQTT
 mqtt:
   host: {{ frigate_mqtt_host }}
   user: mqtt
   password: {{ mqtt_pass }}
 
-# Detectors
 detectors:
   ov:
     type: openvino
     device: GPU
+
+model:
+  model_type: yolo-generic
+  width: 320
+  height: 320
+  input_tensor: nchw
+  input_dtype: float
+  path: /config/model_cache/yolov9t.onnx
+  labelmap_path: /labelmap/coco-80.txt
+
 objects:
   track:
     - person
@@ -21,39 +29,30 @@ objects:
     - cat
     - horse
 
-model:
-  width: 300
-  height: 300
-  input_tensor: nhwc
-  input_pixel_format: bgr
-  path: /openvino-model/ssdlite_mobilenet_v2.xml
-  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
-
-# Hardware accel
 ffmpeg:
   hwaccel_args: preset-vaapi
-  input_args: preset-rtsp-generic-hwaccel
 
-# Database
 database:
   path: /media/frigate/frigate.db
 
 go2rtc:
   streams:
-    camera_master_bedroom:
-      - rtsp://{{ rstp_user_tapo }}:{{ rstp_pass_tapo }}@{{ frigate_camera_ips.master_bedroom }}:554/stream1
     camera_outside01:
       - rtsp://{{ rstp_user_tapo }}:{{ rstp_pass_tapo }}@{{ frigate_camera_ips.outside01 }}:554/stream1
     camera_outside01_sub:
       - rtsp://{{ rstp_user_tapo }}:{{ rstp_pass_tapo }}@{{ frigate_camera_ips.outside01 }}:554/stream2
     camera_patio_left_dual:
-      - rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_left }}:554/Streaming/channels/101
+      - ffmpeg:rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_left }}:554/Streaming/channels/101#video=copy#audio=aac
     camera_patio_left_dual_sub:
       - rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_left }}:554/Streaming/channels/102
     camera_patio_right_dual:
-      - rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_right }}:554/Streaming/channels/101
+      - ffmpeg:rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_right }}:554/Streaming/channels/101#video=copy#audio=aac
     camera_patio_right_dual_sub:
       - rtsp://{{ rstp_user_frigate }}:{{ rstp_pass_frigate }}@{{ frigate_camera_ips.patio_right }}:554/Streaming/channels/102
+    camera_living_room:
+      - rtsp://{{ rstp_user_tapo }}:{{ rstp_pass_tapo }}@{{ frigate_camera_ips.camera_living_room }}:554/stream1
+    camera_living_room_sub:
+      - rtsp://{{ rstp_user_tapo }}:{{ rstp_pass_tapo }}@{{ frigate_camera_ips.camera_living_room }}:554/stream2
 
 live:
   height: 1080
@@ -73,9 +72,10 @@ record:
     pre_capture: 5
     post_capture: 5
   continuous:
-      days: 0
+    days: 0
   motion:
     days: 3
+
 snapshots:
   enabled: true
   timestamp: false
@@ -84,7 +84,7 @@ snapshots:
   retain:
     default: 31
     # objects:
-    # person: 15
+    #   person: 15
 
 detect:
   enabled: true
@@ -97,30 +97,7 @@ detect:
       objects:
         person: 1000
 
-# Cameras
 cameras:
-
-  camera_corridor:
-    ffmpeg:
-      output_args:
-        record: preset-record-generic
-      inputs:
-        - path: rtsp://127.0.0.1:8554/camera_corridor?video=copy
-          input_args: preset-rtsp-restream
-          roles:
-            - record
-            - detect
-
-  camera_master_bedroom:
-    ffmpeg:
-      output_args:
-        record: preset-record-generic
-      inputs:
-        - path: rtsp://127.0.0.1:8554/camera_office?video=copy
-          input_args: preset-rtsp-restream
-          roles:
-            - record
-            - detect
 
   # camera_living_room:
   #   ffmpeg:
@@ -131,6 +108,9 @@ cameras:
   #         input_args: preset-rtsp-restream
   #         roles:
   #           - record
+  #       - path: rtsp://127.0.0.1:8554/camera_living_room_sub?video=copy
+  #         input_args: preset-rtsp-restream
+  #         roles:
   #           - detect
 
   camera_outside01:
@@ -149,8 +129,8 @@ cameras:
 
   camera_patio_left_dual:
     detect:
-      width: 640
-      height: 288
+      width: 1200
+      height: 536
       fps: 5
     ffmpeg:
       output_args:
@@ -169,8 +149,8 @@ cameras:
 
   camera_patio_right_dual:
     detect:
-      width: 640
-      height: 288
+      width: 1200
+      height: 536
       fps: 5
     ffmpeg:
       output_args:

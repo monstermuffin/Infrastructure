@@ -29,6 +29,25 @@ podman_apps:
         owner: root
         group: root
         mode: "0640"
+      # YOLOv9-t ONNX model for OpenVINO detection.
+      # setup_command runs once; skipped on subsequent deploys when the file already exists.
+      # Uses a venv at /root/ul_venv (real disk) to avoid filling the /tmp tmpfs which
+      # counts against the container's RAM cgroup limit and triggers OOM kills.
+      - dest: /opt/frigate/config/model_cache/yolov9t.onnx
+        setup_command: >-
+          systemctl stop frigate.service 2>/dev/null; true &&
+          rm -rf /root/ul_venv /root/yolov9t.pt &&
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -q python3-venv libgl1 &&
+          python3 -m venv /root/ul_venv &&
+          /root/ul_venv/bin/pip install ultralytics --quiet --no-cache-dir &&
+          cd /root && /root/ul_venv/bin/python3 -c
+          "from ultralytics import YOLO; import shutil;
+          shutil.move(str(YOLO('yolov9t.pt').export(format='onnx',imgsz=320,simplify=True)),
+          '/opt/frigate/config/model_cache/yolov9t.onnx')" &&
+          rm -rf /root/ul_venv /root/yolov9t.pt
+        owner: root
+        group: root
+        mode: "0644"
     env:
       TZ: Europe/London
     startup_timeout: 60
@@ -38,6 +57,7 @@ frigate_camera_ips:
   outside01: "10.83.22.101"
   patio_left: "10.83.22.211"
   patio_right: "10.83.22.212"
+  camera_living_room: "10.83.22.201"
 
 rstp_user_tapo: !vault |
           $ANSIBLE_VAULT;1.1;AES256

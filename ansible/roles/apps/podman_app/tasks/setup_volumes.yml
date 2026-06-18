@@ -233,3 +233,20 @@
         or (_managed_template_files_result is changed)
       }}
   tags: [volumes, setup]
+
+- name: Run setup commands for managed files for {{ _app_name }} # noqa: command-instead-of-shell
+  ansible.builtin.shell:
+    cmd: "{{ file_item.setup_command }}"
+    creates: "{{ file_item.dest }}"
+  loop: "{{ _app.files | default([]) }}"
+  loop_control:
+    loop_var: file_item
+    label: "{{ file_item.dest }}"
+  register: _managed_setup_command_result
+  when: file_item.setup_command is defined
+  tags: [volumes, setup]
+
+- name: Track setup changes from command-generated files for {{ _app_name }}
+  ansible.builtin.set_fact:
+    _setup_changed: "{{ _setup_changed or (_managed_setup_command_result is changed) }}"
+  tags: [volumes, setup]
