@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/lemker/unifi-os-server
     # renovate: datasource=docker depName=ghcr.io/lemker/unifi-os-server
-    tag: v1.2.0
+    tag: v1.3.0
     description: UniFi OS Server
     network_mode: host
     # UniFi OS runs systemd as PID 1 which needs CAP_SYS_ADMIN to mount tmpfs at
