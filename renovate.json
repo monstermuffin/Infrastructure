@@ -177,6 +177,13 @@
       "automerge": true,
       "automergeType": "pr",
       "labels": ["renovate", "jellyfin"]
+    },
+    {
+      "description": "Frigate - semver/beta/rc tags only, allow prerelease updates",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["ghcr.io/blakeblackshear/frigate"],
+      "ignoreUnstable": false,
+      "labels": ["renovate", "frigate"]
     }
   ]
 }
