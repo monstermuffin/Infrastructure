@@ -5,7 +5,7 @@ podman_apps:
   frigate:
     enabled: true
     image: ghcr.io/blakeblackshear/frigate
-    # renovate: datasource=docker depName=ghcr.io/blakeblackshear/frigate versioning=regex:^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:-(?<prerelease>(?:beta|rc)\d+))?$
+    # renovate: datasource=docker depName=ghcr.io/blakeblackshear/frigate
     tag: "0.17.1"
     ports:
       - "5000:5000"

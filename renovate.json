@@ -182,6 +182,7 @@
       "description": "Frigate - semver/beta/rc tags only, allow prerelease updates",
       "matchDatasources": ["docker"],
       "matchDepNames": ["ghcr.io/blakeblackshear/frigate"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:-(?<prerelease>(?:beta|rc)\\d+))?$",
       "ignoreUnstable": false,
       "labels": ["renovate", "frigate"]
     }
