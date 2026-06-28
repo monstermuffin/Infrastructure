@@ -45,7 +45,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/grimmory-tools/grimmory
     # renovate: datasource=docker depName=ghcr.io/grimmory-tools/grimmory
-    tag: v3.2.1
+    tag: v3.2.2
     container_name: grimmory
     port: 6060
     uid: 982
