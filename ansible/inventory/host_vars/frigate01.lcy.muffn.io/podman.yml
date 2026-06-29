@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/blakeblackshear/frigate
     # renovate: datasource=docker depName=ghcr.io/blakeblackshear/frigate
-    tag: "0.17.1"
+    tag: "0.17.2"
     ports:
       - "5000:5000"
       - "8554:8554"
