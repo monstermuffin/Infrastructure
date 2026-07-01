@@ -11,7 +11,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/traefik/traefik
     # renovate: datasource=docker depName=ghcr.io/traefik/traefik
-    tag: v3.7.5
+    tag: v3.7.6
     description: AAH ingress Traefik proxy
     container_name: traefik-proxy
     network: ingress
