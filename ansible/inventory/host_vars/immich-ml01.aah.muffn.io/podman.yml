@@ -10,7 +10,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/immich-app/immich-machine-learning
     # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning versioning=regex:^v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)-openvino$
-    tag: v2.7.5-openvino
+    tag: v3.0.1-openvino
     port: 3003
     volumes:
       - model-cache:/cache
