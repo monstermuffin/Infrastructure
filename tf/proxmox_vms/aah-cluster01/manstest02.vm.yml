@@ -1,0 +1,52 @@
+name: manstest02.aah.muffn.io
+hostname: manstest02.aah.muffn.io
+description: MANS Bookworm testing VM.
+node_name: pve04
+vm_id: 231
+
+image:
+  url: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
+  file_name: "debian-12-generic-amd64.qcow2"
+  datastore_id: "local"
+
+cpu:
+  cores: 2
+
+memory:
+  dedicated: 2048
+  floating: 2048
+
+network:
+  ipv4_address: 10.82.7.231/24
+  ipv4_gateway: 10.82.7.1
+  vlan_id: 707
+
+disks:
+  - interface: scsi0
+    datastore_id: local-zfs
+    size_gb: 20
+  - interface: scsi1
+    datastore_id: local-zfs
+    size_gb: 8
+  - interface: scsi2
+    datastore_id: local-zfs
+    size_gb: 8
+  - interface: scsi3
+    datastore_id: local-zfs
+    size_gb: 8
+  - interface: scsi4
+    datastore_id: local-zfs
+    size_gb: 8
+  - interface: scsi5
+    datastore_id: local-zfs
+    size_gb: 8
+
+agent:
+  enabled: true
+
+tags:
+  - app_mans_test
+  - os_bookworm
+  - os_linux
+  - site_aah
+  - vm_test
