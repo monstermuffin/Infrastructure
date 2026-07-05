@@ -10,6 +10,10 @@
             linux_base_manage_qemu_guest_agent | bool
             | ternary([linux_base_qemu_guest_agent_package], [])
           )
+          + (
+            (ansible_distribution_major_version | int >= 13)
+            | ternary(linux_base_packages_debian_13, [])
+          )
         ) | unique
       }}
     state: present

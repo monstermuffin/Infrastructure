@@ -17,7 +17,6 @@ linux_base_packages:
   - bat
   - ca-certificates
   - curl
-  - eza
   - fzf
   - git
   - htop
@@ -27,6 +26,9 @@ linux_base_packages:
   - vim
   - ncdu
   - unzip
+
+linux_base_packages_debian_13:
+  - eza
 
 linux_base_extra_packages: []
 linux_base_igpu_packages:
