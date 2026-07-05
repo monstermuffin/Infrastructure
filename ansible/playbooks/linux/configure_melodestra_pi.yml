@@ -1,0 +1,26 @@
+---
+# Configure MeloDestra Raspberry Pi.
+#
+# Manages the kiosk display setup and PulsDestra.
+#
+# Usage:
+#   ansible-playbook playbooks/linux/configure_melodestra_pi.yml
+#   ansible-playbook playbooks/linux/configure_melodestra_pi.yml --tags pulsedestra
+#   ansible-playbook playbooks/linux/configure_melodestra_pi.yml --tags kiosk
+#   ansible-playbook playbooks/linux/configure_melodestra_pi.yml --tags boot
+#   ansible-playbook playbooks/linux/configure_melodestra_pi.yml --check --diff
+
+- name: Configure MeloDestra Raspberry Pi
+  hosts: "{{ target | default('melodestra-pi.lcy.muffn.io') }}"
+  gather_facts: true
+  become: true
+
+  pre_tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        sleep: 5
+        timeout: 120
+
+  roles:
+    - linux/base
+    - apps/pi_melodestra
