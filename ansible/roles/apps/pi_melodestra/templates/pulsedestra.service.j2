@@ -1,0 +1,20 @@
+# Managed by Ansible
+[Unit]
+Description=PulsDestra
+After=network.target
+
+[Service]
+Type=simple
+User={{ pulsedestra_user }}
+Group={{ pulsedestra_group }}
+WorkingDirectory={{ pulsedestra_install_dir }}
+Environment=PATH={{ pulsedestra_venv_dir }}/bin
+Environment=PYTHONUNBUFFERED=1
+ExecStart={{ pulsedestra_venv_dir }}/bin/python {{ pulsedestra_install_dir }}/app.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

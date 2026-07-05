@@ -236,7 +236,12 @@ rules:
     action: noop
 
   - pattern: "ansible/inventory/host_vars/melodestra-pi*/**"
-    action: noop
+    playbook: "ansible/playbooks/linux/configure_melodestra_pi.yml"
+    limit: "melodestra-pi.lcy.muffn.io"
+
+  - pattern: "ansible/roles/apps/pi_melodestra/**"
+    playbook: "ansible/playbooks/linux/configure_melodestra_pi.yml"
+    limit: "melodestra-pi.lcy.muffn.io"
 
   - pattern: "ansible/inventory/group_vars/pi.yml"
     action: noop

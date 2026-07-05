@@ -1,0 +1,93 @@
+---
+- name: Ensure labwc config directory exists
+  ansible.builtin.file:
+    path: "/home/{{ pi_melodestra_kiosk_user }}/.config/labwc"
+    state: directory
+    owner: "{{ pi_melodestra_kiosk_user }}"
+    group: "{{ pi_melodestra_kiosk_user }}"
+    mode: '0755'
+  tags:
+    - labwc
+
+- name: Deploy labwc autostart (Chromium kiosk)
+  ansible.builtin.template:
+    src: labwc_autostart.j2
+    dest: "/home/{{ pi_melodestra_kiosk_user }}/.config/labwc/autostart"
+    owner: "{{ pi_melodestra_kiosk_user }}"
+    group: "{{ pi_melodestra_kiosk_user }}"
+    mode: '0644'
+  tags:
+    - labwc
+    - chromium
+
+- name: Deploy labwc environment (keyboard layout)
+  ansible.builtin.template:
+    src: labwc_environment.j2
+    dest: "/home/{{ pi_melodestra_kiosk_user }}/.config/labwc/environment"
+    owner: "{{ pi_melodestra_kiosk_user }}"
+    group: "{{ pi_melodestra_kiosk_user }}"
+    mode: '0644'
+  tags:
+    - labwc
+
+- name: Ensure kanshi config directory exists
+  ansible.builtin.file:
+    path: "/home/{{ pi_melodestra_kiosk_user }}/.config/kanshi"
+    state: directory
+    owner: "{{ pi_melodestra_kiosk_user }}"
+    group: "{{ pi_melodestra_kiosk_user }}"
+    mode: '0755'
+  tags:
+    - kanshi
+    - display
+
+- name: Deploy kanshi display config
+  ansible.builtin.template:
+    src: kanshi_config.j2
+    dest: "/home/{{ pi_melodestra_kiosk_user }}/.config/kanshi/config"
+    owner: "{{ pi_melodestra_kiosk_user }}"
+    group: "{{ pi_melodestra_kiosk_user }}"
+    mode: '0644'
+  tags:
+    - kanshi
+    - display
+
+- name: Configure LightDM autologin user
+  ansible.builtin.lineinfile:
+    path: /etc/lightdm/lightdm.conf
+    regexp: '^#?autologin-user='
+    line: "autologin-user={{ pi_melodestra_lightdm_autologin_user }}"
+    insertafter: '^\[Seat:\*\]'
+  notify: Restart lightdm
+  tags:
+    - lightdm
+
+- name: Configure LightDM autologin session
+  ansible.builtin.lineinfile:
+    path: /etc/lightdm/lightdm.conf
+    regexp: '^#?autologin-session='
+    line: "autologin-session={{ pi_melodestra_lightdm_autologin_session }}"
+    insertafter: '^\[Seat:\*\]'
+  notify: Restart lightdm
+  tags:
+    - lightdm
+
+- name: Configure LightDM user session
+  ansible.builtin.lineinfile:
+    path: /etc/lightdm/lightdm.conf
+    regexp: '^#?user-session='
+    line: "user-session={{ pi_melodestra_lightdm_user_session }}"
+    insertafter: '^\[Seat:\*\]'
+  notify: Restart lightdm
+  tags:
+    - lightdm
+
+- name: Configure LightDM greeter session
+  ansible.builtin.lineinfile:
+    path: /etc/lightdm/lightdm.conf
+    regexp: '^#?greeter-session='
+    line: "greeter-session={{ pi_melodestra_lightdm_greeter_session }}"
+    insertafter: '^\[Seat:\*\]'
+  notify: Restart lightdm
+  tags:
+    - lightdm

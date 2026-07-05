@@ -1,0 +1,19 @@
+# Managed by Ansible
+MPUSettings:
+  i2c_address: {{ pulsedestra_i2c_address }}
+  knock_threshold: {{ pulsedestra_knock_threshold }}
+  accelerometer_range: "{{ pulsedestra_accelerometer_range }}"
+
+NetworkSettings:
+  target_host: "{{ pulsedestra_target_host }}"
+  target_port: {{ pulsedestra_target_port }}
+  endpoint: "{{ pulsedestra_endpoint }}"
+
+TimingSettings:
+  debounce_time_seconds: {{ pulsedestra_debounce_time_seconds }}
+
+GeneralSettings:
+  safe_mode: {{ pulsedestra_safe_mode | lower }}
+
+DebugSettings:
+  show_sub_threshold_motion: {{ pulsedestra_show_sub_threshold_motion | lower }}

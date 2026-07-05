@@ -1,0 +1,95 @@
+---
+- name: Install system dependencies for PulsDestra
+  ansible.builtin.apt:
+    name:
+      - git
+      - python3-venv
+      - python3-dev
+      - build-essential
+      - swig
+      - liblgpio-dev
+      - i2c-tools
+    state: present
+  tags:
+    - packages
+
+- name: Ensure pulsedestra user is in hardware access groups
+  ansible.builtin.user:
+    name: "{{ pulsedestra_user }}"
+    groups:
+      - i2c
+      - gpio
+      - spi
+    append: true
+  tags:
+    - users
+    - groups
+
+- name: Clone PulsDestra repository
+  ansible.builtin.git:
+    repo: "{{ pulsedestra_repo }}"
+    dest: "{{ pulsedestra_install_dir }}"
+    version: "{{ pulsedestra_repo_version }}"
+    update: true
+    force: false
+  become: true
+  become_user: "{{ pulsedestra_user }}"
+  notify: Restart pulsedestra
+  tags:
+    - git
+
+- name: Create PulsDestra virtual environment
+  ansible.builtin.command:
+    cmd: python3 -m venv "{{ pulsedestra_venv_dir }}"
+    creates: "{{ pulsedestra_venv_dir }}/bin/python"
+  become: true
+  become_user: "{{ pulsedestra_user }}"
+  tags:
+    - venv
+
+- name: Install PulsDestra Python dependencies
+  ansible.builtin.pip:
+    requirements: "{{ pulsedestra_install_dir }}/requirements.txt"
+    virtualenv: "{{ pulsedestra_venv_dir }}"
+    state: present
+  become: true
+  become_user: "{{ pulsedestra_user }}"
+  notify: Restart pulsedestra
+  tags:
+    - pip
+    - packages
+
+- name: Deploy PulsDestra config
+  ansible.builtin.template:
+    src: pulsedestra_config.yaml.j2
+    dest: "{{ pulsedestra_install_dir }}/config.yaml"
+    owner: "{{ pulsedestra_user }}"
+    group: "{{ pulsedestra_group }}"
+    mode: '0640'
+  notify: Restart pulsedestra
+  tags:
+    - config
+
+- name: Deploy PulsDestra systemd service
+  ansible.builtin.template:
+    src: pulsedestra.service.j2
+    dest: /etc/systemd/system/pulsedestra.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart pulsedestra
+  tags:
+    - service
+    - systemd
+
+- name: Enable and start PulsDestra service
+  ansible.builtin.systemd:
+    name: pulsedestra
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags:
+    - service
+    - systemd

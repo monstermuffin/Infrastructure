@@ -1,0 +1,64 @@
+---
+# PulsDestra — MPU-6050 gyroscope/accelerometer
+pulsedestra_install_dir: /home/muffin/PulsDestra
+pulsedestra_repo: https://github.com/monstermuffin/PulsDestra.git
+pulsedestra_repo_version: main
+pulsedestra_user: muffin
+pulsedestra_group: muffin
+pulsedestra_venv_dir: "{{ pulsedestra_install_dir }}/.venv"
+
+pulsedestra_i2c_address: "0x68"
+pulsedestra_knock_threshold: 10.5
+pulsedestra_accelerometer_range: "RANGE_2_G"
+
+pulsedestra_target_host: "melodestra01.aah.muffn.io"
+pulsedestra_target_port: 5010
+pulsedestra_endpoint: "/toggle-like"
+
+pulsedestra_debounce_time_seconds: 5
+
+pulsedestra_safe_mode: false
+pulsedestra_show_sub_threshold_motion: false
+
+# Kiosk — Chromium in kiosk mode under labwc
+pi_melodestra_kiosk_user: muffin
+pi_melodestra_kiosk_url: "http://melodestra01.aah.muffn.io:5010/"
+pi_melodestra_kiosk_chromium_flags:
+  - "--kiosk"
+  - "--password-store=basic"
+  - "--no-first-run"
+  - "--noerrdialogs"
+  - "--disable-translate"
+  - "--disable-notifications"
+  - "--disable-infobars"
+  - "--check-for-update-interval=31536000"
+
+# labwc keyboard layout (environment file)
+pi_melodestra_xkb_model: "pc105"
+pi_melodestra_xkb_layout: "gb"
+pi_melodestra_xkb_variant: ""
+pi_melodestra_xkb_options: ""
+
+# LightDM autologin
+pi_melodestra_lightdm_autologin_user: muffin
+pi_melodestra_lightdm_autologin_session: rpd-labwc
+pi_melodestra_lightdm_user_session: rpd-labwc
+pi_melodestra_lightdm_greeter_session: pi-greeter-labwc
+pi_melodestra_lightdm_display_setup_script: /usr/share/dispsetup.sh
+
+# kanshi — Wayland output configuration
+# transform values: normal, 90, 180, 270, flipped, flipped-90, flipped-180, flipped-270
+pi_melodestra_kanshi_profiles:
+  - name: default
+    outputs:
+      - output: HDMI-A-1
+        enable: true
+        mode: "3840x2160@59.982"
+        position: "0,0"
+        scale: "1.000000"
+        transform: "90"
+
+# Raspberry Pi firmware (config.txt) settings
+pi_melodestra_firmware_config: /boot/firmware/config.txt
+pi_melodestra_i2c_enabled: true
+pi_melodestra_hdmi_rotate: 1

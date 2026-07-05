@@ -1,0 +1,14 @@
+---
+- name: Restart pulsedestra
+  ansible.builtin.systemd:
+    name: pulsedestra
+    state: restarted
+    daemon_reload: true
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart lightdm
+  ansible.builtin.debug:
+    msg: "LightDM config changed; changes take effect on next login/reboot."

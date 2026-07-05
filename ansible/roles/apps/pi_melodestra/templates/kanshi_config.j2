@@ -1,0 +1,13 @@
+# Managed by Ansible
+{% for profile in pi_melodestra_kanshi_profiles %}
+profile {{ profile.name }} {
+{% for out in profile.outputs %}
+{% if not out.enable | default(true) %}
+		output {{ out.output }} disable
+{% else %}
+		output {{ out.output }} enable{% if out.scale is defined %} scale {{ out.scale }}{% endif %}{% if out.mode is defined %} mode {{ out.mode }}{% endif %}{% if out.position is defined %} position {{ out.position }}{% endif %}{% if out.transform is defined %} transform {{ out.transform }}{% endif %}
+
+{% endif %}
+{% endfor %}
+}
+{% endfor %}

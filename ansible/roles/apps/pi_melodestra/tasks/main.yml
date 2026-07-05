@@ -1,0 +1,22 @@
+---
+- name: Configure Raspberry Pi firmware settings
+  ansible.builtin.import_tasks: boot_config.yml
+  tags:
+    - boot
+    - firmware
+    - setup
+
+- name: Configure kiosk display and browser
+  ansible.builtin.import_tasks: kiosk.yml
+  tags:
+    - kiosk
+    - display
+    - chromium
+    - labwc
+    - setup
+
+- name: Deploy and configure PulsDestra
+  ansible.builtin.import_tasks: pulsedestra.yml
+  tags:
+    - pulsedestra
+    - setup

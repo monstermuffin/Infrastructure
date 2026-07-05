@@ -1,0 +1,29 @@
+---
+- name: Enable I2C in firmware config
+  ansible.builtin.lineinfile:
+    path: "{{ pi_melodestra_firmware_config }}"
+    regexp: '^#?dtparam=i2c_arm='
+    line: "dtparam=i2c_arm={{ 'on' if pi_melodestra_i2c_enabled else 'off' }}"
+    state: present
+  register: _boot_i2c
+  tags:
+    - boot
+    - i2c
+
+- name: Set display HDMI rotation in firmware config
+  ansible.builtin.lineinfile:
+    path: "{{ pi_melodestra_firmware_config }}"
+    regexp: '^#?display_hdmi_rotate='
+    line: "display_hdmi_rotate={{ pi_melodestra_hdmi_rotate }}"
+    state: present
+  register: _boot_rotate
+  tags:
+    - boot
+    - display
+
+- name: Warn if firmware changes require reboot
+  ansible.builtin.debug:
+    msg: "Firmware config changed — a reboot is required for changes to take effect."
+  when: _boot_i2c.changed or _boot_rotate.changed
+  tags:
+    - boot
