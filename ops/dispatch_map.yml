@@ -235,6 +235,10 @@ rules:
   - pattern: "ansible/inventory/host_vars/inky-display*/**"
     action: noop
 
+  - pattern: "ansible/playbooks/linux/configure_melodestra_pi.yml"
+    playbook: "ansible/playbooks/linux/configure_melodestra_pi.yml"
+    limit: "melodestra-pi.lcy.muffn.io"
+
   - pattern: "ansible/inventory/host_vars/melodestra-pi*/**"
     playbook: "ansible/playbooks/linux/configure_melodestra_pi.yml"
     limit: "melodestra-pi.lcy.muffn.io"
