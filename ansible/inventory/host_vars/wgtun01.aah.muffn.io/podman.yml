@@ -48,7 +48,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/home-operations/qbittorrent
     # renovate: datasource=docker depName=ghcr.io/home-operations/qbittorrent
-    tag: 5.2.2
+    tag: 5.2.3
     network_mode: container:gluetun
     after:
       - gluetun.service
