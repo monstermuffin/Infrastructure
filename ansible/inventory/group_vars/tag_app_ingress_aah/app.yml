@@ -27,7 +27,7 @@ podman_apps:
     enabled: true
     image: cloudflare/cloudflared
     # renovate: datasource=docker depName=cloudflare/cloudflared
-    tag: "2026.7.1"
+    tag: "2026.7.2"
     description: Cloudflare Tunnel connector
     network: ingress
     after:
