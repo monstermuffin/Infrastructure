@@ -83,7 +83,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/immich-app/immich-server
     # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
-    tag: v3.0.1
+    tag: v3.0.3
     container_name: immich-server
     port: 2283
     network: immich
