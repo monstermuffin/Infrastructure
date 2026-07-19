@@ -87,7 +87,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/monstermuffin/qsticky
     # renovate: datasource=docker depName=ghcr.io/monstermuffin/qsticky
-    tag: 2.4.0
+    tag: 2.5.0
     network_mode: container:gluetun
     after:
       - gluetun.service
