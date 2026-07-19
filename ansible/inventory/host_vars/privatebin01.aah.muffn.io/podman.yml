@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/privatebin/nginx-fpm-alpine
     # renovate: datasource=docker depName=ghcr.io/privatebin/nginx-fpm-alpine
-    tag: "2.0.4"
+    tag: "2.0.5"
     port: 8080
     user: "984:983"
     uid: 984
