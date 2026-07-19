@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/home-operations/radarr
     # renovate: datasource=docker depName=ghcr.io/home-operations/radarr
-    tag: 6.3.0.10514
+    tag: 6.4.0.10523
     port: 7878
     uid: 65534
     gid: 65533
