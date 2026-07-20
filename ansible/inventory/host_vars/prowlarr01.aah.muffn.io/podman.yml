@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/home-operations/prowlarr
     # renovate: datasource=docker depName=ghcr.io/home-operations/prowlarr
-    tag: 2.5.1.5464
+    tag: 2.5.2.5483
     port: 9696
     uid: 65534
     gid: 65533
