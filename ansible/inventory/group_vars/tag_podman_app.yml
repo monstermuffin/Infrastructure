@@ -2,10 +2,10 @@
 # Podman package versions
 
 # renovate: suite=bookworm arch=amd64 depName=podman
-podman_package_version_podman_bookworm_amd64: "4.3.1+ds1-8+deb12u1+b2"
+podman_package_version_podman_bookworm_amd64: "4.3.1+ds1-8+deb12u1+b3"
 
 # renovate: suite=bookworm arch=arm64 depName=podman
-podman_package_version_podman_bookworm_arm64: "4.3.1+ds1-8+deb12u1+b2"
+podman_package_version_podman_bookworm_arm64: "4.3.1+ds1-8+deb12u1+b3"
 
 # renovate: suite=bookworm depName=podman-compose
 podman_package_version_podman_compose_bookworm: "1.0.3-3"
