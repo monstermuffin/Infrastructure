@@ -48,6 +48,63 @@
     owner: "{{ pi_melodestra_kiosk_user }}"
     group: "{{ pi_melodestra_kiosk_user }}"
     mode: '0644'
+  notify: Restart kanshi service
+  tags:
+    - kanshi
+    - display
+
+- name: Ensure user systemd directory exists
+  ansible.builtin.file:
+    path: "/home/{{ pi_melodestra_kiosk_user }}/.config/systemd/user"
+    state: directory
+    owner: "{{ pi_melodestra_kiosk_user }}"
+    group: "{{ pi_melodestra_kiosk_user }}"
+    mode: '0755'
+  tags:
+    - kanshi
+    - display
+
+- name: Deploy kanshi systemd user service (supervised, auto-restart)
+  ansible.builtin.template:
+    src: kanshi.service.j2
+    dest: "/home/{{ pi_melodestra_kiosk_user }}/.config/systemd/user/kanshi.service"
+    owner: "{{ pi_melodestra_kiosk_user }}"
+    group: "{{ pi_melodestra_kiosk_user }}"
+    mode: '0644'
+  notify: Restart kanshi service
+  tags:
+    - kanshi
+    - display
+
+- name: Disable unsupervised kanshi launch from labwc default autostart
+  ansible.builtin.replace:
+    path: /etc/xdg/labwc/autostart
+    regexp: '^/usr/bin/kanshi &$'
+    replace: '# /usr/bin/kanshi & # disabled: supervised via systemd --user kanshi.service'
+  become: true
+  tags:
+    - kanshi
+    - display
+
+- name: Enable lingering for kiosk user
+  ansible.builtin.command: "loginctl enable-linger {{ pi_melodestra_kiosk_user }}"
+  become: true
+  changed_when: false
+  tags:
+    - kanshi
+    - display
+
+- name: Enable and start kanshi systemd user service
+  ansible.builtin.systemd_service:
+    name: kanshi.service
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started
+  become: true
+  become_user: "{{ pi_melodestra_kiosk_user }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ pi_melodestra_kiosk_uid }}"
   tags:
     - kanshi
     - display

@@ -22,6 +22,7 @@ pulsedestra_show_sub_threshold_motion: false
 
 # Kiosk — Chromium in kiosk mode under labwc
 pi_melodestra_kiosk_user: muffin
+pi_melodestra_kiosk_uid: 1000
 pi_melodestra_kiosk_url: "http://melodestra01.aah.muffn.io:5010/"
 pi_melodestra_kiosk_chromium_flags:
   - "--kiosk"

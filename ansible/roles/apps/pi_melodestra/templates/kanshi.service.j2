@@ -1,0 +1,12 @@
+# Managed by Ansible
+[Unit]
+Description=Kanshi output autoconfiguration daemon
+
+[Service]
+ExecStart=/usr/bin/kanshi
+Restart=always
+RestartSec=2
+Environment=WAYLAND_DISPLAY=wayland-0
+
+[Install]
+WantedBy=default.target
