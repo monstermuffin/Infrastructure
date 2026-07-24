@@ -77,3 +77,48 @@
   tags:
     - verify
     - setup
+
+- name: Create podman-auto-update timer drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/podman-auto-update.timer.d
+    state: directory
+    mode: '0755'
+  when: podman_auto_update_interval | length > 0
+  tags:
+    - setup
+    - auto-update
+
+- name: Configure podman-auto-update timer interval
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/podman-auto-update.timer.d/interval.conf
+    content: |
+      [Timer]
+      OnCalendar=
+      OnCalendar={{ podman_auto_update_interval }}
+      RandomizedDelaySec=0
+    mode: '0644'
+  notify: Reload systemd daemon
+  when: podman_auto_update_interval | length > 0
+  tags:
+    - setup
+    - auto-update
+
+- name: Remove podman-auto-update timer drop-in when interval unset
+  ansible.builtin.file:
+    path: /etc/systemd/system/podman-auto-update.timer.d/interval.conf
+    state: absent
+  notify: Reload systemd daemon
+  when: podman_auto_update_interval | length == 0
+  tags:
+    - setup
+    - auto-update
+
+- name: Enable and start podman-auto-update timer
+  ansible.builtin.systemd:
+    name: podman-auto-update.timer
+    enabled: "{{ podman_auto_update_interval | length > 0 }}"
+    state: "{{ 'started' if podman_auto_update_interval | length > 0 else 'stopped' }}"
+    daemon_reload: false
+  tags:
+    - setup
+    - auto-update

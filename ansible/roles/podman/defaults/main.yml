@@ -51,3 +51,7 @@ podman_volumes: {}
 
 podman_user_shell: /bin/bash
 podman_user_system: true
+
+# systemd calendar expression for podman-auto-update timer (e.g. "*:0/5" for every 5 min).
+# Empty string disables the timer entirely.
+podman_auto_update_interval: ""
