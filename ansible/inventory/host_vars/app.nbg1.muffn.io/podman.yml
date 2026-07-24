@@ -1,5 +1,6 @@
 ---
 podman_enabled: true
+podman_auto_update_interval: "*:0/5"
 
 # Bookwork fixes to ensure podman and deps are installed from testing repo.
 # TODO: Inplace upgrade to Trixie
@@ -43,6 +44,8 @@ podman_apps:
     image: ghcr.io/monstermuffin/labb0t
     tag: "{{ labb0t_container_tag }}"
     network: labb0t
+    labels:
+      io.containers.autoupdate: registry
     volumes:
       - /opt/vps/labb0t/config/config.yaml:/app/config/config.yaml:ro
       - /opt/vps/labb0t/log:/app/logs
