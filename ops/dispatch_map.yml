@@ -158,7 +158,7 @@ rules:
   - pattern: "ansible/inventory/host_vars/*/*.yml"
     action: host_self
 
-  # Frigate01 — Podman-based (new)
+  # Frigate01
   - pattern: "ansible/inventory/host_vars/frigate01.lcy.muffn.io/podman.yml"
     action: host_self
 
@@ -204,7 +204,7 @@ rules:
     playbook: "ansible/playbooks/app/ingress.yml"
     limit: "tag_app_ingress"
 
-  # wgtun role (defaults, tasks, templates)
+  # wgtun role
   - pattern: "ansible/roles/apps/wgtun/**"
     playbook: "ansible/playbooks/lxc/deploy_wgtun.yml"
     limit: "wgtun01.aah.muffn.io"
@@ -253,3 +253,28 @@ rules:
   # Changed playbook runs itself directly
   - pattern: "ansible/playbooks/**/*.yml"
     action: playbook_self
+
+      # Hetzner NBG1
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/meta.yml"
+    action: noop
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/labb0t.yml"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "app.nbg1.muffn.io"
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/podman.yml"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "app.nbg1.muffn.io"
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/files/**"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "app.nbg1.muffn.io"
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/**"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "app.nbg1.muffn.io"
+
+  - pattern: "ansible/inventory/group_vars/nbg1.yml"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "nbg1"
