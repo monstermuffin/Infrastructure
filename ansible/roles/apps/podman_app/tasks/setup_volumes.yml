@@ -75,7 +75,7 @@
 - name: Track setup changes from existing bind mount directories for {{ _app_name }}
   ansible.builtin.set_fact:
     _setup_changed: "{{ _setup_changed or (_bind_mount_dirs_result is changed) }}"
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Create managed bind mount directories for {{ _app_name }}
   ansible.builtin.file:
@@ -114,7 +114,7 @@
 - name: Track setup changes from managed bind mount directories for {{ _app_name }}
   ansible.builtin.set_fact:
     _setup_changed: "{{ _setup_changed or (_managed_bind_mount_dirs_result is changed) }}"
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Inspect managed file destinations for {{ _app_name }}
   ansible.builtin.stat:
@@ -124,7 +124,7 @@
     loop_var: file_item
     label: "{{ file_item.dest }}"
   register: _managed_file_destinations
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Create parent directories for managed files for {{ _app_name }}
   ansible.builtin.file:
@@ -138,12 +138,12 @@
     loop_var: file_item
     label: "{{ file_item.dest | dirname }}"
   register: _managed_file_parent_dirs_result
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Track setup changes from managed file parent directories for {{ _app_name }}
   ansible.builtin.set_fact:
     _setup_changed: "{{ _setup_changed or (_managed_file_parent_dirs_result is changed) }}"
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Remove stale directory placeholders for managed file bind mounts for {{ _app_name }}
   ansible.builtin.file:
@@ -161,12 +161,12 @@
     - managed_file_stat.stat.isdir | default(false)
     - file_item.dest in _volume_source_paths
     - file_item.dest | basename is search('\\.')
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Track setup changes from managed file cleanup for {{ _app_name }}
   ansible.builtin.set_fact:
     _setup_changed: "{{ _setup_changed or (_managed_file_cleanup_result is changed) }}"
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Re-inspect managed file destinations for {{ _app_name }}
   ansible.builtin.stat:
@@ -176,7 +176,7 @@
     loop_var: file_item
     label: "{{ file_item.dest }}"
   register: _managed_file_destinations_final
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Fail when managed file destinations are directories for {{ _app_name }}
   ansible.builtin.fail:
@@ -187,7 +187,7 @@
     loop_var: managed_file_stat
     label: "{{ managed_file_stat.file_item.dest }}"
   when: managed_file_stat.stat.isdir | default(false)
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Deploy managed files for {{ _app_name }}
   ansible.builtin.copy:
@@ -202,7 +202,7 @@
     label: "{{ file_item.dest }}"
   register: _managed_files_result
   when: file_item.content is defined
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Deploy managed templated files for {{ _app_name }}
   ansible.builtin.template:
@@ -222,7 +222,7 @@
     label: "{{ file_item.dest }}"
   register: _managed_template_files_result
   when: file_item.template_src is defined
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Track setup changes from managed files for {{ _app_name }}
   ansible.builtin.set_fact:
@@ -232,7 +232,7 @@
         or (_managed_files_result is changed)
         or (_managed_template_files_result is changed)
       }}
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Run setup commands for managed files for {{ _app_name }} # noqa: command-instead-of-shell
   ansible.builtin.shell:
@@ -244,9 +244,9 @@
     label: "{{ file_item.dest }}"
   register: _managed_setup_command_result
   when: file_item.setup_command is defined
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Track setup changes from command-generated files for {{ _app_name }}
   ansible.builtin.set_fact:
     _setup_changed: "{{ _setup_changed or (_managed_setup_command_result is changed) }}"
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]

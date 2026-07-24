@@ -5,6 +5,7 @@
     - deploy
     - install
     - podman
+    - config
 
 - name: Deploy enabled apps
   ansible.builtin.include_tasks: deploy_app.yml
@@ -19,6 +20,7 @@
   tags:
     - deploy
     - podman
+    - config
 
 - name: Stop and disable apps with enabled false
   ansible.builtin.include_tasks: disable_app.yml

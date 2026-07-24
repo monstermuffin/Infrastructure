@@ -48,9 +48,9 @@
         cmd: podman login ghcr.io --username {{ ghcr_username }} --password {{ vault_ghcr_token }}
       changed_when: false
       no_log: true
-      tags: [podman, install, setup, deploy]
+      tags: [podman, install, setup, deploy, config]
 
     - name: Deploy apps
       ansible.builtin.include_role:
         name: apps/podman_app
-      tags: [deploy]
+      tags: [deploy, config]

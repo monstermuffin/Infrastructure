@@ -7,7 +7,7 @@
 
 - name: Set up bind mount directories for {{ _app_name }}
   ansible.builtin.include_tasks: setup_volumes.yml
-  tags: [volumes, setup]
+  tags: [volumes, setup, config]
 
 - name: Get current image digest for {{ _app_name }}
   ansible.builtin.command:
@@ -20,14 +20,14 @@
   register: _image_id_before
   changed_when: false
   failed_when: false
-  tags: image
+  tags: [image, config]
 
 - name: Pull image for {{ _app_name }}
   ansible.builtin.command:
     cmd: podman pull {{ _app.image }}:{{ _app.tag | default('latest') }}
   register: _pull_result
   changed_when: false
-  tags: image
+  tags: [image, config]
 
 - name: Get new image digest for {{ _app_name }}
   ansible.builtin.command:
@@ -39,13 +39,13 @@
       - "{{ _app.image }}:{{ _app.tag | default('latest') }}"
   register: _image_id_after
   changed_when: false
-  tags: image
+  tags: [image, config]
 
 # Image changed if: digest differs, or image didn't exist before
 - name: Set image changed fact for {{ _app_name }}
   ansible.builtin.set_fact:
     _image_changed: "{{ _image_id_before.rc | default(1) != 0 or _image_id_before.stdout != _image_id_after.stdout }}"
-  tags: image
+  tags: [image, config]
 
 - name: Deploy Quadlet file for {{ _app_name }}
   ansible.builtin.template:
