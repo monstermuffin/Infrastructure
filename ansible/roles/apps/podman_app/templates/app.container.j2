@@ -18,6 +18,10 @@ User={{ _app.user }}
 
 {% if _app.network_mode is defined %}
 Network={{ _app.network_mode }}
+{% elif _app.networks is defined %}
+{%   for net in _app.networks %}
+Network={{ net }}
+{%   endfor %}
 {% elif _app.network is defined %}
 Network={{ _app.network }}
 {% endif %}
