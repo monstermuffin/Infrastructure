@@ -3,6 +3,12 @@
   ansible.builtin.setup:
   when: ansible_system is not defined
   tags: always
+  failed_when: false
+
+- name: End host if facts could not be gathered
+  ansible.builtin.meta: end_host
+  when: ansible_system is not defined
+  tags: always
 
 - name: Verify target is Linux
   ansible.builtin.assert:

@@ -158,6 +158,12 @@ def build_command(rule: dict, path: str, status: str) -> list[CommandSpec]:
     action = rule.get("action")
     priority = int(rule.get("priority", 10))
 
+    # Per-event action overrides (e.g. on_delete: noop skips dispatch when a file is removed)
+    event_key = {"A": "on_add", "D": "on_delete"}.get(change_kind(status), "on_change")
+    event_override = rule.get(event_key)
+    if event_override == "noop":
+        return []
+
     if action == "playbook_self":
         return [_make_command(path, path=path, workdir=workdir, priority=priority)]
 

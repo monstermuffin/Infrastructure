@@ -78,6 +78,7 @@ rules:
     limit: "{group}"
     extra_vars:
       pve_lxc_target: "{stem}"
+    on_delete: noop
 
   # Per-cluster CIFS mounts
   - pattern: "ansible/inventory/group_vars/*/cifs.yml"
@@ -94,6 +95,7 @@ rules:
     playbook: "ansible/playbooks/pve/provision_lxc.yml"
     priority: 1
     limit: "{group}"
+    on_delete: noop
 
   # Per-cluster scratch pool dirs
   - pattern: "ansible/inventory/group_vars/*/scratch.yml"
@@ -106,6 +108,7 @@ rules:
     priority: 1
     extra_vars:
       pve_lxc_target: "{stem}"
+    on_delete: noop
 
   - pattern: "ansible/inventory/host_vars/pve*/scratch.yml"
     playbook: "ansible/playbooks/pve/scratch.yml"
