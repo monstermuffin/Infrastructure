@@ -5,3 +5,10 @@ ansible/inventory/host_vars/*/*/bindings.yml filter=git-crypt diff=git-crypt
 tf/terraform.tfvars filter=git-crypt diff=git-crypt
 tf/terraform.*.tfvars filter=git-crypt diff=git-crypt
 tf/cloudflare.tf filter=git-crypt diff=git-crypt
+
+# Gatus
+ansible/inventory/host_vars/app.nbg1.muffn.io/gatus.yml filter=git-crypt diff=git-crypt
+
+# LabB0T
+ansible/inventory/host_vars/app.nbg1.muffn.io/labb0t.yml filter=git-crypt diff=git-crypt
+ansible/inventory/host_vars/app.nbg1.muffn.io/files/labb0t-config.yaml filter=git-crypt diff=git-crypt

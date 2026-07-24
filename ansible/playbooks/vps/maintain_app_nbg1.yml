@@ -1,0 +1,56 @@
+---
+# Maintain app.nbg1.muffn.io — Hetzner NBG1 VPS
+
+- name: Maintain app.nbg1.muffn.io
+  hosts: app.nbg1.muffn.io
+  gather_facts: true
+  become: true
+
+  pre_tasks:
+    # Bookworm fixes to ensure podman and deps are installed from testing repo.
+    - name: Add Debian Testing apt source
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/debian-testing.list
+        content: "deb http://deb.debian.org/debian testing main\n"
+        mode: "0644"
+      tags: [podman, install, setup]
+
+    - name: Pin Debian Testing to lower priority than stable
+      ansible.builtin.copy:
+        dest: /etc/apt/preferences.d/testing-low-priority
+        content: |
+          Package: *
+          Pin: release a=testing
+          Pin-Priority: 400
+        mode: "0644"
+      tags: [podman, install, setup]
+
+  tasks:
+    - name: Base system
+      ansible.builtin.include_role:
+        name: linux/base
+      tags: [base, setup]
+
+    - name: Install Podman
+      ansible.builtin.include_role:
+        name: podman
+      tags: [podman, install, setup]
+
+    - name: Enable Podman socket
+      ansible.builtin.systemd:
+        name: podman.socket
+        state: started
+        enabled: true
+      tags: [podman, install, setup, deploy]
+
+    - name: Log in to GitHub Container Registry
+      ansible.builtin.command:
+        cmd: podman login ghcr.io --username {{ ghcr_username }} --password {{ vault_ghcr_token }}
+      changed_when: false
+      no_log: true
+      tags: [podman, install, setup, deploy]
+
+    - name: Deploy apps
+      ansible.builtin.include_role:
+        name: apps/podman_app
+      tags: [deploy]

@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: labb0t-prometheus
+    type: prometheus
+    access: proxy
+    url: http://labb0t-prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: "5s"

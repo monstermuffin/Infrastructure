@@ -1,0 +1,41 @@
+storage:
+  type: sqlite
+  path: /data/data.db
+
+alerting:
+  discord:
+    # webhook_url comes from labb0t.yml (git-crypt)
+    webhook-url: "{{ gatus_alerting.discord.webhook_url }}"
+
+endpoints:
+{% for section, endpoints in gatus_sections.items() %}
+{% for endpoint in endpoints %}
+  - name: {{ endpoint.name }}
+    group: {{ section }}
+    url: {{ endpoint.url }}
+    interval: {{ endpoint.interval | default('1m') }}
+    conditions:
+{% for condition in endpoint.conditions %}
+      - "{{ condition }}"
+{% endfor %}
+{% if endpoint.alert | default(false) %}
+    alerts:
+      - type: discord
+        description: "🔥 [{{ section | upper }}] {{ endpoint.name }} health check failed!"
+        send-on-resolved: true
+{% endif %}
+{% if endpoint.client is defined %}
+    client:
+      timeout: {{ endpoint.client.timeout | default('10s') }}
+      insecure: {{ endpoint.client.insecure | default(false) | lower }}
+{% endif %}
+    ui:
+      hide-url: {{ endpoint.hide_url | default(false) | lower }}
+      hide-hostname: {{ endpoint.hide_url | default(false) | lower }}
+{% endfor %}
+{% endfor %}
+
+ui:
+{% for key, value in gatus_ui.items() %}
+  {{ key }}: {{ value }}
+{% endfor %}

@@ -1,0 +1,188 @@
+---
+podman_enabled: true
+
+# Bookwork fixes to ensure podman and deps are installed from testing repo.
+# TODO: Inplace upgrade to Trixie
+podman_package_versions:
+  podman:
+    arm64: "5.8.3+ds1-1"
+  podman-compose: "1.0.3-3"
+  # renovate: suite=testing arch=arm64 depName=crun
+  crun: "1.28-1"
+  netavark: "1.4.0-3"
+  aardvark-dns: "1.4.0-3"
+
+podman_networks:
+  labb0t: {}
+  vps: {}
+
+podman_apps:
+
+  gatus:
+    enabled: true
+    service_start: true
+    service_enable: true
+    image: docker.io/twinproduction/gatus
+    # renovate: datasource=docker depName=docker.io/twinproduction/gatus
+    tag: v5.36.0
+    network: vps
+    volumes:
+      - /opt/vps/gatus/config:/config
+      - /opt/vps/gatus/data:/data
+    files:
+      - dest: /opt/vps/gatus/config/config.yml
+        template_src: gatus-config.yml.j2
+    env:
+      TZ: "{{ timezone }}"
+      GATUS_CONFIG_PATH: /config/config.yml
+
+  labb0t:
+    enabled: true
+    service_start: true
+    service_enable: true
+    image: ghcr.io/monstermuffin/labb0t
+    tag: "{{ labb0t_container_tag }}"
+    network: labb0t
+    volumes:
+      - /opt/vps/labb0t/config/config.yaml:/app/config/config.yaml:ro
+      - /opt/vps/labb0t/log:/app/logs
+    files:
+      - dest: /opt/vps/labb0t/config/config.yaml
+        template_src: labb0t-config.yaml
+        mode: "0600"
+
+  labb0t-prometheus:
+    enabled: true
+    service_start: true
+    service_enable: true
+    image: docker.io/prom/prometheus
+    # renovate: datasource=docker depName=docker.io/prom/prometheus
+    tag: v3.13.1
+    network: labb0t
+    user: "65534:65534"
+    uid: 65534
+    gid: 65534
+    volumes:
+      - /opt/vps/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /opt/vps/prometheus/data:/prometheus
+    files:
+      - dest: /opt/vps/prometheus/prometheus.yml
+        mode: "0644"
+        content: |
+          global:
+            scrape_interval: 5s
+            evaluation_interval: 5s
+
+          scrape_configs:
+            - job_name: labb0t
+              static_configs:
+                - targets: [labb0t:8000]
+              metrics_path: /metrics
+    exec: >-
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.retention.time=30d
+      --storage.tsdb.retention.size=2GB
+      --web.enable-lifecycle
+
+  labb0t-grafana:
+    enabled: true
+    service_start: true
+    service_enable: true
+    image: docker.io/grafana/grafana
+    # renovate: datasource=docker depName=docker.io/grafana/grafana
+    tag: "13.1.1"
+    network: labb0t
+    user: "472:472"
+    uid: 472
+    gid: 472
+    volumes:
+      - /opt/vps/grafana/data:/var/lib/grafana
+      - /opt/vps/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - /opt/vps/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - /opt/vps/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    files:
+      - dest: /opt/vps/grafana/provisioning/datasources/prometheus.yml
+        template_src: grafana-datasource.yml.j2
+        owner: "472"
+        group: "472"
+        mode: "0644"
+      - dest: /opt/vps/grafana/provisioning/dashboards/labb0t.yml
+        template_src: grafana-dashboard-provisioning.yml.j2
+        owner: "472"
+        group: "472"
+        mode: "0644"
+      - dest: /opt/vps/grafana/dashboards/labb0t.json
+        src: grafana-dashboard.json
+        owner: "472"
+        group: "472"
+        mode: "0644"
+    env:
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/labb0t.json
+      GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+      GF_AUTH_GENERIC_OAUTH_NAME: Pocket ID
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: "{{ pocketid_client_id }}"
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: "{{ pocketid_client_secret }}"
+      GF_AUTH_GENERIC_OAUTH_SCOPES: "openid email profile"
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: "{{ pocketid_url }}/authorize"
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "{{ pocketid_url }}/api/oidc/token"
+      GF_AUTH_GENERIC_OAUTH_API_URL: "{{ pocketid_url }}/api/oidc/userinfo"
+      GF_AUTH_SIGNOUT_REDIRECT_URL: "{{ pocketid_url }}/api/oidc/end-session"
+      GF_AUTH_GENERIC_OAUTH_USE_PKCE: "true"
+      GF_AUTH_GENERIC_OAUTH_TLS_SKIP_VERIFY_INSECURE: "false"
+      GF_AUTH_GENERIC_OAUTH_USE_REFRESH_TOKEN: "true"
+      GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_NAME: "email:primary"
+      GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC: "true"
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "'Admin'"
+      GF_AUTH_OAUTH_ALLOW_INSECURE_EMAIL_LOOKUP: "true"
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_AUTH_OAUTH_AUTO_LOGIN: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_AUTO_ASSIGN_ORG: "true"
+      GF_USERS_AUTO_ASSIGN_ORG_ID: "1"
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Admin
+      GF_SERVER_ROOT_URL: "https://{{ grafana_domain }}"
+      GF_FEATURE_TOGGLES_ENABLE: publicDashboards
+      GF_PUBLIC_DASHBOARDS_ENABLED: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
+      GF_SECURITY_COOKIE_SECURE: "true"
+      GF_SECURITY_STRICT_TRANSPORT_SECURITY: "true"
+      GF_SECURITY_CONTENT_SECURITY_POLICY: "true"
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_SECURITY_COOKIE_SAMESITE: lax
+
+  labb0t-dozzle:
+    enabled: true
+    service_start: true
+    service_enable: true
+    image: docker.io/amir20/dozzle
+    # renovate: datasource=docker depName=docker.io/amir20/dozzle
+    tag: v10.6.11
+    network: labb0t
+    after:
+      - podman.socket
+    volumes:
+      - /run/podman/podman.sock:/var/run/docker.sock:ro
+    env:
+      DOZZLE_LEVEL: info
+      DOZZLE_AUTH_PROVIDER: forward-proxy
+      DOZZLE_AUTH_HEADER_USER: Cf-Access-Authenticated-User-Email
+      DOZZLE_AUTH_HEADER_EMAIL: Cf-Access-Authenticated-User-Email
+      DOZZLE_AUTH_HEADER_NAME: Cf-Access-Authenticated-User-Email
+
+  app-nbg1-cftun:
+    enabled: true
+    service_start: true
+    service_enable: true
+    image: docker.io/cloudflare/cloudflared
+    # renovate: datasource=docker depName=docker.io/cloudflare/cloudflared
+    tag: "2026.7.3"
+    networks:
+      - labb0t
+      - vps
+    exec: --no-autoupdate tunnel run
+    env:
+      TUNNEL_TOKEN: "{{ cftunnel_token }}"

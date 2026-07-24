@@ -1,0 +1,2695 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Overview",
+      "type": "row"
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "yellow",
+                "value": 300
+              },
+              {
+                "color": "green",
+                "value": 1800
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_uptime_seconds)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Uptime",
+      "type": "stat",
+      "description": "Time since the current bot process started."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 120
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 3,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "time() - max(bot_last_heartbeat_timestamp)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Heartbeat Age",
+      "type": "stat",
+      "description": "Seconds since the bot last reported a heartbeat."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_total_processed_items_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Processed In Range",
+      "type": "stat",
+      "description": "All work completed by the bot over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_stream_dispatch_total{stream_type=\"submissions\"}[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Posts In Range",
+      "type": "stat",
+      "description": "Submission items dispatched to modules over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_stream_dispatch_total{stream_type=\"comments\"}[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Comments In Range",
+      "type": "stat",
+      "description": "Comment items dispatched to modules over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 15,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_reddit_api_calls_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "API Calls In Range",
+      "type": "stat",
+      "description": "Total Reddit API activity over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_reddit_rate_limits_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Rate Limits In Range",
+      "type": "stat",
+      "description": "Reddit API rate limit hits over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 21,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(bot_reddit_api_latency_seconds_bucket[$__rate_interval]))) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "API P95",
+      "type": "stat",
+      "description": "Overall p95 Reddit API response time."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "bot_cpu_usage_percent",
+          "refId": "A",
+          "legendFormat": "CPU %"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "bot_memory_usage_percent",
+          "refId": "B",
+          "legendFormat": "Memory %"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "bot_task_queue_size",
+          "refId": "C",
+          "legendFormat": "Queue Size"
+        }
+      ],
+      "title": "Health Trends",
+      "type": "timeseries",
+      "description": "Core health indicators from the bot process."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "rate(bot_total_processed_items_total[$__rate_interval])",
+          "refId": "A",
+          "legendFormat": "processed items"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_reddit_api_calls_total[$__rate_interval]))",
+          "refId": "B",
+          "legendFormat": "API calls"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_stream_dispatch_total[$__rate_interval]))",
+          "refId": "C",
+          "legendFormat": "stream dispatch"
+        }
+      ],
+      "title": "Platform Activity",
+      "type": "timeseries",
+      "description": "High-level throughput without exposing internals."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 1
+      },
+      "id": 12,
+      "panels": [],
+      "title": "Runtime",
+      "type": "row"
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 4,
+        "h": 4
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_cpu_usage_percent)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "App CPU",
+      "type": "stat",
+      "description": "Bot-reported CPU usage percentage."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 250000000.0
+              },
+              {
+                "color": "red",
+                "value": 500000000.0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 14,
+        "w": 4,
+        "h": 4
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_memory_usage_bytes)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "App Memory",
+      "type": "stat",
+      "description": "Bot-reported resident memory usage."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 14,
+        "w": 4,
+        "h": 4
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=\"labb0t\"}[5m])) * 100",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Container CPU",
+      "type": "stat",
+      "description": "cAdvisor view of live container CPU usage."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 250000000.0
+              },
+              {
+                "color": "red",
+                "value": 500000000.0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 4,
+        "h": 4
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum by (name) (container_memory_working_set_bytes{name=\"labb0t\"})",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Container Memory",
+      "type": "stat",
+      "description": "cAdvisor view of live container working set memory."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 14,
+        "w": 4,
+        "h": 4
+      },
+      "id": 17,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_ai_tokens_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Tokens In Range",
+      "type": "stat",
+      "description": "Total AI token usage across the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 14,
+        "w": 4,
+        "h": 4
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_d1_cf_database_size_bytes) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Storage Size",
+      "type": "stat",
+      "description": "Current Cloudflare D1 database size."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 8
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "bot_cpu_usage_percent",
+          "refId": "A",
+          "legendFormat": "bot metric"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=\"labb0t\"}[$__rate_interval])) * 100",
+          "refId": "B",
+          "legendFormat": "cAdvisor"
+        }
+      ],
+      "title": "Container vs App CPU",
+      "type": "timeseries",
+      "description": "Cross-check bot CPU reporting against cAdvisor."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 8
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "bot_memory_usage_bytes",
+          "refId": "A",
+          "legendFormat": "bot metric"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum by (name) (container_memory_working_set_bytes{name=\"labb0t\"})",
+          "refId": "B",
+          "legendFormat": "cAdvisor"
+        }
+      ],
+      "title": "Container vs App Memory",
+      "type": "timeseries",
+      "description": "App memory view against container working set."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 1
+      },
+      "id": 21,
+      "panels": [],
+      "title": "Trade Verification",
+      "type": "row"
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 4,
+        "h": 4
+      },
+      "id": 22,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_pending_trades) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Pending Trades",
+      "type": "stat",
+      "description": "Current trades awaiting user confirmation."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 27,
+        "w": 4,
+        "h": 4
+      },
+      "id": 23,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_verified_backlog) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Verified Backlog",
+      "type": "stat",
+      "description": "Confirmed trades waiting for completion work."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 27,
+        "w": 4,
+        "h": 4
+      },
+      "id": 24,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_active_threads) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Active Threads",
+      "type": "stat",
+      "description": "Trade threads currently being monitored."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 27,
+        "w": 4,
+        "h": 4
+      },
+      "id": 25,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(trade_tracker_trades_processed_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Verified In Range",
+      "type": "stat",
+      "description": "Successful trade verifications over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 27,
+        "w": 4,
+        "h": 4
+      },
+      "id": 26,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(trade_tracker_trades_checked_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Checked In Range",
+      "type": "stat",
+      "description": "Trade confirmations reviewed over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 27,
+        "w": 4,
+        "h": 4
+      },
+      "id": 27,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_overall_completed_trades) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Completed Overall",
+      "type": "stat",
+      "description": "Lifetime completed trades recorded in D1."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "id": 28,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "rate(trade_tracker_trades_checked_total[$__rate_interval])",
+          "refId": "A",
+          "legendFormat": "checked"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "rate(trade_tracker_trades_processed_total[$__rate_interval])",
+          "refId": "B",
+          "legendFormat": "verified"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "rate(trade_tracker_invalid_confirmations_total[$__rate_interval])",
+          "refId": "C",
+          "legendFormat": "invalid"
+        }
+      ],
+      "title": "Trade Activity",
+      "type": "timeseries",
+      "description": "High-level trade verification flow over time."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "id": 29,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "trade_tracker_user_delay_seconds",
+          "refId": "A",
+          "legendFormat": "user delay"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "trade_tracker_bot_delay_seconds",
+          "refId": "B",
+          "legendFormat": "bot delay"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "trade_tracker_processing_duration_seconds",
+          "refId": "C",
+          "legendFormat": "processing duration"
+        }
+      ],
+      "title": "Trade Timing",
+      "type": "timeseries",
+      "description": "Current trade verification timing gauges."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 6
+      },
+      "id": 30,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "minVizHeight": 16,
+        "minVizWidth": 12
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_overall_trades) or vector(0)",
+          "refId": "A",
+          "legendFormat": "all trades",
+          "instant": true
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_overall_completed_trades) or vector(0)",
+          "refId": "B",
+          "legendFormat": "completed",
+          "instant": true
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_overall_expired_trades) or vector(0)",
+          "refId": "C",
+          "legendFormat": "expired",
+          "instant": true
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_overall_failed_trades) or vector(0)",
+          "refId": "D",
+          "legendFormat": "failed",
+          "instant": true
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_overall_known_traders) or vector(0)",
+          "refId": "E",
+          "legendFormat": "known traders",
+          "instant": true
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(trade_tracker_overall_threads) or vector(0)",
+          "refId": "F",
+          "legendFormat": "tracked threads",
+          "instant": true
+        }
+      ],
+      "title": "Trade Totals",
+      "type": "bargauge",
+      "description": "Lifetime trade and trader totals from D1."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 24,
+        "h": 1
+      },
+      "id": 31,
+      "panels": [],
+      "title": "AI And Storage",
+      "type": "row"
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 4,
+        "h": 4
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_ai_requests_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "AI Requests In Range",
+      "type": "stat",
+      "description": "AI requests over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 46,
+        "w": 4,
+        "h": 4
+      },
+      "id": 33,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_ai_tokens_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "AI Tokens In Range",
+      "type": "stat",
+      "description": "AI token usage over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "currencyUSD",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 46,
+        "w": 4,
+        "h": 4
+      },
+      "id": 34,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_ai_cost_total_usd_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "AI Cost In Range",
+      "type": "stat",
+      "description": "AI cost accumulated over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "yellow",
+                "value": 0.7
+              },
+              {
+                "color": "green",
+                "value": 0.9
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 46,
+        "w": 4,
+        "h": 4
+      },
+      "id": 35,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "avg(bot_ai_confidence) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Avg Confidence",
+      "type": "stat",
+      "description": "Current average AI confidence."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 46,
+        "w": 4,
+        "h": 4
+      },
+      "id": 36,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_d1_table_count) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Tables",
+      "type": "stat",
+      "description": "Current number of D1 tables."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 46,
+        "w": 4,
+        "h": 4
+      },
+      "id": 37,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(increase(bot_d1_queries_total[$__range])) or vector(0)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "title": "Storage Activity In Range",
+      "type": "stat",
+      "description": "Total D1 query volume over the selected time range."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "id": 38,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_reddit_api_calls_total[$__rate_interval]))",
+          "refId": "A",
+          "legendFormat": "API calls"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_stream_events_total[$__rate_interval]))",
+          "refId": "B",
+          "legendFormat": "stream events"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_stream_dispatch_total[$__rate_interval]))",
+          "refId": "C",
+          "legendFormat": "dispatches"
+        }
+      ],
+      "title": "Request And Stream Rate",
+      "type": "timeseries",
+      "description": "Public-safe overview of request and stream activity."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "id": 39,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_reddit_api_latency_seconds_sum[$__rate_interval])) / sum(rate(bot_reddit_api_latency_seconds_count[$__rate_interval]))",
+          "refId": "A",
+          "legendFormat": "average"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(bot_reddit_api_latency_seconds_bucket[$__rate_interval])))",
+          "refId": "B",
+          "legendFormat": "p95"
+        }
+      ],
+      "title": "Reddit API Response Time",
+      "type": "timeseries",
+      "description": "Average and p95 Reddit API response time."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 50,
+        "w": 8,
+        "h": 8
+      },
+      "id": 40,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum by (name) (rate(container_network_receive_bytes_total{name=\"labb0t\"}[$__rate_interval]))",
+          "refId": "A",
+          "legendFormat": "receive"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum by (name) (rate(container_network_transmit_bytes_total{name=\"labb0t\"}[$__rate_interval]))",
+          "refId": "B",
+          "legendFormat": "transmit"
+        }
+      ],
+      "title": "Network Throughput",
+      "type": "timeseries",
+      "description": "Container network activity from cAdvisor."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 58,
+        "w": 12,
+        "h": 8
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_ai_requests_total[$__rate_interval]))",
+          "refId": "A",
+          "legendFormat": "requests"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_ai_cost_total_usd_total[$__rate_interval]))",
+          "refId": "B",
+          "legendFormat": "cost / sec"
+        }
+      ],
+      "title": "AI Request Volume",
+      "type": "timeseries",
+      "description": "Overall AI activity over time."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 58,
+        "w": 12,
+        "h": 8
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_ai_tokens_total{direction=\"prompt\"}[$__rate_interval]))",
+          "refId": "A",
+          "legendFormat": "prompt"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_ai_tokens_total{direction=\"response\"}[$__rate_interval]))",
+          "refId": "B",
+          "legendFormat": "response"
+        }
+      ],
+      "title": "AI Token Volume",
+      "type": "timeseries",
+      "description": "Prompt and response token volume over time."
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 66,
+        "w": 24,
+        "h": 1
+      },
+      "id": 43,
+      "panels": [],
+      "title": "Modules And Data",
+      "type": "row"
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 67,
+        "w": 12,
+        "h": 8
+      },
+      "id": 44,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "topk(8, label_replace(sum by (__name__) ({__name__=~\"(admin_action_enforcer|bot_replies|homelabsales_archiver|london_content_filter|london_local|london_local_eligibility_checker|london_megathread_helper|london_rule_enforcement|london_tickets|plex_content_filter|trade_tracker)_processed_items_total\"}), \"module\", \"$1\", \"__name__\", \"(.*)_processed_items_total\"))",
+          "refId": "A",
+          "legendFormat": "{{module}}"
+        }
+      ],
+      "title": "Top Modules By Volume",
+      "type": "timeseries",
+      "description": "Most active modules by total processed work in the current metrics history."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 67,
+        "w": 12,
+        "h": 8
+      },
+      "id": 45,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "minVizHeight": 16,
+        "minVizWidth": 12
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_d1_cf_read_queries_total) or vector(0)",
+          "refId": "A",
+          "legendFormat": "read queries",
+          "instant": true
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_d1_cf_write_queries_total) or vector(0)",
+          "refId": "B",
+          "legendFormat": "write queries",
+          "instant": true
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_d1_cf_rows_read_total) or vector(0)",
+          "refId": "C",
+          "legendFormat": "rows read",
+          "instant": true
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "max(bot_d1_cf_rows_written_total) or vector(0)",
+          "refId": "D",
+          "legendFormat": "rows written",
+          "instant": true
+        }
+      ],
+      "title": "Cloudflare D1 Analytics",
+      "type": "bargauge",
+      "description": "Cloudflare-reported D1 usage totals."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 75,
+        "w": 12,
+        "h": 8
+      },
+      "id": 46,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_d1_queries_total[$__rate_interval]))",
+          "refId": "A",
+          "legendFormat": "queries"
+        },
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(bot_d1_rows_affected_total[$__rate_interval]))",
+          "refId": "B",
+          "legendFormat": "rows affected"
+        }
+      ],
+      "title": "D1 Query Volume",
+      "type": "timeseries",
+      "description": "Overall database activity without exposing operation mix."
+    },
+    {
+      "datasource": "labb0t-prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 75,
+        "w": 12,
+        "h": 8
+      },
+      "id": 47,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "minVizHeight": 16,
+        "minVizWidth": 12
+      },
+      "targets": [
+        {
+          "datasource": "labb0t-prometheus",
+          "editorMode": "code",
+          "expr": "topk(8, sum by (module, action_type) (increase(bot_actions_total[$__range])))",
+          "refId": "A",
+          "legendFormat": "{{module}} / {{action_type}}",
+          "instant": true
+        }
+      ],
+      "title": "Bot Action Mix",
+      "type": "bargauge",
+      "description": "Most common moderation and automation actions over the selected range."
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "style": "light",
+  "tags": [
+    "labb0t",
+    "public",
+    "runtime"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "LabB0T Runtime Observatory",
+  "uid": "labb0t-runtime-observatory",
+  "version": 4,
+  "weekStart": ""
+}

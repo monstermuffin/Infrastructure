@@ -1,0 +1,15 @@
+---
+# Hetzner NBG1 VPS hosts
+
+all:
+  children:
+    nbg1:
+      hosts:
+        app.nbg1.muffn.io:
+          ansible_host: app.nbg1.muffn.io
+      vars:
+        ansible_user: muffin
+
+    tag_podman_app:
+      hosts:
+        app.nbg1.muffn.io: {}
