@@ -5,6 +5,31 @@
 
 rules:
 
+  # Hetzner NBG1 — must precede generic host_vars catch-alls
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/meta.yml"
+    action: noop
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/labb0t.yml"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "app.nbg1.muffn.io"
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/podman.yml"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "app.nbg1.muffn.io"
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/files/**"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "app.nbg1.muffn.io"
+
+  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/**"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "app.nbg1.muffn.io"
+
+  - pattern: "ansible/inventory/group_vars/nbg1.yml"
+    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
+    limit: "nbg1"
+
   # group_vars/all.yml — base keys/users applied to all Linux guests
   - pattern: "ansible/inventory/group_vars/all.yml"
     playbook: "ansible/playbooks/linux/manage.yml"
@@ -253,28 +278,3 @@ rules:
   # Changed playbook runs itself directly
   - pattern: "ansible/playbooks/**/*.yml"
     action: playbook_self
-
-      # Hetzner NBG1
-
-  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/meta.yml"
-    action: noop
-
-  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/labb0t.yml"
-    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
-    limit: "app.nbg1.muffn.io"
-
-  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/podman.yml"
-    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
-    limit: "app.nbg1.muffn.io"
-
-  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/files/**"
-    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
-    limit: "app.nbg1.muffn.io"
-
-  - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/**"
-    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
-    limit: "app.nbg1.muffn.io"
-
-  - pattern: "ansible/inventory/group_vars/nbg1.yml"
-    playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
-    limit: "nbg1"
