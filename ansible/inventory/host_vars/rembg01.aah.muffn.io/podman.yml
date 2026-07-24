@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: danielgatis/rembg
     # renovate: datasource=docker depName=danielgatis/rembg
-    tag: 2.0.76
+    tag: 2.0.77
     port: 37285
     container_port: 7000
     exec: s
