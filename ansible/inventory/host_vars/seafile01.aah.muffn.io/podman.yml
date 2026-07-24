@@ -23,7 +23,7 @@ podman_apps:
     enabled: true
     image: mariadb
     # renovate: datasource=docker depName=mariadb versioning=regex:^(?<major>10)\.(?<minor>11)(\.(?<patch>\d+))?(-.*)?$
-    tag: "10.11"
+    tag: "10.11.18-ubi9"
     network: seafile
     volumes:
       - /opt/seafile/db:/var/lib/mysql
