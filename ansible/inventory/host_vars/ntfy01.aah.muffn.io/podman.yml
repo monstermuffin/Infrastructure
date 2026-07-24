@@ -41,7 +41,7 @@ podman_apps:
     enabled: true
     image: docker.io/binwiederhier/ntfy
     # renovate: datasource=docker depName=binwiederhier/ntfy
-    tag: v2.24.0
+    tag: v2.26.0
     port: 80
     container_port: 80
     volumes:
