@@ -8,7 +8,7 @@ all:
         app.nbg1.muffn.io:
           ansible_host: app.nbg1.muffn.io
       vars:
-        ansible_user: muffin
+        ansible_user: ansible
 
     tag_podman_app:
       hosts:
