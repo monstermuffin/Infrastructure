@@ -1,12 +1,8 @@
 ---
 
 - name: Check if role is enabled
-  ansible.builtin.fail:
-    msg: >
-      Podman role is not enabled. Set 'podman_enabled: true'
-      in host_vars to enable deployment.
+  ansible.builtin.meta: end_host
   when: not podman_enabled
-  tags: always
 
 - name: Gather facts if not already present
   ansible.builtin.setup:

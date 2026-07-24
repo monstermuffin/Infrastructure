@@ -18,6 +18,7 @@
   hosts: "{{ target | default('tag_podman_app') }}"
   become: true
   gather_facts: true
+  ignore_unreachable: true
 
   roles:
     - role: linux/base
