@@ -224,6 +224,26 @@
   when: file_item.template_src is defined
   tags: [volumes, setup, config]
 
+- name: Deploy managed static files for {{ _app_name }}
+  ansible.builtin.copy:
+    src: >-
+      {{
+        file_item.src
+        if (file_item.src | regex_search('^/'))
+        else (playbook_dir ~ '/../../inventory/host_vars/' ~ inventory_hostname ~ '/files/' ~ file_item.src)
+      }}
+    dest: "{{ file_item.dest }}"
+    owner: "{{ file_item.owner | default('root') }}"
+    group: "{{ file_item.group | default('root') }}"
+    mode: "{{ file_item.mode | default('0640') }}"
+  loop: "{{ _app.files | default([]) }}"
+  loop_control:
+    loop_var: file_item
+    label: "{{ file_item.dest }}"
+  register: _managed_static_files_result
+  when: file_item.src is defined
+  tags: [volumes, setup, config]
+
 - name: Track setup changes from managed files for {{ _app_name }}
   ansible.builtin.set_fact:
     _setup_changed: >-
@@ -231,6 +251,7 @@
         _setup_changed
         or (_managed_files_result is changed)
         or (_managed_template_files_result is changed)
+        or (_managed_static_files_result is changed)
       }}
   tags: [volumes, setup, config]
 
