@@ -182,6 +182,7 @@ def build_command(rule: dict, path: str, status: str) -> list[CommandSpec]:
             playbook,
             path=path,
             limit=limit,
+            tags=rule.get("tags"),
             extra_vars=rule.get("extra_vars"),
             workdir=workdir,
             priority=priority,

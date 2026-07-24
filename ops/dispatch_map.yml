@@ -21,6 +21,7 @@ rules:
   - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/files/**"
     playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
     limit: "app.nbg1.muffn.io"
+    tags: [config]
 
   - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/**"
     playbook: "ansible/playbooks/vps/maintain_app_nbg1.yml"
