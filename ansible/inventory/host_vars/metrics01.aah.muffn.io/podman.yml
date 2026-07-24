@@ -52,7 +52,7 @@ podman_apps:
     enabled: true
     image: grafana/grafana
     # renovate: datasource=docker depName=grafana/grafana
-    tag: 13.1.0
+    tag: 13.1.1
     port: 3000
     network: metrics
     uid: 472
