@@ -74,7 +74,7 @@
 
 - name: Track setup changes from existing bind mount directories for {{ _app_name }}
   ansible.builtin.set_fact:
-    _setup_changed: "{{ _setup_changed or (_bind_mount_dirs_result is changed) }}"
+    _setup_changed: "{{ _setup_changed or (_bind_mount_dirs_result | default({'changed': false}) is changed) }}"
   tags: [volumes, setup, config]
 
 - name: Create managed bind mount directories for {{ _app_name }}
@@ -113,7 +113,7 @@
 
 - name: Track setup changes from managed bind mount directories for {{ _app_name }}
   ansible.builtin.set_fact:
-    _setup_changed: "{{ _setup_changed or (_managed_bind_mount_dirs_result is changed) }}"
+    _setup_changed: "{{ _setup_changed or (_managed_bind_mount_dirs_result | default({'changed': false}) is changed) }}"
   tags: [volumes, setup, config]
 
 - name: Inspect managed file destinations for {{ _app_name }}
