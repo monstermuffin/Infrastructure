@@ -68,7 +68,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/jlesage/firefox
     # renovate: datasource=docker depName=ghcr.io/jlesage/firefox
-    tag: v26.03.1
+    tag: v26.07.2
     network_mode: container:gluetun
     after:
       - gluetun.service
