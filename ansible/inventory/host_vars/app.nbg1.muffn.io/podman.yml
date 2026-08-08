@@ -61,7 +61,7 @@ podman_apps:
     service_enable: true
     image: docker.io/prom/prometheus
     # renovate: datasource=docker depName=docker.io/prom/prometheus
-    tag: v3.13.1
+    tag: v3.13.2
     network: labb0t
     user: "65534:65534"
     uid: 65534
