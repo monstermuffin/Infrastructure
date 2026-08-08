@@ -25,8 +25,8 @@ podman_apps:
   sure-redis:
     enabled: true
     image: redis
-    # renovate: datasource=docker depName=redis versioning=regex:^(?<major>7)(\.(?<minor>\d+)(\.(?<patch>\d+))?)?(-.*)?$
-    tag: "7"
+    # renovate: datasource=docker depName=redis versioning=regex:^(?<major>7.4.10-alpine3.21)(\.(?<minor>\d+)(\.(?<patch>\d+))?)?(-.*)?$
+    tag: "7.4.10-alpine3.21"
     container_name: sure-redis
     network: sure
     uid: 999
