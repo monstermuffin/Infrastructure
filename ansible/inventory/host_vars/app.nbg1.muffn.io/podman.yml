@@ -164,7 +164,7 @@ podman_apps:
     service_enable: true
     image: docker.io/amir20/dozzle
     # renovate: datasource=docker depName=docker.io/amir20/dozzle
-    tag: v10.6.11
+    tag: v10.6.15
     network: labb0t
     after:
       - podman.socket
