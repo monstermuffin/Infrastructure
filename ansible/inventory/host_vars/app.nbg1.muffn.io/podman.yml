@@ -94,7 +94,7 @@ podman_apps:
     service_enable: true
     image: docker.io/grafana/grafana
     # renovate: datasource=docker depName=docker.io/grafana/grafana
-    tag: "13.1.1"
+    tag: "13.1.4"
     network: labb0t
     user: "472:472"
     uid: 472
