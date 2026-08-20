@@ -9,7 +9,7 @@ podman_apps:
     enabled: true
     image: owntracks/recorder
     # renovate: datasource=docker depName=owntracks/recorder
-    tag: 1.0.1
+    tag: 1.0.3
     container_name: owntracks-recorder
     network: owntracks
     port: 8083
