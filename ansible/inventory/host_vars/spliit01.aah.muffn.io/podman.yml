@@ -27,7 +27,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/spliit-app/spliit
     # renovate: datasource=docker depName=ghcr.io/spliit-app/spliit
-    tag: "1.19.0"
+    tag: "1.22.0"
     port: 3000
     user: "988:994"
     uid: 988
