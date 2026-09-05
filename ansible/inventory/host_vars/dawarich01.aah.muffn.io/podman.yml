@@ -34,7 +34,7 @@ podman_apps:
     enabled: true
     image: freikin/dawarich
     # renovate: datasource=docker depName=freikin/dawarich
-    tag: "1.12.2"
+    tag: "1.14.0"
     container_name: dawarich-app
     port: 3000
     network: dawarich
@@ -82,7 +82,7 @@ podman_apps:
     enabled: true
     image: freikin/dawarich
     # renovate: datasource=docker depName=freikin/dawarich
-    tag: "1.12.2"
+    tag: "1.14.0"
     container_name: dawarich-sidekiq
     network: dawarich
     podman_args:
