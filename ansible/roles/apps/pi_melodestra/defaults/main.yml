@@ -54,7 +54,6 @@ pi_melodestra_kanshi_profiles:
     outputs:
       - output: HDMI-A-1
         enable: true
-        mode: "3840x2160@59.982"
         position: "0,0"
         scale: "1.000000"
         transform: "90"

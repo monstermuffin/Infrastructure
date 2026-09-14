@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/monstermuffin/melodestra
     # renovate: datasource=docker depName=ghcr.io/monstermuffin/melodestra
-    tag: dev
+    tag: latest
     port: 5010
     container_port: 5010
     volumes:
