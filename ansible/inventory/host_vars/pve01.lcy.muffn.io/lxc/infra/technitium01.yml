@@ -4,7 +4,7 @@ pve_lxcs_technitium01:
     vmid: 102
     hostname: technitium01.lcy.muffn.io
     cores: 2
-    memory: 4096
+    memory: 1024
     swap: 512
     disk: "16G"
     network_ip: "10.83.7.102/24"
