@@ -1,0 +1,32 @@
+#!/bin/bash
+# ccagent-relogin — re-authenticate ccagent with claude.ai
+#
+# Run with: sudo ccagent-relogin
+
+set -euo pipefail
+
+CCAGENT_USER=ccagent
+CCAGENT_HOME=/opt/ccagent
+CCAGENT_BIN="$CCAGENT_HOME/.local/bin/claude"
+SERVICE_NAME=ccagent-remote-control
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    echo "error: must be run as root (use sudo ccagent-relogin)" >&2
+    exit 1
+fi
+
+echo "==> Stopping $SERVICE_NAME..."
+systemctl stop "$SERVICE_NAME" 2>/dev/null || true
+# Clear any failed state so the service can restart cleanly afterwards
+systemctl reset-failed "$SERVICE_NAME" 2>/dev/null || true
+
+echo ""
+echo "==> Starting interactive login as $CCAGENT_USER..."
+
+sudo -u "$CCAGENT_USER" -H "$CCAGENT_BIN" /login
+
+echo ""
+echo "==> Starting $SERVICE_NAME..."
+systemctl start "$SERVICE_NAME"
+sleep 3
+systemctl status "$SERVICE_NAME" --no-pager -l

@@ -2,6 +2,10 @@
 Description=CC-RC ({{ ccagent_user }})
 After=network-online.target
 Wants=network-online.target
+# Reset with: sudo systemctl reset-failed {{ ccagent_service_name }}
+# Re-authenticate with: sudo ccagent-relogin
+StartLimitIntervalSec=120
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -18,7 +22,7 @@ ExecStartPre={{ ccagent_home }}/.local/bin/ccagent-fetch-secrets.sh
 WorkingDirectory={{ ccagent_workdir }}
 ExecStart=/bin/sh -c 'echo y | exec {{ ccagent_bin }} remote-control --name "{{ ccagent_remote_control_name }}"{{ (' --spawn ' ~ ccagent_remote_control_spawn) if ccagent_remote_control_spawn | length > 0 else '' }}'
 Restart=on-failure
-RestartSec=5
+RestartSec=15
 
 [Install]
 WantedBy=multi-user.target
