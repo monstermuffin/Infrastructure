@@ -1,0 +1,23 @@
+---
+podman_enabled: true
+
+podman_apps:
+  spoolman:
+    enabled: true
+    image: ghcr.io/donkie/spoolman
+    # renovate: datasource=docker depName=ghcr.io/donkie/spoolman
+    tag: "0.26.1"
+    port: 7912
+    container_port: 8000
+    uid: 1000
+    gid: 1000
+    volumes:
+      - /opt/spoolman/data:/opt/spoolman/data
+    env:
+      TZ: Europe/London
+      SPOOLMAN_DIR_DATA: /opt/spoolman/data
+      SPOOLMAN_DIR_BACKUPS: /opt/spoolman/data/backups
+      SPOOLMAN_LOGGING_LEVEL: WARNING
+    # First-run alembic migrations take ~30s
+    startup_timeout: 60
+    restart: always

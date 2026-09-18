@@ -1,0 +1,23 @@
+---
+pve_lxcs_spoolman01:
+  spoolman01:
+    vmid: 122
+    hostname: spoolman01.lcy.muffn.io
+    cores: 1
+    memory: 1024
+    swap: 512
+    disk: "8G"
+    network_ip: "10.83.7.122/24"
+    network_gw: "10.83.7.1"
+    network_vlan: 7
+    unprivileged: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_lcy
+      - podman_app
+      - app_spoolman
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

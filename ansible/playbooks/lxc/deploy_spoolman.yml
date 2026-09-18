@@ -1,0 +1,25 @@
+---
+# Deploy Spoolman filament spool manager on spoolman01.lcy.muffn.io
+#
+# Full deployment:
+#   ansible-playbook playbooks/lxc/deploy_spoolman.yml
+#
+# Specific host:
+#   ansible-playbook playbooks/lxc/deploy_spoolman.yml --limit spoolman01.lcy.muffn.io -e dispatch_fail_offline=true
+#
+# Update image only:
+#   ansible-playbook playbooks/lxc/deploy_spoolman.yml --tags image
+
+- name: Deploy Spoolman
+  hosts: "{{ target | default('spoolman01.lcy.muffn.io') }}"
+  become: true
+  gather_facts: true
+  ignore_unreachable: "{{ not (dispatch_fail_offline | default(false) | bool) }}"
+
+  roles:
+    - role: linux/base
+      tags: [base, setup]
+    - role: podman
+      tags: [podman, install]
+    - role: apps/podman_app
+      tags: [app, deploy]
