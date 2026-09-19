@@ -8,8 +8,8 @@ podman_apps:
   sparky-db:
     enabled: true
     image: postgres
-    # renovate: datasource=docker depName=postgres versioning=regex:^(?<major>18)(\.(?<minor>\d+)(\.(?<patch>\d+))?)?(-.*)?$
-    tag: "18"
+    # renovate: datasource=docker depName=postgres versioning=regex:^(?<major>18.4-alpine3.24)(\.(?<minor>\d+)(\.(?<patch>\d+))?)?(-.*)?$
+    tag: "18.4-alpine3.24"
     container_name: sparky-db
     network: sparky
     uid: 999
