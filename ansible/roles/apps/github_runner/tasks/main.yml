@@ -22,6 +22,7 @@
     url: https://apt.releases.hashicorp.com/gpg
     dest: "{{ github_runner_terraform_keyring }}"
     mode: "0644"
+    force: true
   when: github_runner_install_terraform | bool
   tags: [packages, install, repo]
 
