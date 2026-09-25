@@ -5,6 +5,10 @@ description: >-
 node_name: pve04
 vm_id: 109
 
+# Unused; kept shut down and out of HA recovery.
+started: false
+on_boot: false
+
 bios: ovmf
 operating_system: win11
 
@@ -46,7 +50,7 @@ vga:
 
 agent:
   enabled: true
-  timeout: 15m
+  timeout: 1m
 
 tags:
   - app_prtg
@@ -56,7 +60,7 @@ tags:
 
 ha:
   enabled: true
-  state: started
+  state: disabled
   max_restart: 1
   max_relocate: 1
 
