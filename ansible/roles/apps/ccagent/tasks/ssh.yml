@@ -28,5 +28,12 @@
     owner: "{{ ccagent_user }}"
     group: "{{ ccagent_user }}"
     mode: "0600"
-  when: ccagent_ansible_ssh_key | length > 0
+  when: (ccagent_infisical_enabled | bool) or (ccagent_ansible_ssh_key | length > 0)
+  tags: [ssh, configure]
+
+- name: Remove stale pre-Infisical SSH private key
+  ansible.builtin.file:
+    path: "{{ ccagent_home }}/.ssh/ansible_ccagent"
+    state: absent
+  when: ccagent_infisical_enabled | bool
   tags: [ssh, configure]
