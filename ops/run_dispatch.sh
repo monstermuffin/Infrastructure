@@ -63,18 +63,27 @@ if [ "$SHA" = "$LAST_SHA" ]; then
   exit 0
 fi
 
+# Never deploy a commit older than the last deployed one: diffing backwards
+# would redeploy old versions (e.g. a re-run of an old workflow run, or CI for
+# an older commit finishing after a newer one).
+if [ -n "$LAST_SHA" ] && git cat-file -e "${LAST_SHA}^{commit}" 2>/dev/null \
+  && ! git merge-base --is-ancestor "$LAST_SHA" "$SHA"; then
+  echo "Skipping dispatch: $SHA does not descend from last dispatched $LAST_SHA"
+  exit 0
+fi
+
 GITHUB_REPO="monstermuffin/Infrastructure"
 CONTEXT="ansible/dispatch"
 
 post_status() {
   local state=$1
   local description=$2
-  curl -s -X POST \
-    -H "Authorization: token ${GITHUB_TOKEN}" \
+  curl -fsS -X POST \
+    -H "Authorization: token ${GITHUB_TOKEN:-}" \
     -H "Content-Type: application/json" \
     -d "{\"state\":\"${state}\",\"context\":\"${CONTEXT}\",\"description\":\"${description}\"}" \
     "https://api.github.com/repos/${GITHUB_REPO}/statuses/${SHA}" \
-    > /dev/null
+    > /dev/null || echo "WARNING: failed to post '${state}' commit status" >&2
 }
 
 post_status "pending" "Dispatch running..."
@@ -84,15 +93,36 @@ run_ansible() {
 }
 
 run_terraform() {
-  local tfvars_file
+  local tfvars_file plan_rc=0
+  local plan_args=(-input=false -parallelism=1 -lock-timeout=10m -detailed-exitcode -out=tfplan)
   tfvars_file=$(python3 ops/proxmox_vm_dispatch.py resolve-tfvars --base "${LAST_SUCCESSFUL_SHA:-}" --head "$SHA")
   python3 ops/gen_lxc_dns.py
   terraform -chdir=tf init -input=false
   if [ -n "$tfvars_file" ]; then
-    terraform -chdir=tf apply -parallelism=1 -auto-approve -var-file="$tfvars_file"
-  else
-    terraform -chdir=tf apply -parallelism=1 -auto-approve
+    plan_args+=(-var-file="$tfvars_file")
   fi
+
+  # -detailed-exitcode: 0 = no changes, 1 = error, 2 = changes present
+  terraform -chdir=tf plan "${plan_args[@]}" || plan_rc=$?
+  case "$plan_rc" in
+    0) echo "Terraform plan: no changes"; return 0 ;;
+    2) ;;
+    *) return 1 ;;
+  esac
+
+  if ! python3 ops/tf_plan_guard.py tf tfplan; then
+    if [ "${TF_ALLOW_DESTROY:-false}" != "true" ]; then
+      echo "::error title=Terraform plan needs approval::Plan deletes or replaces resources. Review it, then run the Deploy workflow manually with allow_destroy enabled."
+      rm -f tf/tfplan
+      return 1
+    fi
+    echo "allow_destroy set: applying destructive plan"
+  fi
+
+  local apply_rc=0
+  terraform -chdir=tf apply -input=false -parallelism=1 -lock-timeout=10m tfplan || apply_rc=$?
+  rm -f tf/tfplan
+  return "$apply_rc"
 }
 
 changed_vm_hosts() {

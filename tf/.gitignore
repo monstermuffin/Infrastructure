@@ -6,3 +6,5 @@
 # Tracked encrypted
 !terraform.tfvars
 !terraform.*.tfvars
+# Saved plans can contain secrets
+tfplan
