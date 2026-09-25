@@ -6,7 +6,7 @@
   ],
   "minimumReleaseAge": "3 days",
   "minimumReleaseAgeBehaviour": "timestamp-optional",
-  "rebaseWhen": "behind-base-branch",
+  "rebaseWhen": "conflicted",
   "separateMajorMinor": false,
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
@@ -177,6 +177,26 @@
       "automerge": true,
       "automergeType": "pr",
       "labels": ["renovate", "jellyfin"]
+    },
+    {
+      "description": "Databases - never automerge, one PR per host, keep the image variant",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["/(^|/)(postgres|postgis|mariadb|mysql|redis|valkey)$/"],
+      "automerge": false,
+      "additionalBranchPrefix": "{{parentDir}}-",
+      "commitMessageSuffix": "({{parentDir}})",
+      "labels": ["renovate", "database"],
+      "prBodyNotes": [
+        "Database image. Patch/minor updates within one major keep the on-disk format; the container restarts during deploy. Check the tag suffix (e.g. `-trixie`, `-alpine`, `-noble`) has not changed: a different base OS can change collation behaviour."
+      ]
+    },
+    {
+      "description": "Database majors - Dependency Dashboard approval only; need a planned dump/restore or upgrade",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["/(^|/)(postgres|postgis|mariadb|mysql|redis|valkey)$/"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "labels": ["renovate", "database", "needs-review"]
     },
     {
       "description": "Frigate - semver/beta/rc tags only, allow prerelease updates",
