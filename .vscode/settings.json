@@ -2,5 +2,13 @@
   "yaml.customTags": [
     "!vault scalar",
     "!unsafe scalar"
-  ]
+  ],
+  "harper.linters.SpellCheck": false,
+  "harper.linters.LongSentences": false,
+  "harper.linters.OxfordComma": false,
+  "harper.linters.Dashes": false,
+  "harper.linters.SentenceCapitalization": false,
+  "harper.linters.UseTitleCase": false,
+  "harper.linters.UnclosedQuotes": false,
+  "ansible.python.interpreterPath": "${workspaceFolder}/ansible/.venv/bin/python"
 }

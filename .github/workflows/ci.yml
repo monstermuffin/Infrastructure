@@ -144,7 +144,7 @@ jobs:
         run: |
           python3 -m venv .venv
           . .venv/bin/activate
-          pip install ansible ansible-lint yamllint
+          pip install -r ansible/requirements-dev.txt
 
       - name: yamllint
         if: ${{ steps.scope.outputs.ci_skip != 'true' && steps.scope.outputs.has_ansible_yml == 'true' }}

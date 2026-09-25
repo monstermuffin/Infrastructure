@@ -18,6 +18,7 @@ ansible/.venv
 *.tmp*
 .*au*
 *au*.md
+*agents*
 password*.txt
 inventory/hosts.yml
 inventory/*/hosts.yml
