@@ -9,10 +9,51 @@ podman_apps:
     tag: 2.0.84
     port: 37285
     container_port: 7000
-    exec: s
+    # Server takes ~40s to bind after start
+    startup_timeout: 90
+
+    # 2.0.80+ uses ~/.rembg/models/<model>/<model>.onnx; mount shadows baked-in bria-rmbg
     volumes:
-      - /opt/rembg/models:/root/.u2net
+      - /opt/rembg/models/new:/root/.rembg/models
+      - /opt/rembg/start.py:/opt/start.py:ro
+
     env:
-      MODEL: birefnet-general-lite
-      OMP_NUM_THREADS: "4"
+      OMP_NUM_THREADS: "2"
       TZ: Europe/London
+      # Return freed memory to the OS between inferences
+      MALLOC_TRIM_THRESHOLD_: "524288"
+      MALLOC_MMAP_THRESHOLD_: "131072"
+
+    podman_args:
+      - "--entrypoint=python3"
+
+    exec: /opt/start.py
+
+    files:
+      # Disables the ONNX CPU memory arena, which otherwise hoards all RAM and OOMs the LXC
+      - dest: /opt/rembg/start.py
+        mode: "0755"
+        content: |
+          #!/usr/bin/env python3
+          import onnxruntime as ort
+
+          _orig_init = ort.SessionOptions.__init__
+
+          def _patched_init(self, *args, **kwargs):
+              _orig_init(self, *args, **kwargs)
+              self.enable_cpu_mem_arena = False
+
+          ort.SessionOptions.__init__ = _patched_init
+
+          from rembg.commands.s_command import s_command
+          s_command(standalone_mode=False, args=["--no-ui"])
+
+      - dest: /opt/rembg/models/new/u2netp/u2netp.onnx
+        setup_command: >-
+          mkdir -p /opt/rembg/models/new/u2netp &&
+          cp /opt/rembg/models/u2netp.onnx /opt/rembg/models/new/u2netp/u2netp.onnx
+
+      - dest: /opt/rembg/models/new/u2net/u2net.onnx
+        setup_command: >-
+          mkdir -p /opt/rembg/models/new/u2net &&
+          cp /opt/rembg/models/u2net.onnx /opt/rembg/models/new/u2net/u2net.onnx
