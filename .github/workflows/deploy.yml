@@ -1,28 +1,52 @@
 name: Deploy
 
+# Deploys only after CI succeeds for a push to main. PR CI runs also complete
+# the CI workflow, so the job filters on the triggering event and branch.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
-    paths-ignore:
-      - "**/*.example.*"
-      - "**/*.example"
   workflow_dispatch:
+    inputs:
+      allow_destroy:
+        description: "Apply a Terraform plan that deletes or replaces resources"
+        type: boolean
+        default: false
+
+# One deploy at a time. A newer pending run replaces an older pending run; a
+# running deploy is never cancelled. Dispatch diffs from the last successful
+# SHA, so the surviving run covers every commit merged while it waited.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  statuses: write
 
 jobs:
   dispatch:
     name: Deploy Dispatch
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main')
     runs-on: [self-hosted, linux, aah]
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Validate LXC inventory identifiers
         run: python3 ops/lxc_inventory.py --check-duplicates
 
       - name: Run dispatch
         env:
-          BEFORE_SHA: ${{ github.event.before }}
           GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
           VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+          GITHUB_TOKEN: ${{ github.token }}
+          TF_ALLOW_DESTROY: ${{ inputs.allow_destroy && 'true' || 'false' }}
         run: bash ops/run_dispatch.sh
