@@ -21,7 +21,7 @@ ccagent_infisical_client_secret: !vault |
           63633836623833333536306334653665333030363366346239303662393630393038646534653730
           65613833323636666638
 
-ccagent_mcphub_url: "http://mcphub01.lcy.muffn.io:3000/mcp"
+ccagent_mcphub_url: "http://mcphub01.lcy.muffn.io:3000/mcp/ccagent"
 
 ccagent_mcphub_bearer_key: !vault |
           $ANSIBLE_VAULT;1.1;AES256
