@@ -13,6 +13,13 @@
   when: ccagent_mcphub_url | length > 0
   tags: [mcp, configure]
 
+- name: Determine registered mcphub URL
+  ansible.builtin.set_fact:
+    _ccagent_mcphub_registered_url: >-
+      {{ (_ccagent_mcp_list.stdout | regex_findall('^mcphub: (\S+)', multiline=True) + [''])[0] }}
+  when: ccagent_mcphub_url | length > 0
+  tags: [mcp, configure]
+
 - name: Remove existing mcphub MCP server
   ansible.builtin.command:
     argv:
@@ -27,8 +34,9 @@
   args:
     chdir: "{{ ccagent_workdir }}"
   when:
-    - ccagent_mcp_force_register | default(false) | bool
-    - "'mcphub:' in _ccagent_mcp_list.stdout"
+    - ccagent_mcphub_url | length > 0
+    - _ccagent_mcphub_registered_url | length > 0
+    - (ccagent_mcp_force_register | default(false) | bool) or (_ccagent_mcphub_registered_url != ccagent_mcphub_url)
   changed_when: true
   failed_when: false
   tags: [mcp, configure]
@@ -53,7 +61,9 @@
     HOME: "{{ ccagent_home }}"
   args:
     chdir: "{{ ccagent_workdir }}"
-  when: "'mcphub:' not in _ccagent_mcp_list.stdout"
+  when:
+    - ccagent_mcphub_url | length > 0
+    - (ccagent_mcp_force_register | default(false) | bool) or (_ccagent_mcphub_registered_url != ccagent_mcphub_url)
   no_log: true
   changed_when: true
   notify: Restart ccagent remote-control service
