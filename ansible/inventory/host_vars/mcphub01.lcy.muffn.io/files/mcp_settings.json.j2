@@ -65,8 +65,40 @@
       "type": "stdio",
       "command": "uvx",
       "args": ["--from", "flights[mcp]", "fli-mcp"]
+    },
+    "places": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "-q", "--script", "/opt/mcphub-servers/places_mcp.py"],
+      "env": {
+        "GOOGLE_MAPS_API_KEY": "{{ mcphub_google_maps_api_key }}",
+        "HOME_LAT": "{{ mcphub_home_lat }}",
+        "HOME_LNG": "{{ mcphub_home_lng }}"
+      }
     }
   },
+  "groups": [
+    {
+      "id": "bf459135-1f10-42ed-b165-42cf9ed33541",
+      "name": "ccagent",
+      "description": "Servers available to ccagent",
+      "servers": [
+        "proxmox-lcy-pve01",
+        "proxmox-aah-pve02",
+        "proxmox-aah-pve03",
+        "proxmox-aah-pve04",
+        "home-assistant",
+        "fli",
+        "places"
+      ]
+    },
+    {
+      "id": "45c263cf-3cea-453d-873a-1e02fdbf3cec",
+      "name": "hass-voice",
+      "description": "Tools exposed to the Home Assistant voice assistant",
+      "servers": ["places"]
+    }
+  ],
   "bearerKeys": [
     {
       "id": "aa19baac-2f6b-494a-a182-151a6e7ea021",
@@ -74,8 +106,18 @@
       "token": "{{ mcphub_bearer_key_ccagent }}",
       "enabled": true,
       "kind": "system",
-      "accessType": "all",
-      "allowedGroups": [],
+      "accessType": "groups",
+      "allowedGroups": ["ccagent"],
+      "allowedServers": []
+    },
+    {
+      "id": "78fd4c7e-3048-406d-a7f8-c576fab8b833",
+      "name": "hass-voice",
+      "token": "{{ mcphub_bearer_key_hass_voice }}",
+      "enabled": true,
+      "kind": "system",
+      "accessType": "groups",
+      "allowedGroups": ["hass-voice"],
       "allowedServers": []
     },
     {
