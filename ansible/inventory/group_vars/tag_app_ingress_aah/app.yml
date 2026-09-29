@@ -32,8 +32,6 @@ podman_apps:
     network: ingress
     after:
       - traefik.service
-    requires:
-      - traefik.service
     env:
       TUNNEL_TOKEN: "{{ cftun_tunnel_token | trim }}"
     exec: --no-autoupdate tunnel run
