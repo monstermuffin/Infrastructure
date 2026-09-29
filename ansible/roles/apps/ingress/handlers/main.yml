@@ -9,3 +9,9 @@
     name: traefik.service
     state: restarted
   failed_when: false
+
+- name: Restart systemd-tmpfiles-clean timer
+  ansible.builtin.systemd:
+    name: systemd-tmpfiles-clean.timer
+    state: restarted
+    daemon_reload: true
