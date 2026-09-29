@@ -67,6 +67,7 @@ podman_apps:
       VIKUNJA_MAILER_PASSWORD: "{{ vikunja_mailer_password | trim }}"
       VIKUNJA_MAILER_FROMEMAIL: "{{ vikunja_mailer_from | trim }}"
       VIKUNJA_MAILER_FORCESSL: "true"
+      VIKUNJA_DEFAULTSETTINGS_EMAIL_REMINDERS_ENABLED: "true"
 
 vikunja_db_password: !vault |
           $ANSIBLE_VAULT;1.1;AES256
