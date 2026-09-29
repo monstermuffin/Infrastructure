@@ -1,0 +1,31 @@
+---
+# Alloy loads every *.alloy file in the config directory.
+- name: Point Alloy at the config directory
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^CONFIG_FILE='
+    line: 'CONFIG_FILE="/etc/alloy"'
+  notify: Restart alloy
+
+- name: Set Alloy start options
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^CUSTOM_ARGS='
+    line: 'CUSTOM_ARGS="--disable-reporting --server.http.listen-addr={{ collector_http_listen_address }}"'
+  notify: Restart alloy
+
+- name: Remove the packaged example config
+  ansible.builtin.file:
+    path: /etc/alloy/config.alloy
+    state: absent
+  notify: Reload alloy
+
+- name: Deploy the collector config
+  ansible.builtin.template:
+    src: collector.alloy.j2
+    dest: /etc/alloy/collector.alloy
+    owner: root
+    group: alloy
+    mode: "0640"
+    validate: /usr/bin/alloy validate %s
+  notify: Reload alloy

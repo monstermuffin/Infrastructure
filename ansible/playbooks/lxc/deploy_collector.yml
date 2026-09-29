@@ -1,0 +1,36 @@
+---
+# Deploy a site collector: Alloy (receive, buffer, forward, scrape) plus the
+# site-local exporters declared in the host's podman_apps.
+#
+# Target all collectors (tag app_collector in Proxmox):
+#   ops/ansible_playbook.sh playbooks/lxc/deploy_collector.yml
+#
+# Target one collector:
+#   ansible-playbook playbooks/lxc/deploy_collector.yml -e target=collector01.aah.muffn.io -e dispatch_fail_offline=true
+#
+# Alloy only / exporters only:
+#   --tags alloy  |  --tags deploy
+
+- name: Deploy site collector
+  hosts: "{{ target | default('tag_app_collector') }}"
+  become: true
+  gather_facts: true
+  ignore_unreachable: "{{ not (dispatch_fail_offline | default(false) | bool) }}"
+
+  roles:
+    - role: linux/base
+      tags:
+        - base
+        - setup
+    - role: podman
+      tags:
+        - podman
+        - install
+    - role: apps/collector
+      tags:
+        - alloy
+        - collector
+    - role: apps/podman_app
+      tags:
+        - app
+        - deploy

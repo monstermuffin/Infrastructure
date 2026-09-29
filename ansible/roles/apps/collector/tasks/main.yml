@@ -1,0 +1,32 @@
+---
+- name: Check this host is a collector in monitoring_topology
+  ansible.builtin.assert:
+    that:
+      - monitoring_topology is defined
+      - inventory_hostname in (monitoring_topology.sites.values() | map(attribute='collector') | list)
+    fail_msg: >-
+      {{ inventory_hostname }} is not the collector of any site in
+      monitoring_topology.sites. Add it there or do not target this host.
+  tags: always
+
+- name: Configure the Grafana apt repository
+  ansible.builtin.import_tasks: repo.yml
+  tags:
+    - repo
+    - setup
+
+- name: Install Alloy
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - install
+    - packages
+
+- name: Configure Alloy
+  ansible.builtin.import_tasks: config.yml
+  tags:
+    - config
+
+- name: Manage the Alloy service
+  ansible.builtin.import_tasks: service.yml
+  tags:
+    - service

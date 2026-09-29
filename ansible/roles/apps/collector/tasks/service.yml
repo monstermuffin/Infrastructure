@@ -1,0 +1,18 @@
+---
+- name: Enable and start Alloy
+  ansible.builtin.systemd:
+    name: alloy
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Apply pending Alloy changes now
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the push receiver
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ collector_receiver_port }}"
+    timeout: 30
+  tags:
+    - verify

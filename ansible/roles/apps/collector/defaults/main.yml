@@ -1,0 +1,46 @@
+---
+# Site collector: Grafana Alloy receives remote-write pushes from the hosts at
+# its site, buffers them on disk and forwards them to the hub. It also scrapes
+# the fixed targets listed in monitoring_topology.
+
+# renovate: grafana-apt depName=alloy
+collector_alloy_version: "1.20.1-1"
+collector_alloy_repo_uri: https://apt.grafana.com
+collector_alloy_repo_key: https://apt.grafana.com/gpg.key
+
+# Site this collector serves: the site whose monitoring_topology entry names
+# this host as its collector.
+collector_site: >-
+  {{ monitoring_topology.sites | dict2items
+     | selectattr('value.collector', 'equalto', inventory_hostname)
+     | map(attribute='key') | first }}
+
+# Push receiver for the hosts at the site (Prometheus remote-write).
+collector_receiver_address: "0.0.0.0"
+collector_receiver_port: 8429
+
+# Hub: where everything is forwarded. Use the inventory address, since DNS
+# records for new guests are only created after a merge.
+collector_hub_host: victoriametrics01.aah.muffn.io
+collector_hub_port: 8428
+collector_hub_write_url: >-
+  http://{{ hostvars[collector_hub_host].ansible_host | default(collector_hub_host)
+  if collector_hub_host in hostvars else collector_hub_host }}:{{ collector_hub_port }}/api/v1/write
+
+# On-disk buffer for the forwarded stream. max_keepalive_time is how long
+# unsent data is kept while the hub is unreachable (design minimum: 48h).
+collector_wal_truncate_frequency: 2h
+collector_wal_min_keepalive_time: 5m
+collector_wal_max_keepalive_time: 72h
+
+# Alloy's own status and self-metrics endpoint. Loopback only.
+collector_http_listen_address: "127.0.0.1:12345"
+
+# Heartbeat and self-metrics.
+collector_self_scrape_interval: 30s
+
+# pve-exporter (podman app on this host) queried for the Proxmox API targets in
+# monitoring_topology.pve that belong to this site.
+collector_pve_exporter_address: "127.0.0.1:9221"
+collector_pve_scrape_interval: 60s
+collector_pve_scrape_timeout: 30s

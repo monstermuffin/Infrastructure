@@ -1,0 +1,129 @@
+// {{ ansible_managed }}
+//
+// Site collector for {{ collector_site }}.
+//   1. receives Prometheus remote-write pushes from the hosts at the site,
+//   2. scrapes the fixed targets (Proxmox API through pve-exporter) and its own
+//      status, and
+//   3. forwards everything to the hub through an on-disk buffer.
+
+// ---- Push receiver ---------------------------------------------------------
+// Hosts stamp their own site/host/kind labels; the receiver forwards as is.
+prometheus.receive_http "site" {
+  http {
+    listen_address = "{{ collector_receiver_address }}"
+    listen_port    = {{ collector_receiver_port }}
+  }
+  forward_to = [prometheus.remote_write.hub.receiver]
+}
+
+// ---- Forward to the hub ----------------------------------------------------
+// The WAL is the buffer: while the hub is unreachable, unsent samples stay on
+// disk for up to max_keepalive_time and are sent in order once it is back.
+// Unsent samples are not resent if Alloy itself restarts, so config changes
+// are applied with a reload.
+prometheus.remote_write "hub" {
+  endpoint {
+    url = "{{ collector_hub_write_url }}"
+
+    metadata_config {
+      send = false
+    }
+  }
+
+  wal {
+    truncate_frequency = "{{ collector_wal_truncate_frequency }}"
+    min_keepalive_time = "{{ collector_wal_min_keepalive_time }}"
+    max_keepalive_time = "{{ collector_wal_max_keepalive_time }}"
+  }
+}
+
+// ---- Heartbeat and pipeline health -----------------------------------------
+// up{job="collector"} is the site heartbeat seen at the hub. The series kept
+// here are the ones used by rules and the pipeline dashboard.
+prometheus.exporter.self "collector" {}
+
+discovery.relabel "collector" {
+  targets = prometheus.exporter.self.collector.targets
+
+  // The exporter sets job="integrations/self"; the heartbeat series is
+  // up{job="collector"}.
+  rule {
+    target_label = "job"
+    replacement  = "collector"
+  }
+
+  rule {
+    target_label = "site"
+    replacement  = "{{ collector_site }}"
+  }
+
+  rule {
+    target_label = "host"
+    replacement  = "{{ inventory_hostname }}"
+  }
+
+  rule {
+    target_label = "kind"
+    replacement  = "lxc"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement  = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "collector" {
+  job_name        = "collector"
+  targets         = discovery.relabel.collector.output
+  scrape_interval = "{{ collector_self_scrape_interval }}"
+  forward_to      = [prometheus.relabel.collector.receiver]
+}
+
+prometheus.relabel "collector" {
+  forward_to = [prometheus.remote_write.hub.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "up|alloy_build_info|alloy_config_last_load_(successful|success_timestamp_seconds)|alloy_resources_process_(cpu_seconds_total|resident_memory_bytes)|prometheus_remote_storage_(samples_total|samples_failed_total|samples_retried_total|samples_pending|bytes_total|highest_timestamp_in_seconds|queue_highest_sent_timestamp_seconds|shards)"
+    action        = "keep"
+  }
+}
+{% set pve_entries = monitoring_topology.pve | default([]) | selectattr('site', 'equalto', collector_site) | list %}
+{% if pve_entries %}
+
+// ---- Proxmox API ------------------------------------------------------------
+// One job per pve-exporter module, named as before the exporter moved here
+// (pve_<module>) so existing dashboards and rules keep matching. The instance
+// label is the Proxmox node that was queried.
+{% for entry in pve_entries %}
+
+prometheus.scrape "pve_{{ entry.module }}" {
+  job_name        = "pve_{{ entry.module }}"
+  metrics_path    = "/pve"
+  scrape_interval = "{{ collector_pve_scrape_interval }}"
+  scrape_timeout  = "{{ collector_pve_scrape_timeout }}"
+  forward_to      = [prometheus.relabel.pve.receiver]
+
+  targets = [
+{% for target in entry.targets %}
+    {
+      "__address__"       = "{{ collector_pve_exporter_address }}",
+      "__param_module"    = "{{ entry.module }}",
+      "__param_target"    = "{{ target }}",
+      "instance"          = "{{ target }}",
+    },
+{% endfor %}
+  ]
+}
+{% endfor %}
+
+prometheus.relabel "pve" {
+  forward_to = [prometheus.remote_write.hub.receiver]
+
+  rule {
+    target_label = "site"
+    replacement  = "{{ collector_site }}"
+  }
+}
+{% endif %}
