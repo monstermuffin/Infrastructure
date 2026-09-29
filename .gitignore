@@ -6,7 +6,9 @@ ansible/collections/
 .vault_password
 !.vault_password.example
 *.secret
-docs/
+docs/*
+!docs/monitoring/
+!docs/runbooks/
 .env
 *claude*
 ansible/.venv
