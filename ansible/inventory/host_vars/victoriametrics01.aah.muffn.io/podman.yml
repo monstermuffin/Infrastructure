@@ -1,0 +1,130 @@
+---
+podman_enabled: true
+
+podman_networks:
+  metrics: {}
+
+podman_apps:
+  victoriametrics:
+    enabled: true
+    image: victoriametrics/victoria-metrics
+    # renovate: datasource=docker depName=victoriametrics/victoria-metrics
+    tag: v1.152.0
+    port: 8428
+    network: metrics
+    volumes:
+      - /opt/victoriametrics01/victoria-metrics-data:/victoria-metrics-data
+      - /opt/victoriametrics01/scrape.yml:/etc/victoria-metrics/scrape.yml:ro
+    files:
+      - dest: /opt/victoriametrics01/scrape.yml
+        template_src: prometheus.yml.j2
+        owner: root
+        group: root
+        mode: "0644"
+    exec: >-
+      -storageDataPath=/victoria-metrics-data
+      -retentionPeriod=2y
+      -promscrape.config=/etc/victoria-metrics/scrape.yml
+    env:
+      TZ: Europe/London
+
+  pve-exporter:
+    enabled: true
+    image: prompve/prometheus-pve-exporter
+    # renovate: datasource=docker depName=prompve/prometheus-pve-exporter
+    tag: 3.10.0
+    port: 9221
+    network: metrics
+    volumes:
+      - /opt/victoriametrics01/pve-exporter.yml:/etc/pve-exporter/pve-exporter.yml:ro
+    files:
+      - dest: /opt/victoriametrics01/pve-exporter.yml
+        template_src: pve-exporter.yml.j2
+        mode: "0644"
+    exec: --config.file=/etc/pve-exporter/pve-exporter.yml
+    env:
+      TZ: Europe/London
+
+  vmalert:
+    enabled: true
+    image: victoriametrics/vmalert
+    # renovate: datasource=docker depName=victoriametrics/vmalert
+    tag: v1.152.0
+    port: 8880
+    network: metrics
+    after:
+      - victoriametrics.service
+      - alertmanager.service
+    volumes:
+      - /opt/victoriametrics01/vmalert/rules:/etc/vmalert/rules:ro
+    files:
+      - dest: /opt/victoriametrics01/vmalert/rules/pve.yml
+        src: rules/pve.yml
+        mode: "0644"
+    exec: >-
+      -datasource.url=http://victoriametrics:8428
+      -remoteWrite.url=http://victoriametrics:8428
+      -remoteRead.url=http://victoriametrics:8428
+      -notifier.url=http://alertmanager:9093
+      -rule=/etc/vmalert/rules/*.yml
+    env:
+      TZ: Europe/London
+
+  alertmanager:
+    enabled: true
+    image: prom/alertmanager
+    # renovate: datasource=docker depName=prom/alertmanager
+    tag: v0.34.1
+    port: 9093
+    network: metrics
+    uid: 65534
+    gid: 65534
+    volumes:
+      - /opt/victoriametrics01/alertmanager/data:/alertmanager
+      - /opt/victoriametrics01/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    files:
+      - dest: /opt/victoriametrics01/alertmanager/alertmanager.yml
+        src: alertmanager.yml
+        mode: "0644"
+    exec: >-
+      --config.file=/etc/alertmanager/alertmanager.yml
+      --storage.path=/alertmanager
+      --cluster.listen-address=
+    env:
+      TZ: Europe/London
+
+pve02_aah_exporter_token_value: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          30323630333332616537346338396564306339616563616562346362663531306331613434323363
+          6536306139636433363237636435346165356231363937630a373637653263373561643935346337
+          36313935663966616337616363366231373539386234393736643561346663346565303938626432
+          6164363664356431350a633434333632363063306264383036613031353535333433306637616531
+          33383035656231633661633163366138316639643065636161636363356435336330386331613838
+          3134623166616631616665616332393737373436636132633838
+
+aah_cluster01_exporter_token_value: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          66353232333936373335333061316134626462376238346535363837366563373036386466643432
+          6264313436636435313866626637323566316366643865320a666564623238613763653461396130
+          30356561623861376234643839313334386466666463376463653866663163303934386134646162
+          3664616264363733650a626266646231333733346331633734623634393738623935396334623764
+          33653737343833393064393866326363633834303135363562396531383065663737613261623963
+          3339346466333735303235653134626139313766333038356535
+
+pve01_lcy_exporter_token_value: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          37303265396234623631643432383335643332353664336662386437313234393037306565643231
+          3862363966343636343537343838346434643365303135610a366162393165303662626130616635
+          34373236313537633563366233396466646239353335376631346338666665313862633238343233
+          3633303038643139610a623466393431643966636264303632363734343039663735643262316138
+          37666633353261666234383261666362653962383130636364303934646461663865613162653861
+          3235353063663036396132393963316436353436666666376435
+
+pve_exporter_targets:
+  pve02_aah:
+    - pve02.aah.muffn.io
+  aah_cluster01:
+    - pve03.aah.muffn.io
+    - pve04.aah.muffn.io
+  pve01_lcy:
+    - pve01.lcy.muffn.io
