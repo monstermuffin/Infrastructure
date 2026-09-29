@@ -29,6 +29,9 @@ podman_apps:
       - dest: /opt/grafana01/provisioning/dashboards/json/pve-exporter.json
         src: dashboards/pve-exporter.json
         mode: "0644"
+      - dest: /opt/grafana01/provisioning/dashboards/json/collectors.json
+        src: dashboards/collectors.json
+        mode: "0644"
       # Dashboard schema v2 resource (apiVersion dashboard.grafana.app/v2)
       - dest: /opt/grafana01/provisioning/dashboards/json/qbittorrent.json
         src: dashboards/qbittorrent.json

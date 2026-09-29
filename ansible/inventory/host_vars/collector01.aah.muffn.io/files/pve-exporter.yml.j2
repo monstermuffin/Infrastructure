@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+
+{% for entry in monitoring_topology.pve | selectattr('site', 'equalto', collector_site) %}
+{{ entry.module }}:
+  user: prometheus@pve
+  token_name: monitoring
+  token_value: {{ lookup('vars', entry.module + '_exporter_token_value') }}
+  verify_ssl: false
+
+{% endfor %}

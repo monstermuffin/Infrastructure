@@ -19,26 +19,6 @@ scrape_configs:
       - targets:
           - alertmanager:9093
 
-{% for module, targets in pve_exporter_targets.items() %}
-  - job_name: pve_{{ module }}
-    static_configs:
-      - targets:
-{% for target in targets %}
-          - '{{ target }}'
-{% endfor %}
-    metrics_path: /pve
-    params:
-      module: [{{ module }}]
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target
-      - source_labels: [__param_target]
-        target_label: instance
-      - target_label: __address__
-        replacement: pve-exporter:9221
-
-{% endfor %}
-
 {% for host in groups['all'] | sort %}
 {%   set host_vars = hostvars[host] %}
 {%   if host_vars.prometheus_scrape_targets is defined %}

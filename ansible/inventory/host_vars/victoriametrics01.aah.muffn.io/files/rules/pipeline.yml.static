@@ -1,0 +1,45 @@
+# Health of the monitoring pipeline itself: the site collectors and the hub
+# components that vmalert can see. All rules are info until notifications are
+# enabled.
+groups:
+  - name: pipeline
+    rules:
+      # Every site collector pushes up{job="collector"} (30s). A site that has
+      # sent one within the last 30 days but none for 5 minutes is unreachable.
+      # There is no hand-kept site list: a new collector is covered from its
+      # first heartbeat. At the hub's own site this means the collector guest or
+      # its Alloy service is down, not the whole site.
+      - alert: SiteUnreachable
+        expr: >-
+          max by (site) (present_over_time(up{job="collector"}[30d]))
+          unless on (site)
+          max by (site) (present_over_time(up{job="collector"}[5m]))
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Site {{ $labels.site }}: no collector heartbeat"
+          description: "The hub has received no heartbeat from the {{ $labels.site }} collector for 5 minutes, so metrics from that site are not arriving. Hosts and the collector buffer what they cannot send and deliver it when the collector is reachable again."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/site-unreachable.md"
+          dashboard: "https://metrics.muffn.io/d/collectors"
+          promql: 'up{job="collector",site="{{ $labels.site }}"}'
+          logql: '{site="{{ $labels.site }}", unit="alloy"}'
+
+      # Something in the path from collector to hub is not working although the
+      # heartbeat still arrives: the collector delivers more than 15 minutes
+      # behind, or a hub component that vmalert can see is down.
+      - alert: MonitoringPipelineStale
+        expr: >-
+          (time() - prometheus_remote_storage_queue_highest_sent_timestamp_seconds{job="collector"} > 900)
+          or
+          (up{job=~"vmalert|alertmanager"} == 0)
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Monitoring pipeline stale: {{ $labels.job }} {{ $labels.instance }}"
+          description: "Either a site collector is delivering samples to the hub more than 15 minutes late, or a hub component (vmalert or Alertmanager) is not answering scrapes. Data may be delayed or alerts not evaluated."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/monitoring-pipeline-stale.md"
+          dashboard: "https://metrics.muffn.io/d/collectors"
+          promql: 'time() - prometheus_remote_storage_queue_highest_sent_timestamp_seconds{job="collector"}'
+          logql: '{unit=~"alloy|vmalert|alertmanager"}'

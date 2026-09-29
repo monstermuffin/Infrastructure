@@ -50,3 +50,19 @@ groups:
           dashboard: "https://metrics.muffn.io/d/pve-exporter"
           promql: 'pve_up{id="{{ $labels.id }}"}'
           logql: '{host="{{ $labels.host }}"}'
+
+      # No Proxmox API of a module answers the collector: the whole cluster, or
+      # a standalone node (whose death leaves no pve_up series for PveNodeDown
+      # to compare). A single unreachable node of a cluster is PveNodeDown.
+      - alert: PveApiUnreachable
+        expr: max by (job, site) (up{job=~"pve_.*"}) == 0
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "No Proxmox API answers for {{ $labels.job }}"
+          description: "The {{ $labels.site }} collector could not query any Proxmox API for {{ $labels.job }} for 10 minutes. Proxmox metrics and the guest-down rules are blind for it. The nodes may be down or unreachable, or the API token may have stopped working."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/pve-api-unreachable.md"
+          dashboard: "https://metrics.muffn.io/d/collectors"
+          promql: 'up{job="{{ $labels.job }}"}'
+          logql: '{host=~"collector01\\..*", unit="pve-exporter"}'
