@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/donkie/spoolman
     # renovate: datasource=docker depName=ghcr.io/donkie/spoolman
-    tag: "0.26.1"
+    tag: "0.27.0"
     port: 7912
     container_port: 8000
     uid: 1000
