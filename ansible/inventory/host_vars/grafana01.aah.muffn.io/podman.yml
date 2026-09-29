@@ -18,7 +18,7 @@ podman_apps:
         template_src: grafana-datasources.yml.j2
         mode: "0644"
       - dest: /opt/grafana01/provisioning/dashboards/dashboards.yml
-        src: provisioning/dashboards.yml
+        src: provisioning/dashboards.yml.static
         mode: "0644"
       - dest: /opt/grafana01/provisioning/dashboards/json/proxmox-via-prometheus.json
         src: dashboards/proxmox-via-prometheus.json

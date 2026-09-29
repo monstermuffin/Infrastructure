@@ -59,7 +59,7 @@ podman_apps:
       - /opt/victoriametrics01/vmalert/rules:/etc/vmalert/rules:ro
     files:
       - dest: /opt/victoriametrics01/vmalert/rules/pve.yml
-        src: rules/pve.yml
+        src: rules/pve.yml.static
         mode: "0644"
     exec: >-
       -datasource.url=http://victoriametrics:8428
@@ -84,7 +84,7 @@ podman_apps:
       - /opt/victoriametrics01/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     files:
       - dest: /opt/victoriametrics01/alertmanager/alertmanager.yml
-        src: alertmanager.yml
+        src: alertmanager.yml.static
         mode: "0644"
     exec: >-
       --config.file=/etc/alertmanager/alertmanager.yml
