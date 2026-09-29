@@ -47,6 +47,19 @@
       "datasourceTemplate": "deb",
       "versioningTemplate": "deb",
       "registryUrlTemplate": "https://deb.debian.org/debian?suite={{suite}}&components=main,contrib,non-free,non-free-firmware&binaryArch={{arch}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Match renovate tags for packages from the Grafana apt repository",
+      "managerFilePatterns": [
+        "/(^|/)ansible/roles/.+/defaults/main\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate:\\s+grafana-apt depName=(?<depName>\\S+)\\n\\s*[A-Za-z0-9_]+:\\s+\"?(?<currentValue>[^\"\\s#]+)\"?"
+      ],
+      "datasourceTemplate": "deb",
+      "versioningTemplate": "deb",
+      "registryUrlTemplate": "https://apt.grafana.com?suite=stable&components=main&binaryArch=amd64"
     }
   ],
   "packageRules": [
