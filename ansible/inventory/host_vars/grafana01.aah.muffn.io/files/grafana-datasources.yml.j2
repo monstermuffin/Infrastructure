@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+
+# Address VictoriaMetrics by its inventory IP so this works before DNS records
+# for new guests exist; falls back to the DNS name.
+{% set vm_host = hostvars.get('victoriametrics01.aah.muffn.io', {}).get('ansible_host', 'victoriametrics01.aah.muffn.io') %}
+apiVersion: 1
+
+datasources:
+  - name: aah-VictoriaMetrics
+    type: prometheus
+    uid: victoriametrics
+    url: http://{{ vm_host }}:8428
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s

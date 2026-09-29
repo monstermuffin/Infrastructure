@@ -1,0 +1,61 @@
+---
+# Alertmanager routing skeleton. No receiver notifies yet: every route ends in
+# the "null" receiver, so alerts are visible in the Alertmanager and vmalert
+# UIs only. Notification receivers are added when delivery is set up.
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: "null"
+  group_by: [alertname, site]
+  group_wait: 1m
+  group_interval: 10m
+  repeat_interval: 24h
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: "null"
+      repeat_interval: 4h
+    - matchers:
+        - severity="warning"
+      receiver: "null"
+      repeat_interval: 24h
+      mute_time_intervals:
+        - quiet_hours
+    - matchers:
+        - severity="info"
+      receiver: "null"
+
+receivers:
+  - name: "null"
+
+# Warnings are muted overnight; critical alerts are never muted. Time ranges
+# cannot wrap midnight, hence two ranges.
+time_intervals:
+  - name: quiet_hours
+    time_intervals:
+      - times:
+          - start_time: "00:00"
+            end_time: "07:00"
+          - start_time: "23:00"
+            end_time: "24:00"
+        location: Europe/London
+
+# Only inhibitions whose labels exist today are listed. TunnelDown ->
+# BgpSessionDown (shared "tunnel" label) is added with the topology data.
+inhibit_rules:
+  - source_matchers:
+      - alertname="SiteUnreachable"
+    target_matchers:
+      - alertname!="SiteUnreachable"
+    equal: [site]
+  - source_matchers:
+      - alertname="HostDown"
+    target_matchers:
+      - alertname!="HostDown"
+    equal: [host]
+  - source_matchers:
+      - alertname="PveNodeDown"
+    target_matchers:
+      - alertname="HostDown"
+    equal: [node]

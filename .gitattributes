@@ -15,3 +15,5 @@ ansible/inventory/host_vars/app.nbg1.muffn.io/files/labb0t-config.yaml filter=gi
 
 # ccagent
 ansible/roles/apps/ccagent/templates/CLAUDE.md.j2 filter=git-crypt diff=git-crypt
+
+docs/monitoring/** filter=git-crypt diff=git-crypt

@@ -1,0 +1,26 @@
+---
+pve_lxcs_victoriametrics01:
+  victoriametrics01:
+    vmid: 155
+    hostname: victoriametrics01.aah.muffn.io
+    node: pve03
+    cores: 4
+    memory: 4096
+    swap: 1024
+    disk: "200G"
+    storage: "local-zfs"
+    network_ip: "10.82.7.155/24"
+    network_gw: "10.82.7.1"
+    network_vlan: 707
+    unprivileged: true
+    onboot: true
+    start: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_aah
+      - podman_app
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

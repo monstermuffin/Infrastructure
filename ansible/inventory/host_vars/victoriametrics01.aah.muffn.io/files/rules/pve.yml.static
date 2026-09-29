@@ -1,0 +1,52 @@
+---
+# Proxmox alerts from pve-exporter.
+#
+# pve-exporter is scraped through every PVE node, so each guest and node is
+# reported once per scraping node. Every expression dedupes with
+# max by (job, id) before joining or comparing. The job is part of the key
+# because VMIDs repeat between clusters (lxc/118 exists at more than one site).
+groups:
+  - name: pve
+    rules:
+      - alert: PveNodeDown
+        expr: >-
+          label_replace(
+            max by (job, id) (pve_up{id=~"node/.*"}) == 0,
+            "node", "$1", "id", "node/(.*)"
+          )
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Proxmox node {{ $labels.node }} is down"
+          description: "The cluster reports node {{ $labels.node }} as offline. Guests on it are not running unless HA has restarted them elsewhere."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/pve-node-down.md"
+          dashboard: "https://metrics.muffn.io/d/pve-exporter"
+          promql: 'pve_up{id="node/{{ $labels.node }}"}'
+          logql: '{host=~"{{ $labels.node }}\\..*"}'
+
+      # Guests that start at boot but are stopped. Guests with onboot=0 are
+      # parked on purpose and never alert. Detection of a running guest that has
+      # gone silent needs host metrics and is added with them.
+      - alert: HostDown
+        expr: >-
+          label_replace(
+            (
+              (max by (job, id) (pve_up{id=~"(lxc|qemu)/.*"}) == 0)
+              and on (job, id)
+              (max by (job, id) (pve_onboot_status) == 1)
+            )
+            * on (job, id) group_left (name, node)
+            max by (job, id, name, node) (pve_guest_info),
+            "host", "$1", "name", "(.*)"
+          )
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "{{ $labels.host }} is stopped but set to start at boot"
+          description: "Proxmox reports {{ $labels.host }} as stopped while start at boot is enabled, so the services on it are unavailable."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/host-down.md"
+          dashboard: "https://metrics.muffn.io/d/pve-exporter"
+          promql: 'pve_up{id="{{ $labels.id }}"}'
+          logql: '{host="{{ $labels.host }}"}'

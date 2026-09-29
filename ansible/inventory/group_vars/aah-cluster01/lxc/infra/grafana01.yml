@@ -1,0 +1,26 @@
+---
+pve_lxcs_grafana01:
+  grafana01:
+    vmid: 156
+    hostname: grafana01.aah.muffn.io
+    node: pve03
+    cores: 2
+    memory: 2048
+    swap: 512
+    disk: "10G"
+    storage: "local-zfs"
+    network_ip: "10.82.7.156/24"
+    network_gw: "10.82.7.1"
+    network_vlan: 707
+    unprivileged: true
+    onboot: true
+    start: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_aah
+      - podman_app
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

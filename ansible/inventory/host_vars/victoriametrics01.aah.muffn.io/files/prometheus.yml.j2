@@ -1,0 +1,64 @@
+# {{ ansible_managed }}
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: victoriametrics
+    static_configs:
+      - targets:
+          - victoriametrics:8428
+
+  - job_name: vmalert
+    static_configs:
+      - targets:
+          - vmalert:8880
+
+  - job_name: alertmanager
+    static_configs:
+      - targets:
+          - alertmanager:9093
+
+{% for module, targets in pve_exporter_targets.items() %}
+  - job_name: pve_{{ module }}
+    static_configs:
+      - targets:
+{% for target in targets %}
+          - '{{ target }}'
+{% endfor %}
+    metrics_path: /pve
+    params:
+      module: [{{ module }}]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: pve-exporter:9221
+
+{% endfor %}
+
+{% for host in groups['all'] | sort %}
+{%   set host_vars = hostvars[host] %}
+{%   if host_vars.prometheus_scrape_targets is defined %}
+{%     for job in host_vars.prometheus_scrape_targets %}
+  - job_name: {{ job.job_name }}
+{%       if job.scrape_interval is defined %}
+    scrape_interval: {{ job.scrape_interval }}
+{%       endif %}
+    static_configs:
+      - targets:
+{%       for target in job.targets %}
+          - '{{ target }}'
+{%       endfor %}
+{%       if job.labels is defined %}
+        labels:
+{%         for key, value in job.labels.items() %}
+          {{ key }}: {{ value }}
+{%         endfor %}
+{%       endif %}
+
+{%     endfor %}
+{%   endif %}
+{% endfor %}
