@@ -70,6 +70,17 @@ rules:
     playbook: "ansible/playbooks/lxc/update_podman_packages.yml"
     limit: "tag_podman_app"
 
+  # Collector role and the topology file it renders from: redeploy every collector.
+  - pattern: "ansible/roles/apps/collector/**"
+    playbook: "ansible/playbooks/lxc/deploy_collector.yml"
+    limit: "tag_app_collector"
+    tags: [alloy]
+
+  - pattern: "ansible/inventory/group_vars/tag_app_collector/**"
+    playbook: "ansible/playbooks/lxc/deploy_collector.yml"
+    limit: "tag_app_collector"
+    tags: [alloy, deploy]
+
   - pattern: "ansible/roles/proxmox/pve_build_lxc_template/**"
     action: manual_notice
     note: "LXC template role changed — rebuild manually: ansible-playbook playbooks/pve/build_lxc_template.yml, then update pve_lxc_default_ostemplate in group_vars/aah-cluster01/lxc.yml"
@@ -205,6 +216,21 @@ rules:
 
   - pattern: "ansible/inventory/host_vars/*/linux.yml"
     action: host_linux
+
+  # Site collectors run Alloy (apt package, systemd) and their exporters (podman
+  # apps) from one playbook. These must precede the generic podman.yml and
+  # files/** rules below, which would deploy the podman apps only.
+  - pattern: "ansible/inventory/host_vars/collector*/podman.yml"
+    playbook: "ansible/playbooks/lxc/deploy_collector.yml"
+    extra_vars:
+      target: "{host}"
+    tags: [setup, image, deploy, alloy]
+
+  - pattern: "ansible/inventory/host_vars/collector*/files/**"
+    playbook: "ansible/playbooks/lxc/deploy_collector.yml"
+    extra_vars:
+      target: "{host}"
+    tags: [setup, image, deploy, alloy]
 
   - pattern: "ansible/inventory/host_vars/*/podman.yml"
     action: host_self
