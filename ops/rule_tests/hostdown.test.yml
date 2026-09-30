@@ -1,0 +1,124 @@
+# HostDown: the stopped-guest rule (pve.yml) and the two generated rules
+# (host_generated.yml). The generated file is rendered from the real inventory,
+# so the direct check is for app.nbg1.muffn.io and the ignored guest is one of
+# the names in group_vars/monitored.yml.
+rule_files:
+  - pve.yml
+  - host_generated.yml
+evaluation_interval: 1m
+
+tests:
+  # A guest that keeps sending metrics never alerts; one that goes silent
+  # alerts 10 minutes after Proxmox and the metrics disagree; a parked guest
+  # (onboot 0) never alerts.
+  - interval: 1m
+    input_series:
+      - series: 'pve_up{job="pve_aah",id="lxc/1",instance="pve03.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_up{job="pve_aah",id="lxc/1",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_onboot_status{job="pve_aah",id="lxc/1",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_guest_info{job="pve_aah",id="lxc/1",instance="pve04.aah.muffn.io",site="aah",name="quiet.aah.muffn.io",node="pve04",type="lxc"}'
+        values: '1+0x60'
+      - series: 'up{job="node_fast",instance="quiet.aah.muffn.io",site="aah",host="quiet.aah.muffn.io",kind="lxc"}'
+        values: '1+0x10 _x50'
+      - series: 'pve_up{job="pve_aah",id="lxc/2",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_onboot_status{job="pve_aah",id="lxc/2",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_guest_info{job="pve_aah",id="lxc/2",instance="pve04.aah.muffn.io",site="aah",name="chatty.aah.muffn.io",node="pve04",type="lxc"}'
+        values: '1+0x60'
+      - series: 'up{job="node_fast",instance="chatty.aah.muffn.io",site="aah",host="chatty.aah.muffn.io",kind="lxc"}'
+        values: '1+0x60'
+      - series: 'pve_up{job="pve_aah",id="lxc/3",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_onboot_status{job="pve_aah",id="lxc/3",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '0+0x60'
+      - series: 'pve_guest_info{job="pve_aah",id="lxc/3",instance="pve04.aah.muffn.io",site="aah",name="parked.aah.muffn.io",node="pve04",type="lxc"}'
+        values: '1+0x60'
+      # A stopped guest is the other rule.
+      - series: 'pve_up{job="pve_aah",id="lxc/4",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '0+0x60'
+      - series: 'pve_onboot_status{job="pve_aah",id="lxc/4",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_guest_info{job="pve_aah",id="lxc/4",instance="pve04.aah.muffn.io",site="aah",name="stopped.aah.muffn.io",node="pve04",type="lxc"}'
+        values: '1+0x60'
+      # A guest on monitoring_hostdown_ignore runs without Alloy on purpose, so
+      # it stays quiet although it is running, starts at boot and sends nothing.
+      - series: 'pve_up{job="pve_aah",id="qemu/5",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_onboot_status{job="pve_aah",id="qemu/5",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1+0x60'
+      - series: 'pve_guest_info{job="pve_aah",id="qemu/5",instance="pve04.aah.muffn.io",site="aah",name="management02.internal.muffn.io",node="pve04",type="qemu"}'
+        values: '1+0x60'
+      # The VPS is checked by absence only; it sends metrics until minute 10.
+      - series: 'up{job="node_fast",instance="app.nbg1.muffn.io",site="nbg1",host="app.nbg1.muffn.io",kind="vps"}'
+        values: '1+0x10 _x50'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: HostDown
+        exp_alerts:
+          - exp_labels:
+              severity: info
+              reason: stopped
+              job: pve_aah
+              id: lxc/4
+              name: stopped.aah.muffn.io
+              node: pve04
+              host: stopped.aah.muffn.io
+            exp_annotations:
+              summary: "stopped.aah.muffn.io is stopped but set to start at boot"
+              description: "Proxmox reports stopped.aah.muffn.io as stopped while start at boot is enabled, so the services on it are unavailable."
+              runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/host-down.md"
+              dashboard: "https://metrics.muffn.io/d/pve-exporter"
+              promql: 'pve_up{id="lxc/4"}'
+              logql: '{host="stopped.aah.muffn.io"}'
+      - eval_time: 40m
+        alertname: HostDown
+        exp_alerts:
+          - exp_labels:
+              severity: info
+              reason: stopped
+              job: pve_aah
+              id: lxc/4
+              name: stopped.aah.muffn.io
+              node: pve04
+              host: stopped.aah.muffn.io
+            exp_annotations:
+              summary: "stopped.aah.muffn.io is stopped but set to start at boot"
+              description: "Proxmox reports stopped.aah.muffn.io as stopped while start at boot is enabled, so the services on it are unavailable."
+              runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/host-down.md"
+              dashboard: "https://metrics.muffn.io/d/pve-exporter"
+              promql: 'pve_up{id="lxc/4"}'
+              logql: '{host="stopped.aah.muffn.io"}'
+          - exp_labels:
+              severity: info
+              reason: silent
+              job: pve_aah
+              id: lxc/1
+              site: aah
+              name: quiet.aah.muffn.io
+              node: pve04
+              host: quiet.aah.muffn.io
+            exp_annotations:
+              summary: "quiet.aah.muffn.io is running but sends no metrics"
+              description: "Proxmox reports quiet.aah.muffn.io as running with start at boot enabled, but no node metrics have arrived from it for 10 minutes. The guest may be hung, its network may be down, or Alloy has stopped."
+              runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/host-down.md"
+              dashboard: "https://metrics.muffn.io/d/pve-exporter"
+              promql: 'up{job="node_fast", host="quiet.aah.muffn.io"}'
+              logql: '{host="quiet.aah.muffn.io"}'
+          - exp_labels:
+              severity: info
+              reason: silent
+              site: nbg1
+              kind: vps
+              job: node_fast
+              host: app.nbg1.muffn.io
+            exp_annotations:
+              summary: "app.nbg1.muffn.io sends no metrics"
+              description: "No node metrics have arrived from app.nbg1.muffn.io for 10 minutes. The host may be down or unreachable from its collector, or Alloy has stopped."
+              runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/host-down.md"
+              dashboard: "https://metrics.muffn.io/d/host-overview?var-host=app.nbg1.muffn.io"
+              promql: 'up{job="node_fast", host="app.nbg1.muffn.io"}'
+              logql: '{host="app.nbg1.muffn.io"}'

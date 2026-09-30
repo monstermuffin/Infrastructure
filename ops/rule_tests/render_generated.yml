@@ -1,0 +1,13 @@
+---
+# Renders the generated rule file for a local check (see run.sh).
+- name: Render the generated rules
+  hosts: victoriametrics01.aah.muffn.io
+  gather_facts: false
+  connection: local
+  become: false
+  tasks:
+    - name: Render host_generated.yml
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../../ansible/inventory/host_vars/victoriametrics01.aah.muffn.io/files/rules/host_generated.yml.j2"
+        dest: "{{ out }}"
+        mode: "0644"

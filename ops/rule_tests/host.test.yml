@@ -1,0 +1,90 @@
+rule_files:
+  - host.yml
+evaluation_interval: 1m
+
+tests:
+  # DiskFilling: fires for a real file system under 10% free, stays quiet for
+  # a healthy one, a network mount and a read-only mount.
+  - interval: 1m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sda1",mountpoint="/",fstype="ext4"}'
+        values: '5+0x30'
+      - series: 'node_filesystem_size_bytes{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sda1",mountpoint="/",fstype="ext4"}'
+        values: '100+0x30'
+      - series: 'node_filesystem_readonly{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sda1",mountpoint="/",fstype="ext4"}'
+        values: '0+0x30'
+      - series: 'node_filesystem_avail_bytes{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sdb1",mountpoint="/data",fstype="ext4"}'
+        values: '50+0x30'
+      - series: 'node_filesystem_size_bytes{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sdb1",mountpoint="/data",fstype="ext4"}'
+        values: '100+0x30'
+      - series: 'node_filesystem_readonly{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sdb1",mountpoint="/data",fstype="ext4"}'
+        values: '0+0x30'
+      - series: 'node_filesystem_avail_bytes{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="nas:/media",mountpoint="/mnt/media",fstype="cifs"}'
+        values: '1+0x30'
+      - series: 'node_filesystem_size_bytes{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="nas:/media",mountpoint="/mnt/media",fstype="cifs"}'
+        values: '100+0x30'
+      - series: 'node_filesystem_readonly{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="nas:/media",mountpoint="/mnt/media",fstype="cifs"}'
+        values: '0+0x30'
+      - series: 'node_filesystem_avail_bytes{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sdc1",mountpoint="/ro",fstype="ext4"}'
+        values: '1+0x30'
+      - series: 'node_filesystem_size_bytes{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sdc1",mountpoint="/ro",fstype="ext4"}'
+        values: '100+0x30'
+      - series: 'node_filesystem_readonly{job="node_slow",site="aah",host="a.aah.muffn.io",kind="lxc",device="/dev/sdc1",mountpoint="/ro",fstype="ext4"}'
+        values: '1+0x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: DiskFilling
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: DiskFilling
+        exp_alerts:
+          - exp_labels:
+              severity: info
+              job: node_slow
+              site: aah
+              host: a.aah.muffn.io
+              kind: lxc
+              device: /dev/sda1
+              mountpoint: /
+              fstype: ext4
+            exp_annotations:
+              summary: "a.aah.muffn.io: / is 5% free"
+              description: "The file system mounted at / on a.aah.muffn.io has less than 10% space available. Writes fail when it fills, which stops services and can leave databases corrupt."
+              runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/disk-filling.md"
+              dashboard: "https://metrics.muffn.io/d/host-overview?var-host=a.aah.muffn.io"
+              promql: 'node_filesystem_avail_bytes{host="a.aah.muffn.io", mountpoint="/"}'
+              logql: '{host="a.aah.muffn.io"} |= "No space left"'
+
+  # ZfsPoolDegraded: a pool that is not online fires, an online one does not.
+  - interval: 1m
+    input_series:
+      - series: 'node_zfs_zpool_state{job="node_slow",site="aah",host="pve.aah.muffn.io",kind="pve",zpool="tank",state="online"}'
+        values: '1+0x5 0+0x20'
+      - series: 'node_zfs_zpool_state{job="node_slow",site="aah",host="pve.aah.muffn.io",kind="pve",zpool="tank",state="degraded"}'
+        values: '0+0x5 1+0x20'
+      - series: 'node_zfs_zpool_state{job="node_slow",site="aah",host="pve.aah.muffn.io",kind="pve",zpool="rpool",state="online"}'
+        values: '1+0x25'
+      - series: 'node_zfs_zpool_state{job="node_slow",site="aah",host="pve.aah.muffn.io",kind="pve",zpool="rpool",state="degraded"}'
+        values: '0+0x25'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ZfsPoolDegraded
+        exp_alerts: []
+      - eval_time: 15m
+        alertname: ZfsPoolDegraded
+        exp_alerts:
+          - exp_labels:
+              severity: info
+              job: node_slow
+              site: aah
+              host: pve.aah.muffn.io
+              kind: pve
+              zpool: tank
+              state: degraded
+            exp_annotations:
+              summary: "pve.aah.muffn.io: ZFS pool tank is degraded"
+              description: "The ZFS pool tank on pve.aah.muffn.io is not online. A degraded pool has lost redundancy or a device, a faulted one may have lost data."
+              runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/zfs-pool-degraded.md"
+              dashboard: "https://metrics.muffn.io/d/pve-host?var-host=pve.aah.muffn.io"
+              promql: 'node_zfs_zpool_state{host="pve.aah.muffn.io", zpool="tank"}'
+              logql: '{host="pve.aah.muffn.io", unit="zfs-zed"}'

@@ -5,6 +5,11 @@
 
 rules:
 
+  # Alloy per-host settings (extra scrapes, opt-out). Must precede the
+  # nbg1 and pve* host_vars catch-alls below, which would run other playbooks.
+  - pattern: "ansible/inventory/host_vars/*/alloy.yml"
+    playbook: "ansible/playbooks/linux/deploy_alloy.yml"
+
   # Hetzner NBG1 — must precede generic host_vars catch-alls
 
   - pattern: "ansible/inventory/host_vars/app.nbg1.muffn.io/meta.yml"
@@ -48,6 +53,21 @@ rules:
   # Guest-wide Linux policy overrides
   - pattern: "ansible/inventory/group_vars/linux_guests.yml"
     playbook: "ansible/playbooks/linux/manage.yml"
+
+  # Alloy: fleet-wide monitoring settings and the role. The role rule
+  # must precede the generic ansible/roles/linux/** rule, which would run the
+  # guest baseline instead. Every monitored host, collectors last (the playbook orders them).
+  - pattern: "ansible/inventory/group_vars/monitored.yml"
+    playbook: "ansible/playbooks/linux/deploy_alloy.yml"
+    limit: "monitored"
+
+  - pattern: "ansible/roles/linux/alloy/**"
+    playbook: "ansible/playbooks/linux/deploy_alloy.yml"
+    limit: "monitored"
+
+  - pattern: "ansible/playbooks/linux/deploy_alloy.yml"
+    playbook: "ansible/playbooks/linux/deploy_alloy.yml"
+    limit: "monitored"
 
   # Firewall/WireGuard role changes must precede generic linux/** catch-all.
   - pattern: "ansible/roles/linux/firewall/**"

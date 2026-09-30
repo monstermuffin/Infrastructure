@@ -1,0 +1,60 @@
+rule_files:
+  - recording.yml
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      # An LXC: node meminfo (in-guest), a service cgroup, and Proxmox's view
+      # of the same guest, reported through two nodes of the cluster.
+      - series: 'node_memory_MemTotal_bytes{job="node_slow",instance="a.aah.muffn.io",site="aah",host="a.aah.muffn.io",kind="lxc"}'
+        values: '1000+0x10'
+      - series: 'node_memory_MemAvailable_bytes{job="node_slow",instance="a.aah.muffn.io",site="aah",host="a.aah.muffn.io",kind="lxc"}'
+        values: '700+0x10'
+      - series: 'container_memory_working_set_bytes{job="units",instance="a.aah.muffn.io",site="aah",host="a.aah.muffn.io",kind="lxc",unit="app"}'
+        values: '120+0x10'
+      - series: 'pve_memory_usage_bytes{job="pve_aah",id="lxc/112",instance="pve03.aah.muffn.io",site="aah"}'
+        values: '280+0x10'
+      - series: 'pve_memory_usage_bytes{job="pve_aah",id="lxc/112",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '280+0x10'
+      - series: 'pve_memory_size_bytes{job="pve_aah",id="lxc/112",instance="pve03.aah.muffn.io",site="aah"}'
+        values: '1000+0x10'
+      - series: 'pve_memory_size_bytes{job="pve_aah",id="lxc/112",instance="pve04.aah.muffn.io",site="aah"}'
+        values: '1000+0x10'
+      - series: 'pve_guest_info{job="pve_aah",id="lxc/112",instance="pve03.aah.muffn.io",site="aah",name="a.aah.muffn.io",node="pve04",type="lxc"}'
+        values: '1+0x10'
+      - series: 'pve_guest_info{job="pve_aah",id="lxc/112",instance="pve04.aah.muffn.io",site="aah",name="a.aah.muffn.io",node="pve04",type="lxc"}'
+        values: '1+0x10'
+      # The same VMID at another site must stay a separate guest.
+      - series: 'pve_memory_usage_bytes{job="pve_lcy",id="lxc/112",instance="pve01.lcy.muffn.io",site="lcy"}'
+        values: '50+0x10'
+      - series: 'pve_guest_info{job="pve_lcy",id="lxc/112",instance="pve01.lcy.muffn.io",site="lcy",name="b.lcy.muffn.io",node="pve01",type="lxc"}'
+        values: '1+0x10'
+    metricsql_expr_test:
+      - expr: host:memory_total_bytes
+        eval_time: 5m
+        exp_samples:
+          - labels: 'host:memory_total_bytes{site="aah",host="a.aah.muffn.io",kind="lxc"}'
+            value: 1000
+      - expr: host:memory_used_bytes
+        eval_time: 5m
+        exp_samples:
+          - labels: 'host:memory_used_bytes{site="aah",host="a.aah.muffn.io",kind="lxc"}'
+            value: 300
+      - expr: unit:memory_bytes
+        eval_time: 5m
+        exp_samples:
+          - labels: 'unit:memory_bytes{site="aah",host="a.aah.muffn.io",kind="lxc",unit="app"}'
+            value: 120
+      - expr: guest:memory_bytes
+        eval_time: 5m
+        exp_samples:
+          - labels: 'guest:memory_bytes{job="pve_aah",id="lxc/112",name="a.aah.muffn.io",node="pve04",site="aah",host="a.aah.muffn.io"}'
+            value: 280
+          - labels: 'guest:memory_bytes{job="pve_lcy",id="lxc/112",name="b.lcy.muffn.io",node="pve01",site="lcy",host="b.lcy.muffn.io"}'
+            value: 50
+      - expr: guest:memory_total_bytes
+        eval_time: 5m
+        exp_samples:
+          - labels: 'guest:memory_total_bytes{job="pve_aah",id="lxc/112",name="a.aah.muffn.io",node="pve04",site="aah",host="a.aah.muffn.io"}'
+            value: 1000
