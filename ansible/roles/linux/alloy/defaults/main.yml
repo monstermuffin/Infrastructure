@@ -1,0 +1,101 @@
+---
+# Grafana Alloy on every host: node metrics (two sampling tiers), per-service
+# cgroup metrics on podman hosts and optional per-host scrapes, pushed to the
+# collector of the host's site. Fleet-wide values (site, collector URL, unit
+# allowlist, opt-out) come from group_vars/monitored.yml (monitoring_*).
+
+# renovate: grafana-apt depName=alloy
+alloy_version: "1.20.1-1"
+alloy_repo_uri: https://apt.grafana.com
+alloy_repo_key: https://apt.grafana.com/gpg.key
+alloy_repo_architectures:
+  x86_64: amd64
+  aarch64: arm64
+alloy_repo_arch: "{{ alloy_repo_architectures[ansible_facts['architecture']] }}"
+
+# Alloy pkg about 560 MB installed, 170 MB download
+alloy_min_free_mb: 1200
+
+alloy_config_dir: /etc/alloy
+alloy_stage_dir: /var/lib/alloy/staging
+alloy_http_listen_address: "127.0.0.1:12345"
+
+# Optional soft memory limit for the Go runtime
+alloy_gomemlimit: ""
+
+# Buffer for pushes while the collector is unreachable. max_keepalive_time is
+# how long unsent data is kept (design minimum: 48h). Unsent data is lost if
+# Alloy restarts during the outage, so config changes use a reload.
+alloy_wal_truncate_frequency: 2h
+alloy_wal_min_keepalive_time: 5m
+alloy_wal_max_keepalive_time: 72h
+
+# Sampling tiers.
+alloy_fast_interval: 15s
+alloy_slow_interval: 60s
+alloy_units_interval: 30s
+alloy_self_interval: 60s
+
+# Node exporter collectors per tier. Fast: bursts of CPU, network and
+# contention. Slow: everything else that is kept.
+alloy_fast_collectors:
+  - cpu
+  - netdev
+  - pressure
+  - loadavg
+alloy_slow_collectors:
+  - boottime
+  - diskstats
+  - filefd
+  - filesystem
+  - meminfo
+  - netclass
+  - netstat
+  - os
+  - sockstat
+  - stat
+  - systemd
+  - textfile
+  - time
+  - uname
+  - vmstat
+# Added on kind pve.
+alloy_slow_collectors_pve:
+  - zfs
+  - hwmon
+  - nvme
+  - cpufreq
+
+# Dropped on kind lxc. Guest disk I/O comes from Proxmox instead
+alloy_slow_collectors_exclude_lxc:
+  - diskstats
+
+# Series dropped from the slow tier before they are pushed: per-dataset ZIL
+# internals
+alloy_slow_drop_regex: "node_zfs_zpool_dataset_zil_.*|node_zfs_zil_.*"
+
+alloy_netdev_device_exclude: "^(lo|veth.*|br-.*|podman[0-9]*|cni-.*|docker[0-9]*|fwbr.*|fwpr.*|fwln.*|tap.*)$"
+alloy_filesystem_mount_points_exclude: >-
+  ^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+|var/lib/containers/storage/.+)($|/)|^(/[^/]+)+/(subvol|vm|base)-[0-9]+-disk-[0-9]+$
+alloy_textfile_directory: /var/lib/prometheus/node-exporter
+
+# Units reported by the node systemd collector: the fleet allowlist, the
+# PVE list on kind pve, the podman apps of the host and per-host extras
+alloy_systemd_units: >-
+  {{ (monitoring_systemd_units | default([]))
+     + (monitoring_systemd_units_pve | default([]) if monitoring_kind == 'pve' else [])
+     + (podman_apps | default({}) | dict2items
+        | rejectattr('value.enabled', 'defined') | map(attribute='key') | list)
+     + (podman_apps | default({}) | dict2items
+        | selectattr('value.enabled', 'defined') | selectattr('value.enabled') | map(attribute='key') | list)
+     + (monitoring_systemd_units_extra | default([])) }}
+
+# cgroup metrics per systemd unit (embedded cAdvisor, raw cgroup mode)
+alloy_units_enabled: "{{ 'tag_podman_app' in group_names or (podman_apps | default({}) | length > 0) }}"
+
+# Series kept from Alloy's own metrics (health, resources and delivery)
+alloy_self_metrics_regex: >-
+  up|alloy_build_info|alloy_config_last_load_(successful|success_timestamp_seconds)|alloy_resources_process_(cpu_seconds_total|resident_memory_bytes)|prometheus_remote_storage_(samples_total|samples_failed_total|samples_retried_total|samples_pending|bytes_total|highest_timestamp_in_seconds|queue_highest_sent_timestamp_seconds|shards)
+
+# Per-host scrapes rendered into extras.alloy (see the README)
+monitoring_extra_scrapes: []

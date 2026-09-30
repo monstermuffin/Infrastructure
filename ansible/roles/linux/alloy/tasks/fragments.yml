@@ -1,0 +1,12 @@
+---
+- name: Apply the host fragments
+  ansible.builtin.include_tasks: apply_config.yml
+  vars:
+    alloy_config_set: host
+    alloy_config_files: >-
+      {{ [{'src': 'base.alloy.j2', 'dest': 'base.alloy'}, {'src': 'node.alloy.j2', 'dest': 'node.alloy'}]
+         + ([{'src': 'units.alloy.j2', 'dest': 'units.alloy'}] if alloy_units_enabled | bool else [])
+         + ([{'src': 'extras.alloy.j2', 'dest': 'extras.alloy'}] if monitoring_extra_scrapes | length > 0 else []) }}
+    alloy_config_absent: >-
+      {{ ['base.alloy', 'node.alloy', 'units.alloy', 'extras.alloy']
+         | reject('in', alloy_config_files | map(attribute='dest') | list) | list }}

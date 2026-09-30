@@ -1,0 +1,30 @@
+---
+- name: Check whether Alloy is installed
+  ansible.builtin.stat:
+    path: /usr/bin/alloy
+  register: alloy_binary
+
+- name: Check free space for the package
+  ansible.builtin.command: df --output=avail -m /
+  register: alloy_root_free
+  changed_when: false
+  check_mode: false
+  when: not alloy_binary.stat.exists
+
+- name: Refuse to install on a nearly full disk
+  ansible.builtin.assert:
+    that: (alloy_root_free.stdout_lines[-1] | trim | int) >= alloy_min_free_mb
+    fail_msg: >-
+      Only {{ alloy_root_free.stdout_lines[-1] | trim }} MB free on / and the Alloy package needs about
+      {{ alloy_min_free_mb }} MB (download plus installed size). Free space or grow the disk first.
+    quiet: true
+  when: not alloy_binary.stat.exists
+
+- name: Install Alloy
+  ansible.builtin.apt:
+    name: "alloy={{ alloy_version }}"
+    state: present
+    allow_downgrade: true
+    update_cache: true
+    cache_valid_time: 3600
+  notify: Restart alloy

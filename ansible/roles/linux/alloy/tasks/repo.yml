@@ -1,0 +1,32 @@
+---
+# A one-line grafana.list from a manual install conflicts with the deb822
+# source below, and makes every apt run fail, so remove it first.
+- name: Remove a legacy Grafana apt source
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/grafana.list
+    state: absent
+
+- name: Install prerequisite packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gnupg
+      - python3-debian
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Configure the Grafana apt repository
+  ansible.builtin.deb822_repository:
+    name: grafana
+    types: deb
+    uris: "{{ alloy_repo_uri }}"
+    suites: stable
+    components: main
+    architectures: "{{ alloy_repo_arch }}"
+    signed_by: "{{ alloy_repo_key }}"
+    state: present
+  notify: Update apt cache
+
+- name: Flush apt cache update
+  ansible.builtin.meta: flush_handlers

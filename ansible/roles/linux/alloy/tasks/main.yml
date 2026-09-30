@@ -1,0 +1,47 @@
+---
+- name: Check the monitoring variables
+  ansible.builtin.assert:
+    that:
+      - monitoring_site is defined
+      - monitoring_kind is defined
+      - monitoring_collector_url is defined
+      - ansible_facts['architecture'] in alloy_repo_architectures
+    fail_msg: >-
+      {{ inventory_hostname }} is missing monitoring variables (site, kind or collector URL) or runs an
+      architecture with no Alloy package. Check group_vars/monitored.yml and the host's site group.
+    quiet: true
+  tags: always
+
+- name: Stop Alloy on hosts that opted out
+  ansible.builtin.import_tasks: disabled.yml
+  when: not (monitoring_enabled | default(true) | bool)
+
+- name: Deploy Alloy
+  when: monitoring_enabled | default(true) | bool
+  block:
+    - name: Configure the Grafana apt repository
+      ansible.builtin.import_tasks: repo.yml
+      tags:
+        - repo
+        - setup
+
+    - name: Install Alloy
+      ansible.builtin.import_tasks: install.yml
+      tags:
+        - install
+        - packages
+
+    - name: Configure the service environment
+      ansible.builtin.import_tasks: environment.yml
+      tags:
+        - config
+
+    - name: Deploy the host fragments
+      ansible.builtin.import_tasks: fragments.yml
+      tags:
+        - config
+
+    - name: Manage the Alloy service
+      ansible.builtin.import_tasks: service.yml
+      tags:
+        - service

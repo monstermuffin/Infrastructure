@@ -1,0 +1,39 @@
+---
+# Alloy loads every *.alloy file in the config directory.
+- name: Point Alloy at the config directory
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^CONFIG_FILE='
+    line: 'CONFIG_FILE="{{ alloy_config_dir }}"'
+  notify: Restart alloy
+
+- name: Set Alloy start options
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^CUSTOM_ARGS='
+    line: 'CUSTOM_ARGS="--disable-reporting --server.http.listen-addr={{ alloy_http_listen_address }}"'
+  notify: Restart alloy
+
+- name: Set the Go memory limit
+  ansible.builtin.lineinfile:
+    path: /etc/default/alloy
+    regexp: '^GOMEMLIMIT='
+    line: 'GOMEMLIMIT="{{ alloy_gomemlimit }}"'
+    state: "{{ 'present' if alloy_gomemlimit | length > 0 else 'absent' }}"
+  notify: Restart alloy
+
+# The packaged example config would run next to the fragments.
+- name: Remove the packaged example config
+  ansible.builtin.file:
+    path: "{{ alloy_config_dir }}/config.alloy"
+    state: absent
+  notify: Reload alloy
+
+- name: Create the textfile collector directory
+  ansible.builtin.file:
+    path: "{{ alloy_textfile_directory }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: "'textfile' in alloy_slow_collectors"

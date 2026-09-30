@@ -1,0 +1,63 @@
+// {{ ansible_managed }}
+//
+// Metrics per systemd unit from the embedded cAdvisor in raw cgroup mode.
+// Each podman (Quadlet) app runs under its own service, so this gives CPU,
+// memory, I/O, pressure and OOM events per app without a container runtime
+// socket. There are no per-container network metrics.
+prometheus.exporter.cadvisor "units" {
+  docker_only            = false
+  storage_duration       = "2m"
+  store_container_labels = false
+  disabled_metrics       = ["advtcp", "cpu_topology", "cpuset", "hugetlb", "memory_numa", "percpu", "process", "referenced_memory", "resctrl", "sched", "tcp", "udp"]
+}
+
+discovery.relabel "units" {
+  targets = prometheus.exporter.cadvisor.units.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "units"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement  = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "units" {
+  job_name        = "units"
+  targets         = discovery.relabel.units.output
+  scrape_interval = "{{ alloy_units_interval }}"
+  forward_to      = [prometheus.relabel.units.receiver]
+}
+
+// Keep the service cgroups and the series that dashboards use (and the scrape's
+// own up), and turn the cgroup path into a unit label.
+prometheus.relabel "units" {
+  forward_to = [prometheus.relabel.identity.receiver]
+
+  rule {
+    source_labels = ["__name__", "id"]
+    regex         = "up;.*|[^;]+;/system.slice/[^/]+\\.service"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "up|container_(cpu_usage_seconds_total|cpu_system_seconds_total|cpu_user_seconds_total|memory_working_set_bytes|memory_rss|memory_usage_bytes|memory_cache|spec_memory_limit_bytes|oom_events_total|fs_reads_bytes_total|fs_writes_bytes_total|pressure_.*|last_seen)"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["id"]
+    regex         = "/system.slice/(.+)\\.service"
+    target_label  = "unit"
+    replacement   = "$1"
+  }
+
+  rule {
+    action = "labeldrop"
+    regex  = "id"
+  }
+}

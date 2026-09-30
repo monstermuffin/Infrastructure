@@ -1,0 +1,62 @@
+---
+# Apply one set of config files to the config directory. Each set is rendered
+# into its own staging directory and checked with `alloy validate` as a whole
+# (fragments refer to components in each other, so a single file cannot be
+# checked alone), then copied into place. A failed check leaves the running
+# config untouched, and a change is applied with a reload, never a restart.
+#
+# Inputs:
+#   alloy_config_set     name of the set (staging subdirectory)
+#   alloy_config_files   list of {src, dest}; src is a template name, or an absolute path
+#   alloy_config_absent  file names to remove from the config directory
+- name: Create the staging directory
+  ansible.builtin.file:
+    path: "{{ alloy_stage_dir }}/{{ alloy_config_set }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Render the config files
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ alloy_stage_dir }}/{{ alloy_config_set }}/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0640"
+  loop: "{{ alloy_config_files }}"
+  loop_control:
+    label: "{{ item.dest }}"
+
+- name: Validate the rendered config
+  ansible.builtin.command: /usr/bin/alloy validate {{ alloy_stage_dir }}/{{ alloy_config_set }}
+  changed_when: false
+  check_mode: false
+
+- name: Install the config files
+  ansible.builtin.copy:
+    src: "{{ alloy_stage_dir }}/{{ alloy_config_set }}/{{ item.dest }}"
+    dest: "{{ alloy_config_dir }}/{{ item.dest }}"
+    remote_src: true
+    owner: root
+    group: alloy
+    mode: "0640"
+  loop: "{{ alloy_config_files }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  notify: Reload alloy
+
+- name: Remove config files that no longer apply
+  ansible.builtin.file:
+    path: "{{ item_dir }}/{{ item }}"
+    state: absent
+  loop: "{{ alloy_config_absent }}"
+  vars:
+    item_dir: "{{ alloy_config_dir }}"
+  notify: Reload alloy
+
+- name: Remove stale staged files
+  ansible.builtin.file:
+    path: "{{ alloy_stage_dir }}/{{ alloy_config_set }}/{{ item }}"
+    state: absent
+  loop: "{{ alloy_config_absent }}"

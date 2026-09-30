@@ -1,0 +1,22 @@
+---
+- name: Enable and start Alloy
+  ansible.builtin.systemd:
+    name: alloy
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Apply pending Alloy changes now
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the Alloy status endpoint
+  ansible.builtin.uri:
+    url: "http://{{ alloy_http_listen_address }}/-/ready"
+    status_code: 200
+  register: alloy_ready
+  retries: 10
+  delay: 3
+  until: alloy_ready.status == 200
+  changed_when: false
+  tags:
+    - verify

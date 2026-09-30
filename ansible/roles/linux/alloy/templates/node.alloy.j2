@@ -1,0 +1,98 @@
+// {{ ansible_managed }}
+//
+// Node metrics from two embedded node-exporter instances: a fast tier for
+// short bursts of CPU, network and contention, and a slow tier for the rest.
+
+// ---- Fast tier ({{ alloy_fast_interval }}) ---------------------------------------------------
+prometheus.exporter.unix "fast" {
+  set_collectors = [
+{% for collector in alloy_fast_collectors %}
+    "{{ collector }}",
+{% endfor %}
+  ]
+
+  netdev {
+    device_exclude = "{{ alloy_netdev_device_exclude }}"
+  }
+}
+
+discovery.relabel "node_fast" {
+  targets = prometheus.exporter.unix.fast.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "node_fast"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement  = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "node_fast" {
+  job_name        = "node_fast"
+  targets         = discovery.relabel.node_fast.output
+  scrape_interval = "{{ alloy_fast_interval }}"
+  forward_to      = [prometheus.relabel.identity.receiver]
+}
+
+// ---- Slow tier ({{ alloy_slow_interval }}) ---------------------------------------------------
+prometheus.exporter.unix "slow" {
+  set_collectors = [
+{% for collector in (alloy_slow_collectors + (alloy_slow_collectors_pve if monitoring_kind == 'pve' else [])) | reject('in', alloy_slow_collectors_exclude_lxc if monitoring_kind == 'lxc' else []) %}
+    "{{ collector }}",
+{% endfor %}
+  ]
+
+  filesystem {
+    mount_points_exclude = "{{ alloy_filesystem_mount_points_exclude }}"
+  }
+
+  netclass {
+    ignored_devices = "{{ alloy_netdev_device_exclude }}"
+  }
+
+  // Only the units in the allowlist are reported: unrestricted, this
+  // collector is the largest source of series on a host.
+  systemd {
+    unit_include     = "({{ alloy_systemd_units | unique | join('|') }})\\.service"
+    enable_restarts  = true
+    start_time       = true
+  }
+
+  textfile {
+    directory = "{{ alloy_textfile_directory }}"
+  }
+}
+
+discovery.relabel "node_slow" {
+  targets = prometheus.exporter.unix.slow.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "node_slow"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement  = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "node_slow" {
+  job_name        = "node_slow"
+  targets         = discovery.relabel.node_slow.output
+  scrape_interval = "{{ alloy_slow_interval }}"
+  forward_to      = [prometheus.relabel.node_slow.receiver]
+}
+
+prometheus.relabel "node_slow" {
+  forward_to = [prometheus.relabel.identity.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "{{ alloy_slow_drop_regex }}"
+    action        = "drop"
+  }
+}

@@ -1,0 +1,37 @@
+---
+# monitoring_enabled: false. Remove the host fragments and stop Alloy so
+# the host no longer pushes. The package stays installed. A collector keeps
+# running: only its host fragments go.
+- name: Check whether the Alloy service exists
+  ansible.builtin.stat:
+    path: /usr/lib/systemd/system/alloy.service
+  register: alloy_unit
+
+- name: Remove the host fragments
+  ansible.builtin.file:
+    path: "{{ alloy_config_dir }}/{{ item }}"
+    state: absent
+  loop:
+    - base.alloy
+    - node.alloy
+    - units.alloy
+    - extras.alloy
+  when: alloy_unit.stat.exists
+  register: alloy_fragments_removed
+
+- name: Reload the collector without the host fragments
+  ansible.builtin.systemd:
+    name: alloy
+    state: reloaded
+  when:
+    - alloy_fragments_removed.changed
+    - "'tag_app_collector' in group_names"
+
+- name: Stop and disable Alloy
+  ansible.builtin.systemd:
+    name: alloy
+    enabled: false
+    state: stopped
+  when:
+    - alloy_unit.stat.exists
+    - "'tag_app_collector' not in group_names"

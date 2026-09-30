@@ -1,0 +1,31 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+
+# Environment file and package changes need a restart; a config change is
+# applied with a reload, which keeps the old config running if the new one
+# fails to load. A restart drops the unsent backlog and takes about 20 s.
+- name: Restart alloy
+  ansible.builtin.systemd:
+    name: alloy
+    state: restarted
+    daemon_reload: true
+
+# A reload straight after a restart can reach Alloy before it is ready and
+# stop it, so wait for the status endpoint first.
+- name: Wait for alloy after a restart
+  ansible.builtin.uri:
+    url: "http://{{ alloy_http_listen_address }}/-/ready"
+    status_code: 200
+  register: alloy_restart_ready
+  retries: 10
+  delay: 3
+  until: alloy_restart_ready.status == 200
+  changed_when: false
+  listen: Restart alloy
+
+- name: Reload alloy
+  ansible.builtin.systemd:
+    name: alloy
+    state: reloaded

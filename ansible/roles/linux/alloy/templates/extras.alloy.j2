@@ -1,0 +1,45 @@
+// {{ ansible_managed }}
+//
+// Extra scrapes declared for this host in monitoring_extra_scrapes. The host
+// scrapes them itself and pushes the result like everything else.
+{% for scrape in monitoring_extra_scrapes %}
+{% set name = scrape.job | regex_replace('[^A-Za-z0-9_]', '_') %}
+
+prometheus.scrape "extra_{{ name }}" {
+  job_name        = "{{ scrape.job }}"
+  metrics_path    = "{{ scrape.path | default('/metrics') }}"
+  scheme          = "{{ scrape.scheme | default('http') }}"
+  scrape_interval = "{{ scrape.interval | default('60s') }}"
+  scrape_timeout  = "{{ scrape.timeout | default('10s') }}"
+{% if scrape.params | default({}) | length > 0 %}
+  params = {
+{% for key, values in scrape.params.items() %}
+    "{{ key }}" = [{% for value in values %}"{{ value }}"{{ ', ' if not loop.last }}{% endfor %}],
+{% endfor %}
+  }
+{% endif %}
+  forward_to      = [{{ 'prometheus.relabel.extra_' ~ name ~ '.receiver' if scrape.keep is defined else 'prometheus.relabel.identity.receiver' }}]
+
+  targets = [
+    {
+      "__address__" = "{{ scrape.address }}",
+      "instance"    = "{{ scrape.instance | default(scrape.address) }}",
+{% for key, value in (scrape.labels | default({})).items() if key not in ['site', 'host', 'kind', 'job', 'instance'] %}
+      "{{ key }}" = "{{ value }}",
+{% endfor %}
+    },
+  ]
+}
+{% if scrape.keep is defined %}
+
+prometheus.relabel "extra_{{ name }}" {
+  forward_to = [prometheus.relabel.identity.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "up|{{ scrape.keep }}"
+    action        = "keep"
+  }
+}
+{% endif %}
+{% endfor %}

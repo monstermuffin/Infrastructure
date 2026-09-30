@@ -1,0 +1,89 @@
+// {{ ansible_managed }}
+//
+// Host identity and delivery. Every other fragment forwards to
+// prometheus.relabel.identity, which stamps the label schema and hands the
+// samples to the on-disk buffer that pushes to the site collector.
+
+// ---- Push to the site collector ---------------------------------------------
+// The WAL is the buffer: while the collector is unreachable, unsent samples
+// stay on disk for up to max_keepalive_time and are sent in order once it is
+// back. Unsent samples are not resent if Alloy itself restarts during the
+// outage, so config changes are applied with a reload.
+prometheus.remote_write "push" {
+  endpoint {
+    url = "{{ monitoring_collector_url }}"
+
+    metadata_config {
+      send = false
+    }
+  }
+
+  wal {
+    truncate_frequency = "{{ alloy_wal_truncate_frequency }}"
+    min_keepalive_time = "{{ alloy_wal_min_keepalive_time }}"
+    max_keepalive_time = "{{ alloy_wal_max_keepalive_time }}"
+  }
+}
+
+// ---- Identity ---------------------------------------------------------------
+prometheus.relabel "identity" {
+  forward_to = [prometheus.remote_write.push.receiver]
+
+  rule {
+    target_label = "site"
+    replacement  = "{{ monitoring_site }}"
+  }
+
+  rule {
+    target_label = "host"
+    replacement  = "{{ inventory_hostname }}"
+  }
+
+  rule {
+    target_label = "kind"
+    replacement  = "{{ monitoring_kind }}"
+  }
+}
+
+// ---- Alloy itself -----------------------------------------------------------
+// Health, resource use and delivery lag of this host's Alloy.
+prometheus.exporter.self "alloy" {}
+
+discovery.relabel "alloy" {
+  targets = prometheus.exporter.self.alloy.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "alloy"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement  = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "alloy" {
+  job_name        = "alloy"
+  targets         = discovery.relabel.alloy.output
+  scrape_interval = "{{ alloy_self_interval }}"
+  forward_to      = [prometheus.relabel.alloy.receiver]
+}
+
+prometheus.relabel "alloy" {
+  forward_to = [prometheus.relabel.identity.receiver]
+
+  // On a collector the same process also forwards to the hub; that component
+  // is reported by the collector's own heartbeat (job="collector").
+  rule {
+    source_labels = ["component_id"]
+    regex         = "prometheus\\.remote_write\\.hub"
+    action        = "drop"
+  }
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "{{ alloy_self_metrics_regex }}"
+    action        = "keep"
+  }
+}
