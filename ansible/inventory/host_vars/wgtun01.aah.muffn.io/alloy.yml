@@ -1,0 +1,9 @@
+---
+# qBittorrent exporter (published by the gluetun container on this host).
+# Alloy scrapes it locally and pushes the result; the job and instance labels
+# are the ones the hub's own scrape used, so the dashboard and history carry on.
+monitoring_extra_scrapes:
+  - job: qbittorrent
+    address: 127.0.0.1:9171
+    instance: wgtun01.aah.muffn.io:9171
+    interval: 15s  # as the hub's scrape used
