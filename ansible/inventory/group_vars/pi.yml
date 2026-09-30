@@ -12,3 +12,7 @@ linux_base_igpu_packages: []
 
 linux_base_extra_packages:
   - i2c-tools
+
+# The Alloy package needs about 1.2 GB free to install and the Pi root
+# filesystem has less. Monitoring stays off until that is sorted out.
+monitoring_enabled: false

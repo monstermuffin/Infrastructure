@@ -1,0 +1,69 @@
+---
+# Fleet-wide monitoring settings for Alloy on every host (roles/linux/alloy).
+# Kept out of all.yml on purpose: a change to that file redeploys the guest
+# baseline everywhere. A change here redeploys Alloy (config reload) on the
+# hosts of the group.
+
+# Set to false in host_vars/<host>/alloy.yml to opt a host out: its host
+# fragments are removed and Alloy is stopped (a collector keeps running).
+monitoring_enabled: true
+
+# Proxmox guests that are meant to run without Alloy (appliances, hosts outside
+# this inventory, test VMs). The silent HostDown rule ignores them; the names
+# are the guest names Proxmox reports. Remove an entry when the guest gets an
+# agent.
+monitoring_hostdown_ignore:
+  - management02.internal.muffn.io
+  - manstest01.aah.muffn.io
+  - manstest02.aah.muffn.io
+
+# Where hosts push their metrics: the collector of their own site. nbg1 has no
+# collector and reaches the aah one over WireGuard, by address because the
+# tailnet resolver there does not know the aah names.
+monitoring_collector_urls:
+  aah: http://collector01.aah.muffn.io:8429/api/v1/metrics/write
+  lcy: http://collector01.lcy.muffn.io:8429/api/v1/metrics/write
+  nbg1: >-
+    http://{{ hostvars.get('collector01.aah.muffn.io', {}).get('ansible_host', 'collector01.aah.muffn.io') }}:8429/api/v1/metrics/write
+monitoring_collector_url: "{{ monitoring_collector_urls[monitoring_site] }}"
+
+# Label schema (site, kind), derived from inventory groups.
+monitoring_site: >-
+  {{ group_names | map('regex_replace', '^tag_site_', '')
+     | select('in', monitoring_collector_urls.keys() | list) | first }}
+monitoring_kind: >-
+  {{ 'pve' if 'proxmox' in group_names
+     else 'vps' if 'nbg1' in group_names
+     else 'pi' if 'pi' in group_names
+     else 'vm' if (proxmox_vmtype | default('')) == 'qemu'
+     else 'lxc' }}
+
+# Units reported by the node systemd collector (names without .service). A
+# unit that is not installed produces no series. The podman apps of a host are
+# added automatically; use monitoring_systemd_units_extra for anything else.
+monitoring_systemd_units:
+  - alloy
+  - chrony
+  - cron
+  - dbus
+  - podman
+  - postfix
+  - qemu-guest-agent
+  - ssh
+  - systemd-networkd
+  - systemd-resolved
+  - systemd-timesyncd
+monitoring_systemd_units_pve:
+  - corosync
+  - lxcfs
+  - pve-cluster
+  - pve-firewall
+  - pve-ha-crm
+  - pve-ha-lrm
+  - pvedaemon
+  - pveproxy
+  - pvescheduler
+  - pvestatd
+  - rrdcached
+  - smartmontools
+  - zfs-zed
