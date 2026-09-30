@@ -4,6 +4,10 @@ podman_enabled: true
 podman_networks:
   metrics: {}
 
+# Switches (host label) that may be off without SwitchDown firing, for spare or
+# test gear. Empty: every switch in monitoring_topology.switches is expected up.
+monitoring_switchdown_ignore: []
+
 podman_apps:
   victoriametrics:
     enabled: true
@@ -55,6 +59,9 @@ podman_apps:
         mode: "0644"
       - dest: /opt/victoriametrics01/vmalert/rules/host_generated.yml
         template_src: rules/host_generated.yml.j2
+        mode: "0644"
+      - dest: /opt/victoriametrics01/vmalert/rules/switch.yml
+        template_src: rules/switch.yml.j2
         mode: "0644"
     exec: >-
       -datasource.url=http://victoriametrics:8428

@@ -44,6 +44,9 @@ podman_apps:
       - dest: /opt/grafana01/provisioning/dashboards/json/fleet.json
         src: dashboards/fleet.json
         mode: "0644"
+      - dest: /opt/grafana01/provisioning/dashboards/json/switches.json
+        src: dashboards/switches.json
+        mode: "0644"
       # Dashboard schema v2 resource (apiVersion dashboard.grafana.app/v2)
       - dest: /opt/grafana01/provisioning/dashboards/json/qbittorrent.json
         src: dashboards/qbittorrent.json

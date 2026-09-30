@@ -1,5 +1,5 @@
 ---
-# Renders the generated rule file for a local check (see run.sh).
+# Renders the generated rule files for a local check (see run.sh).
 - name: Render the generated rules
   hosts: victoriametrics01.aah.muffn.io
   gather_facts: false
@@ -11,3 +11,16 @@
         src: "{{ playbook_dir }}/../../ansible/inventory/host_vars/victoriametrics01.aah.muffn.io/files/rules/host_generated.yml.j2"
         dest: "{{ out }}"
         mode: "0644"
+    - name: Render switch.yml
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../../ansible/inventory/host_vars/victoriametrics01.aah.muffn.io/files/rules/switch.yml.j2"
+        dest: "{{ out_switch }}"
+        mode: "0644"
+
+    - name: Render switch_ignore.yml with sw02 on the exclusion list
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../../ansible/inventory/host_vars/victoriametrics01.aah.muffn.io/files/rules/switch.yml.j2"
+        dest: "{{ out_switch_ignore }}"
+        mode: "0644"
+      vars:
+        monitoring_switchdown_ignore: [sw02]

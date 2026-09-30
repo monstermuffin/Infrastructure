@@ -1,0 +1,51 @@
+# SwitchDown, rendered from switch.yml.j2 with the inventory's (empty)
+# monitoring_switchdown_ignore. The exclusion list itself is in
+# switchignore.test.yml.
+rule_files:
+  - switch.yml
+evaluation_interval: 1m
+
+tests:
+  # sw01 keeps answering and never alerts. sw02 stops answering on both jobs at
+  # minute 10, alerts 10 minutes later and resolves when it answers again at
+  # minute 30. sw03 fails only its health walk while the interface walk keeps
+  # answering, which is not a down switch.
+  - interval: 1m
+    input_series:
+      - series: 'up{job="snmp_interfaces",instance="sw01",site="aah",host="sw01",kind="network"}'
+        values: '1+0x60'
+      - series: 'up{job="snmp_health",instance="sw01",site="aah",host="sw01",kind="network"}'
+        values: '1+0x60'
+      - series: 'up{job="snmp_interfaces",instance="sw02",site="aah",host="sw02",kind="network"}'
+        values: '1+0x10 0+0x19 1+0x30'
+      - series: 'up{job="snmp_health",instance="sw02",site="aah",host="sw02",kind="network"}'
+        values: '1+0x10 0+0x19 1+0x30'
+      - series: 'up{job="snmp_interfaces",instance="sw03",site="aah",host="sw03",kind="network"}'
+        values: '1+0x60'
+      - series: 'up{job="snmp_health",instance="sw03",site="aah",host="sw03",kind="network"}'
+        values: '0+0x60'
+      # Not a switch job: never considered.
+      - series: 'up{job="node_fast",instance="h1",site="aah",host="h1",kind="lxc"}'
+        values: '0+0x60'
+    alert_rule_test:
+      # Down for 9 minutes: still pending.
+      - eval_time: 19m
+        alertname: SwitchDown
+        exp_alerts: []
+      - eval_time: 22m
+        alertname: SwitchDown
+        exp_alerts:
+          - exp_labels:
+              severity: info
+              site: aah
+              host: sw02
+            exp_annotations:
+              summary: "Switch sw02 does not answer SNMP"
+              description: "The aah collector has had no SNMP answer from sw02 for 10 minutes. The switch may be down or unreachable from the collector, or its SNMP access has changed. Traffic and port state for it are not being recorded."
+              runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/switch-down.md"
+              dashboard: "https://metrics.muffn.io/d/switches?var-host=sw02"
+              promql: 'up{job=~"snmp_.*", host="sw02"}'
+              logql: '{site="aah", unit="alloy"}'
+      - eval_time: 35m
+        alertname: SwitchDown
+        exp_alerts: []

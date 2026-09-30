@@ -136,3 +136,79 @@ prometheus.relabel "pve" {
   }
 }
 {% endif %}
+{% if collector_switches %}
+
+// ---- Switches (SNMP) ---------------------------------------------------------
+// Two jobs per switch, by sampling tier: snmp_interfaces (counters, port state)
+// and snmp_health (system, health, SFP diagnostics). The exporter reads its
+// modules and the community from snmp.yml; local.file re-reads it when it
+// changes. Target labels must be identifiers, so dashes in the switch name
+// become underscores there and the real name is set as the host label.
+local.file "snmp" {
+  filename       = "{{ collector_snmp_config_file }}"
+  is_secret      = true
+  poll_frequency = "1m"
+}
+{% for tier in ['interfaces', 'health'] %}
+
+prometheus.exporter.snmp "{{ tier }}" {
+  config = local.file.snmp.content
+{% for sw in collector_switches %}
+
+  target "{{ sw.name | replace('-', '_') }}" {
+    address = "{{ sw.address }}"
+    module  = "{{ sw.platform }}_{{ tier }}"
+    auth    = "{{ sw.auth }}"
+
+    labels = {
+      "site" = "{{ sw.site }}",
+      "host" = "{{ sw.name }}",
+      "kind" = "network",
+    }
+  }
+{% endfor %}
+}
+
+discovery.relabel "snmp_{{ tier }}" {
+  targets = prometheus.exporter.snmp.{{ tier }}.targets
+
+  // The exporter sets job and instance itself (integrations/snmp/<switch>, the
+  // component id); the series are identified by job and by the switch name.
+  rule {
+    target_label = "job"
+    replacement  = "snmp_{{ tier }}"
+  }
+
+  rule {
+    source_labels = ["host"]
+    target_label  = "instance"
+  }
+}
+
+prometheus.scrape "snmp_{{ tier }}" {
+  job_name        = "snmp_{{ tier }}"
+  targets         = discovery.relabel.snmp_{{ tier }}.output
+  scrape_interval = "{{ lookup('vars', 'collector_snmp_' ~ tier ~ '_interval') }}"
+  scrape_timeout  = "{{ lookup('vars', 'collector_snmp_' ~ tier ~ '_timeout') }}"
+  forward_to      = [prometheus.relabel.snmp.receiver]
+}
+{% endfor %}
+
+prometheus.relabel "snmp" {
+  forward_to = [prometheus.remote_write.hub.receiver]
+
+  // The exporter's own packet histograms are identical for every target and
+  // add nothing beyond snmp_scrape_*.
+  rule {
+    source_labels = ["__name__"]
+    regex         = "snmp_(packet_.*|packets_total|request_in_flight|unexpected_pdu_type_total)"
+    action        = "drop"
+  }
+
+  // ifDescr repeats ifName on these switches and ifAlias is empty.
+  rule {
+    action = "labeldrop"
+    regex  = "ifDescr|ifAlias"
+  }
+}
+{% endif %}

@@ -12,9 +12,23 @@
 # Alloy is installed and running from the linux/alloy dependency. The template
 # is passed by absolute path because the shared task runs in that role, so the
 # path is fixed here, in this role's context.
-- name: Locate the collector template
+- name: Locate the collector templates
   ansible.builtin.set_fact:
     collector_template_src: "{{ role_path }}/templates/collector.alloy.j2"
+    collector_snmp_template_src: "{{ role_path }}/templates/snmp.yml.j2"
+    collector_snmp_modules_src: "{{ role_path }}/files/snmp_modules.yml.static"
+  tags:
+    - config
+
+- name: Check the switches of this site have their credential
+  ansible.builtin.assert:
+    that:
+      - ('snmp_community_' ~ item) is in vars
+    fail_msg: >-
+      No snmp_community_{{ item }} for the switches of {{ collector_site }};
+      add the vault value to this collector's podman.yml.
+    quiet: true
+  loop: "{{ collector_switches | map(attribute='auth') | unique | list }}"
   tags:
     - config
 
@@ -24,10 +38,10 @@
     tasks_from: apply_config.yml
   vars:
     alloy_config_set: collector
-    alloy_config_files:
-      - src: "{{ collector_template_src }}"
-        dest: collector.alloy
-    alloy_config_absent: []
+    alloy_config_files: >-
+      {{ [{'src': collector_template_src, 'dest': 'collector.alloy'}]
+         + ([{'src': collector_snmp_template_src, 'dest': 'snmp.yml'}] if collector_switches else []) }}
+    alloy_config_absent: "{{ [] if collector_switches else ['snmp.yml'] }}"
   tags:
     - config
 

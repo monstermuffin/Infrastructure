@@ -1,0 +1,26 @@
+# Rendered when the hub is deployed. Alert rule for the switches that the site
+# collectors poll over SNMP; port errors, flaps and health readings are
+# dashboard-only. Switches named in monitoring_switchdown_ignore
+# (host_vars/victoriametrics01.../podman.yml) are left out.
+groups:
+  - name: switches
+    rules:
+      # up is 1 while a switch answers SNMP; both scrape jobs of a switch
+      # (snmp_interfaces and snmp_health) must fail. A switch removed from the
+      # topology stops reporting and does not alert. If the site collector
+      # itself is down nothing is reported either (SiteUnreachable covers it).
+      - alert: SwitchDown
+        expr: >-
+          max by (site, host) (up{job=~"snmp_(interfaces|health)", host!~"^({{ (monitoring_switchdown_ignore | default([]) + ['none.invalid']) | join('|') }})$"}) == 0
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+{% raw %}
+          summary: "Switch {{ $labels.host }} does not answer SNMP"
+          description: "The {{ $labels.site }} collector has had no SNMP answer from {{ $labels.host }} for 10 minutes. The switch may be down or unreachable from the collector, or its SNMP access has changed. Traffic and port state for it are not being recorded."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/switch-down.md"
+          dashboard: "https://metrics.muffn.io/d/switches?var-host={{ $labels.host }}"
+          promql: 'up{job=~"snmp_.*", host="{{ $labels.host }}"}'
+          logql: '{site="{{ $labels.site }}", unit="alloy"}'
+{% endraw %}

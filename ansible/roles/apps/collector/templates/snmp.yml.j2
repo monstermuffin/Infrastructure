@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+# Read by Alloy's SNMP exporter (local.file "snmp" in collector.alloy).
+auths:
+{% for auth in collector_switches | map(attribute='auth') | unique | sort %}
+  {{ auth }}:
+    community: {{ lookup('vars', 'snmp_community_' ~ auth) | to_json }}
+    version: 2
+{% endfor %}
+{{ lookup('ansible.builtin.file', collector_snmp_modules_src) }}

@@ -1,0 +1,33 @@
+# A switch on monitoring_switchdown_ignore may be off without SwitchDown
+# firing. switch_ignore.yml is rendered with sw02 on the list (see
+# render_generated.yml); sw04 is the same failure on an unlisted switch.
+rule_files:
+  - switch_ignore.yml
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="snmp_interfaces",instance="sw02",site="aah",host="sw02",kind="network"}'
+        values: '0+0x60'
+      - series: 'up{job="snmp_health",instance="sw02",site="aah",host="sw02",kind="network"}'
+        values: '0+0x60'
+      - series: 'up{job="snmp_interfaces",instance="sw04",site="aah",host="sw04",kind="network"}'
+        values: '0+0x60'
+      - series: 'up{job="snmp_health",instance="sw04",site="aah",host="sw04",kind="network"}'
+        values: '0+0x60'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: SwitchDown
+        exp_alerts:
+          - exp_labels:
+              severity: info
+              site: aah
+              host: sw04
+            exp_annotations:
+              summary: "Switch sw04 does not answer SNMP"
+              description: "The aah collector has had no SNMP answer from sw04 for 10 minutes. The switch may be down or unreachable from the collector, or its SNMP access has changed. Traffic and port state for it are not being recorded."
+              runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/switch-down.md"
+              dashboard: "https://metrics.muffn.io/d/switches?var-host=sw04"
+              promql: 'up{job=~"snmp_.*", host="sw04"}'
+              logql: '{site="aah", unit="alloy"}'

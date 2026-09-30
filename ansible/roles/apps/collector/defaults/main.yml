@@ -38,3 +38,16 @@ collector_self_scrape_interval: 30s
 collector_pve_exporter_address: "127.0.0.1:9221"
 collector_pve_scrape_interval: 60s
 collector_pve_scrape_timeout: 30s
+
+# Switches (SNMP v2c) of this site from monitoring_topology.switches, pulled
+# through Alloy's built-in SNMP exporter. Alloy only uses its bundled modules
+# with the default `public` community, so the role ships its own snmp.yml
+# (files/snmp_modules.yml.static plus the site communities, root:alloy 0640).
+collector_switches: >-
+  {{ monitoring_topology.switches | default([])
+     | selectattr('site', 'equalto', collector_site) | list }}
+collector_snmp_config_file: "{{ alloy_config_dir }}/snmp.yml"
+collector_snmp_interfaces_interval: 30s
+collector_snmp_interfaces_timeout: 25s
+collector_snmp_health_interval: 60s
+collector_snmp_health_timeout: 30s

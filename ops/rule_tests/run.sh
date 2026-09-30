@@ -20,7 +20,10 @@ trap 'rm -rf "$work"' EXIT
 for f in "$hub"/rules/*.yml.static; do
   cp "$f" "$work/$(basename "${f%.static}")"
 done
-(cd "$repo/ansible" && ansible-playbook "$here/render_generated.yml" -e "out=$work/host_generated.yml" >/dev/null || { echo "rendering the generated rules failed" >&2; exit 1; })
+if ! (cd "$repo/ansible" && ansible-playbook "$here/render_generated.yml" -e "out=$work/host_generated.yml" -e "out_switch=$work/switch.yml" -e "out_switch_ignore=$work/switch_ignore.yml" >/dev/null); then
+  echo "rendering the generated rules failed" >&2
+  exit 1
+fi
 
 "${bin:+$bin/}vmalert-prod" -dryRun -rule="$work/*.yml"
 "${bin:+$bin/}amtool" check-config "$hub/alertmanager.yml.static"

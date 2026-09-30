@@ -1,0 +1,1222 @@
+{
+  "uid": "switches",
+  "title": "Switches",
+  "description": "Network switches polled over SNMP: whether they answer, port state and traffic, errors and flaps, temperatures, power supplies and SFP modules.",
+  "tags": [
+    "monitoring",
+    "network"
+  ],
+  "schemaVersion": 42,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "",
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "templating": {
+    "list": [
+      {
+        "name": "site",
+        "label": "Site",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "victoriametrics"
+        },
+        "query": {
+          "query": "label_values(up{job=\"snmp_health\"}, site)",
+          "refId": "site"
+        },
+        "definition": "label_values(up{job=\"snmp_health\"}, site)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "sort": 1,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "host",
+        "label": "Switch",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "victoriametrics"
+        },
+        "query": {
+          "query": "label_values(up{job=\"snmp_health\", site=~\"$site\"}, host)",
+          "refId": "host"
+        },
+        "definition": "label_values(up{job=\"snmp_health\", site=~\"$site\"}, host)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "sort": 1,
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Status",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 2,
+      "title": "Switches not answering",
+      "description": "Switches whose SNMP scrape is failing right now. SwitchDown fires after 10 minutes of this.",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 6
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "count(max by (host) (up{job=\"snmp_health\", site=~\"$site\", host=~\"$host\"}) == 0) or vector(0)",
+          "legendFormat": "",
+          "range": false,
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "0",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 3,
+      "title": "Switches",
+      "description": "One row per switch: whether it answers, its model and OS, uptime, ports up, and how long the interface scrape takes.",
+      "type": "table",
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 20,
+        "h": 6
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host) (up{job=\"snmp_health\", site=~\"$site\", host=~\"$host\"})",
+          "legendFormat": "answering",
+          "range": false,
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host) (sysUpTime{site=~\"$site\", host=~\"$host\"}) / 100",
+          "legendFormat": "uptime",
+          "range": false,
+          "refId": "B",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "count by (host) (ifOperStatus{site=~\"$site\", host=~\"$host\"} == 1)",
+          "legendFormat": "ports_up",
+          "range": false,
+          "refId": "C",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "count by (host) (ifOperStatus{site=~\"$site\", host=~\"$host\"})",
+          "legendFormat": "ports",
+          "range": false,
+          "refId": "D",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host) (snmp_scrape_duration_seconds{module=~\".*_interfaces\", site=~\"$site\", host=~\"$host\"})",
+          "legendFormat": "scrape",
+          "range": false,
+          "refId": "E",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, sysDescr) (sysDescr{site=~\"$site\", host=~\"$host\"})",
+          "legendFormat": "model",
+          "range": false,
+          "refId": "F",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "noValue": "-"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Answering"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "No",
+                        "color": "red"
+                      },
+                      "1": {
+                        "text": "Yes",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Uptime"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Interface scrape"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "host",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Time 4": true,
+              "Time 5": true,
+              "Time 6": true,
+              "Value #F": true
+            },
+            "renameByName": {
+              "host": "Switch",
+              "Value #A": "Answering",
+              "sysDescr": "Model and OS",
+              "Value #B": "Uptime",
+              "Value #C": "Ports up",
+              "Value #D": "Ports",
+              "Value #E": "Interface scrape"
+            },
+            "indexByName": {
+              "host": 0,
+              "Value #A": 1,
+              "sysDescr": 2,
+              "Value #B": 3,
+              "Value #C": 4,
+              "Value #D": 5,
+              "Value #E": 6
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "row",
+      "title": "Ports",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 5,
+      "title": "Port state",
+      "description": "Operational state of every port. Grey is a port that is down (unused ports are normally down), green is up. Names are the port names set on the switch.",
+      "type": "state-timeline",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "ifOperStatus{site=~\"$site\", host=~\"$host\"}",
+          "legendFormat": "{{host}} {{ifName}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 0,
+            "fillOpacity": 80
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "up",
+                  "color": "green"
+                },
+                "2": {
+                  "text": "down",
+                  "color": "#5c5c5c"
+                },
+                "3": {
+                  "text": "testing",
+                  "color": "yellow"
+                },
+                "5": {
+                  "text": "dormant",
+                  "color": "yellow"
+                },
+                "7": {
+                  "text": "lower layer down",
+                  "color": "orange"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "never",
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 6,
+      "title": "Traffic in",
+      "description": "Received bit rate for every port that is up.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "rate(ifHCInOctets{site=~\"$site\", host=~\"$host\"}[5m]) * 8 and on (host, ifIndex) (ifOperStatus{site=~\"$site\", host=~\"$host\"} == 1)",
+          "legendFormat": "{{host}} {{ifName}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 7,
+      "title": "Traffic out",
+      "description": "Transmitted bit rate for every port that is up.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "rate(ifHCOutOctets{site=~\"$site\", host=~\"$host\"}[5m]) * 8 and on (host, ifIndex) (ifOperStatus{site=~\"$site\", host=~\"$host\"} == 1)",
+          "legendFormat": "{{host}} {{ifName}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 8,
+      "title": "Busiest ports",
+      "description": "The ten ports with the most traffic (in plus out) over the last 5 minutes.",
+      "type": "bargauge",
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, (rate(ifHCInOctets{site=~\"$site\", host=~\"$host\"}[5m]) + rate(ifHCOutOctets{site=~\"$site\", host=~\"$host\"}[5m])) * 8)",
+          "legendFormat": "{{host}} {{ifName}}",
+          "range": false,
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "min": 0,
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "namePlacement": "left",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "Errors and flaps",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 10,
+      "title": "Errors and discards",
+      "description": "Packets per second that a port dropped or counted as errors (in and out together). Only ports with a non-zero rate appear; an empty panel is the healthy state.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "sum by (host, ifName) (rate(ifInErrors{site=~\"$site\", host=~\"$host\"}[5m]) + rate(ifOutErrors{site=~\"$site\", host=~\"$host\"}[5m]) + rate(ifInDiscards{site=~\"$site\", host=~\"$host\"}[5m]) + rate(ifOutDiscards{site=~\"$site\", host=~\"$host\"}[5m])) > 0",
+          "legendFormat": "{{host}} {{ifName}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0,
+          "noValue": "None"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 11,
+      "title": "Recent port state changes",
+      "description": "Ports whose up/down state changed within the selected time range, and how long ago the last change was (from the switch's own last-change time, so a gap in the data does not count as a change). A flapping link keeps reappearing here with a recent time.",
+      "type": "table",
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "(max by (host) (sysUpTime{site=~\"$site\", host=~\"$host\"}) - on (host) group_right () max by (host, ifName) (ifLastChange{site=~\"$site\", host=~\"$host\"})) / 100 < $__range_s",
+          "legendFormat": "",
+          "range": false,
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "noValue": "No changes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Changed ago"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Changed ago",
+            "desc": false
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "host": "Switch",
+              "ifName": "Port",
+              "Value": "Changed ago"
+            },
+            "indexByName": {
+              "host": 0,
+              "ifName": 1,
+              "Value": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 12,
+      "title": "Broadcast and multicast in",
+      "description": "Received broadcast and multicast packets per second for each switch. A sudden rise is the first sign of a loop or a storm.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "sum by (host) (rate(ifHCInBroadcastPkts{site=~\"$site\", host=~\"$host\"}[5m]))",
+          "legendFormat": "{{host}} broadcast",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "sum by (host) (rate(ifHCInMulticastPkts{site=~\"$site\", host=~\"$host\"}[5m]))",
+          "legendFormat": "{{host}} multicast",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "Health",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 14,
+      "title": "Temperature",
+      "description": "CPU temperature (CRS models), the board sensor (CSS models, one unnamed gauge shown as reported, assumed to be degrees Celsius) and the hottest SFP module per switch.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 51,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host) (mtxrHlProcessorTemperature{site=~\"$site\", host=~\"$host\"}) / 10",
+          "legendFormat": "{{host}} CPU",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host) (mtxrGaugeValue{site=~\"$site\", host=~\"$host\"})",
+          "legendFormat": "{{host}} board sensor",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host) (mtxrOpticalTemperature{site=~\"$site\", host=~\"$host\"} < 200)",
+          "legendFormat": "{{host}} hottest SFP",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 15,
+      "title": "Power supplies",
+      "description": "State of the main and backup power supply inputs, on switches that report them.",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 51,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host) (mtxrHlPowerSupplyState{site=~\"$site\", host=~\"$host\"})",
+          "legendFormat": "{{host}} main",
+          "range": false,
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host) (mtxrHlBackupPowerSupplyState{site=~\"$site\", host=~\"$host\"})",
+          "legendFormat": "{{host}} backup",
+          "range": false,
+          "instant": true,
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Not reported",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Not OK",
+                  "color": "orange"
+                },
+                "1": {
+                  "text": "OK",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "id": 16,
+      "title": "SFP modules",
+      "description": "Modules the switches can read: temperature, supply voltage, transmit bias current and wavelength. Empty cages are left out. These switches do not report optical power levels.",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 59,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, mtxrOpticalIndex, mtxrOpticalName) (mtxrOpticalTemperature{site=~\"$site\", host=~\"$host\"}) and on (host, mtxrOpticalIndex) (mtxrOpticalTemperature{site=~\"$site\", host=~\"$host\"} < 200)",
+          "legendFormat": "",
+          "range": false,
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, mtxrOpticalIndex, mtxrOpticalName) (mtxrOpticalSupplyVoltage{site=~\"$site\", host=~\"$host\"} / 1000) and on (host, mtxrOpticalIndex) (mtxrOpticalTemperature{site=~\"$site\", host=~\"$host\"} < 200)",
+          "legendFormat": "",
+          "range": false,
+          "refId": "B",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, mtxrOpticalIndex, mtxrOpticalName) (mtxrOpticalTxBiasCurrent{site=~\"$site\", host=~\"$host\"}) and on (host, mtxrOpticalIndex) (mtxrOpticalTemperature{site=~\"$site\", host=~\"$host\"} < 200)",
+          "legendFormat": "",
+          "range": false,
+          "refId": "C",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "editorMode": "code",
+          "expr": "max by (host, mtxrOpticalIndex, mtxrOpticalName) (mtxrOpticalWavelength{site=~\"$site\", host=~\"$host\"} / 100) and on (host, mtxrOpticalIndex) (mtxrOpticalTemperature{site=~\"$site\", host=~\"$host\"} < 200)",
+          "legendFormat": "",
+          "range": false,
+          "refId": "D",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "noValue": "-"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temperature"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Voltage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "volt"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tx bias"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "mA"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Wavelength"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "nm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "mtxrOpticalIndex": true
+            },
+            "renameByName": {
+              "host": "Switch",
+              "mtxrOpticalName": "Port",
+              "Value #A": "Temperature",
+              "Value #B": "Voltage",
+              "Value #C": "Tx bias",
+              "Value #D": "Wavelength"
+            },
+            "indexByName": {
+              "host": 0,
+              "mtxrOpticalName": 1,
+              "Value #A": 2,
+              "Value #B": 3,
+              "Value #C": 4,
+              "Value #D": 5
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
