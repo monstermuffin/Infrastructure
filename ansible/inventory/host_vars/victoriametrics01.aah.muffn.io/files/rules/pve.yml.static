@@ -26,8 +26,8 @@ groups:
           logql: '{host=~"{{ $labels.node }}\\..*"}'
 
       # Guests that start at boot but are stopped. Guests with onboot=0 are
-      # parked on purpose and never alert. Detection of a running guest that has
-      # gone silent needs host metrics and is added with them.
+      # parked on purpose and never alert. A running guest that has gone silent
+      # is caught by the second HostDown rule in host_generated.yml.
       - alert: HostDown
         expr: >-
           label_replace(
@@ -43,6 +43,7 @@ groups:
         for: 10m
         labels:
           severity: info
+          reason: stopped
         annotations:
           summary: "{{ $labels.host }} is stopped but set to start at boot"
           description: "Proxmox reports {{ $labels.host }} as stopped while start at boot is enabled, so the services on it are unavailable."

@@ -1,0 +1,43 @@
+# Alerts from the node metrics pushed by every host. All rules are info until
+# notifications are enabled; the severity noted on each is the intended one.
+#
+# Host liveness (HostDown) is in host_generated.yml, which is rendered from the
+# inventory.
+groups:
+  - name: host
+    rules:
+      # Intended severity: warning, critical below 3% free. Network file
+      # systems, tmpfs, overlays and the EFI partition are not judged here.
+      - alert: DiskFilling
+        expr: >-
+          (
+            node_filesystem_avail_bytes{job="node_slow", fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs|cifs|nfs|nfs4|smb3|fuse.*|autofs|iso9660|vfat"}
+            / node_filesystem_size_bytes{job="node_slow", fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs|cifs|nfs|nfs4|smb3|fuse.*|autofs|iso9660|vfat"}
+          ) < 0.10
+          and on (site, host, device, mountpoint)
+          node_filesystem_readonly{job="node_slow"} == 0
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "{{ $labels.host }}: {{ $labels.mountpoint }} is {{ $value | humanizePercentage }} free"
+          description: "The file system mounted at {{ $labels.mountpoint }} on {{ $labels.host }} has less than 10% space available. Writes fail when it fills, which stops services and can leave databases corrupt."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/disk-filling.md"
+          dashboard: "https://metrics.muffn.io/d/host-overview?var-host={{ $labels.host }}"
+          promql: 'node_filesystem_avail_bytes{host="{{ $labels.host }}", mountpoint="{{ $labels.mountpoint }}"}'
+          logql: '{host="{{ $labels.host }}"} |= "No space left"'
+
+      # Intended severity: critical. Needs the zfs collector, which runs on the
+      # Proxmox hosts.
+      - alert: ZfsPoolDegraded
+        expr: node_zfs_zpool_state{job="node_slow", state!="online"} == 1
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "{{ $labels.host }}: ZFS pool {{ $labels.zpool }} is {{ $labels.state }}"
+          description: "The ZFS pool {{ $labels.zpool }} on {{ $labels.host }} is not online. A degraded pool has lost redundancy or a device, a faulted one may have lost data."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/zfs-pool-degraded.md"
+          dashboard: "https://metrics.muffn.io/d/pve-host?var-host={{ $labels.host }}"
+          promql: 'node_zfs_zpool_state{host="{{ $labels.host }}", zpool="{{ $labels.zpool }}"}'
+          logql: '{host="{{ $labels.host }}", unit="zfs-zed"}'

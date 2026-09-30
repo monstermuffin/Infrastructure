@@ -1,0 +1,71 @@
+# Generated from the inventory when the hub is deployed; do not edit by hand.
+#
+# Two kinds of HostDown rule, both for a host that stopped sending node
+# metrics (the stopped-guest half is in pve.yml):
+#   1. A Proxmox guest that is running and set to start at boot, but has sent
+#      no node metrics for 10 minutes. Guests of hosts that opted out of the
+#      Alloy (monitoring_enabled: false) and the names in
+#      monitoring_hostdown_ignore (group_vars/monitored.yml) are left out.
+#   2. One absence check for every monitored host that Proxmox does not know
+#      about (VPS, Pi).
+{% set optout = [] %}
+{% for h in groups['monitored'] | default([]) | sort %}
+{% if not (hostvars[h].monitoring_enabled | default(true) | bool) %}
+{% set _ = optout.append(h) %}
+{% endif %}
+{% endfor %}
+{% set skip = optout + (monitoring_hostdown_ignore | default([])) %}
+{% set direct = [] %}
+{% for h in ((groups['nbg1'] | default([])) + (groups['pi'] | default([]))) | sort %}
+{% if h not in optout %}
+{% set _ = direct.append(h) %}
+{% endif %}
+{% endfor %}
+groups:
+  - name: host_generated
+    rules:
+      - alert: HostDown
+        expr: >-
+          label_replace(
+            (
+              (max by (job, id, site) (pve_up{id=~"(lxc|qemu)/.*"}) == 1)
+              and on (job, id)
+              (max by (job, id) (pve_onboot_status) == 1)
+            )
+            * on (job, id) group_left (name, node)
+            max by (job, id, name, node) (pve_guest_info{name!~"^({{ (skip + ['none.invalid']) | join('|') }})$"}),
+            "host", "$1", "name", "(.*)"
+          )
+          unless on (host)
+          max by (host) (up{job="node_fast"})
+        for: 10m
+        labels:
+          severity: info
+          reason: silent
+        annotations:
+{% raw %}
+          summary: "{{ $labels.host }} is running but sends no metrics"
+          description: "Proxmox reports {{ $labels.host }} as running with start at boot enabled, but no node metrics have arrived from it for 10 minutes. The guest may be hung, its network may be down, or Alloy has stopped."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/host-down.md"
+          dashboard: "https://metrics.muffn.io/d/pve-exporter"
+          promql: 'up{job="node_fast", host="{{ $labels.host }}"}'
+          logql: '{host="{{ $labels.host }}"}'
+{% endraw %}
+{% for h in direct %}
+
+      - alert: HostDown
+        expr: absent(up{job="node_fast", host="{{ h }}"})
+        for: 10m
+        labels:
+          severity: info
+          reason: silent
+          site: "{{ hostvars[h].monitoring_site }}"
+          kind: "{{ hostvars[h].monitoring_kind }}"
+        annotations:
+          summary: "{{ h }} sends no metrics"
+          description: "No node metrics have arrived from {{ h }} for 10 minutes. The host may be down or unreachable from its collector, or Alloy has stopped."
+          runbook: "https://github.com/monstermuffin/Infrastructure/blob/main/docs/runbooks/host-down.md"
+          dashboard: "https://metrics.muffn.io/d/host-overview?var-host={{ h }}"
+          promql: 'up{job="node_fast", host="{{ h }}"}'
+          logql: '{host="{{ h }}"}'
+{% endfor %}

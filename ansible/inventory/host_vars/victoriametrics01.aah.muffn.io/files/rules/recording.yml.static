@@ -1,0 +1,49 @@
+# Canonical metrics. Several sources measure the same thing differently
+# (memory above all), so one series is defined per quantity here and
+# dashboards use only these names.
+#
+#   host:memory_total_bytes   limit the host or guest sees (node meminfo)
+#   host:memory_used_bytes    total minus available (node meminfo)
+#   unit:memory_bytes         working set per systemd unit (cgroup; excludes
+#                             inactive file cache, unlike usage_bytes)
+#   guest:memory_bytes        memory of a guest as Proxmox reports it
+#   guest:memory_total_bytes  memory allocated to the guest in Proxmox
+#
+# For containers Proxmox reports the cgroup usage minus file cache, which
+# lands a little below the in-guest figure. For VMs it includes the guest page
+# cache and is far above it. Compare them for containers only.
+groups:
+  - name: canonical_memory
+    interval: 60s
+    rules:
+      - record: host:memory_total_bytes
+        expr: max by (site, host, kind) (node_memory_MemTotal_bytes{job="node_slow"})
+
+      - record: host:memory_used_bytes
+        expr: >-
+          max by (site, host, kind) (
+            node_memory_MemTotal_bytes{job="node_slow"} - node_memory_MemAvailable_bytes{job="node_slow"}
+          )
+
+      - record: unit:memory_bytes
+        expr: max by (site, host, kind, unit) (container_memory_working_set_bytes{job="units"})
+
+      # pve-exporter is scraped through every node, so dedupe first. The job
+      # is part of the key because VMIDs repeat between clusters and sites.
+      - record: guest:memory_bytes
+        expr: >-
+          label_replace(
+            max by (job, id) (pve_memory_usage_bytes{id=~"(lxc|qemu)/.*"})
+            * on (job, id) group_left (name, node, site)
+            max by (job, id, name, node, site) (pve_guest_info),
+            "host", "$1", "name", "(.*)"
+          )
+
+      - record: guest:memory_total_bytes
+        expr: >-
+          label_replace(
+            max by (job, id) (pve_memory_size_bytes{id=~"(lxc|qemu)/.*"})
+            * on (job, id) group_left (name, node, site)
+            max by (job, id, name, node, site) (pve_guest_info),
+            "host", "$1", "name", "(.*)"
+          )

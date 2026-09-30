@@ -47,6 +47,15 @@ podman_apps:
       - dest: /opt/victoriametrics01/vmalert/rules/pipeline.yml
         src: rules/pipeline.yml.static
         mode: "0644"
+      - dest: /opt/victoriametrics01/vmalert/rules/recording.yml
+        src: rules/recording.yml.static
+        mode: "0644"
+      - dest: /opt/victoriametrics01/vmalert/rules/host.yml
+        src: rules/host.yml.static
+        mode: "0644"
+      - dest: /opt/victoriametrics01/vmalert/rules/host_generated.yml
+        template_src: rules/host_generated.yml.j2
+        mode: "0644"
     exec: >-
       -datasource.url=http://victoriametrics:8428
       -remoteWrite.url=http://victoriametrics:8428
