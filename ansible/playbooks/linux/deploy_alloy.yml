@@ -1,0 +1,46 @@
+---
+# Deploy Alloy on every host: node metrics, per-service metrics on podman
+# hosts and per-host extra scrapes, pushed to the collector of the site.
+#
+# Whole fleet (hosts in batches, collectors last, one at a time):
+#   ops/ansible_playbook.sh playbooks/linux/deploy_alloy.yml
+#
+# One host, or a bounded set (dispatch_fail_offline makes an unreachable host an error):
+#   ansible-playbook playbooks/linux/deploy_alloy.yml --limit radarr01.aah.muffn.io -e dispatch_fail_offline=true
+#   ansible-playbook playbooks/linux/deploy_alloy.yml -e target=pve02.aah.muffn.io -e dispatch_fail_offline=true
+#
+# Batch size of the first play: -e alloy_serial=5
+#
+# A config change is applied with a reload. Installing or upgrading the
+# package restarts Alloy (about 20 s), and a restart loses the backlog that
+# has not been sent yet, so do not roll a version change during an outage.
+
+- name: Deploy Alloy on hosts
+  hosts: "{{ target | default('monitored') }}:!tag_app_collector"
+  become: true
+  gather_facts: true
+  gather_subset:
+    - min
+  serial: "{{ alloy_serial | default(10) }}"
+  ignore_unreachable: "{{ not (dispatch_fail_offline | default(false) | bool) }}"
+
+  roles:
+    - role: linux/alloy
+      tags:
+        - alloy
+
+# Collectors last and one at a time, so pushes from the hosts never stall.
+- name: Deploy Alloy on collectors
+  hosts: "{{ target | default('monitored') }}:&tag_app_collector"
+  become: true
+  gather_facts: true
+  gather_subset:
+    - min
+  serial: 1
+  ignore_unreachable: "{{ not (dispatch_fail_offline | default(false) | bool) }}"
+
+  roles:
+    - role: apps/collector
+      tags:
+        - alloy
+        - collector
