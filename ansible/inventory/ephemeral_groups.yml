@@ -8,3 +8,11 @@ all:
         tag_os_linux: {}
         tag_os_trixie: {}
         lxc_bootstrap_targets: {}
+    # Every host that runs Alloy (roles/linux/alloy). Fleet-wide
+    # monitoring settings live in group_vars/monitored.yml.
+    monitored:
+      children:
+        linux_guests: {}
+        proxmox: {}
+        nbg1: {}
+        pi: {}
