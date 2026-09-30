@@ -3,10 +3,7 @@
 # its site, buffers them on disk and forwards them to the hub. It also scrapes
 # the fixed targets listed in monitoring_topology.
 
-# renovate: grafana-apt depName=alloy
-collector_alloy_version: "1.20.1-1"
-collector_alloy_repo_uri: https://apt.grafana.com
-collector_alloy_repo_key: https://apt.grafana.com/gpg.key
+# The package, its version pin and the service come from the linux/alloy role.
 
 # Site this collector serves: the site whose monitoring_topology entry names
 # this host as its collector.
@@ -32,9 +29,6 @@ collector_hub_write_url: >-
 collector_wal_truncate_frequency: 2h
 collector_wal_min_keepalive_time: 5m
 collector_wal_max_keepalive_time: 72h
-
-# Alloy's own status and self-metrics endpoint. Loopback only.
-collector_http_listen_address: "127.0.0.1:12345"
 
 # Heartbeat and self-metrics.
 collector_self_scrape_interval: 30s

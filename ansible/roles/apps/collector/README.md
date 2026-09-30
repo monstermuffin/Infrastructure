@@ -4,9 +4,8 @@ Site collector: one small LXC per site (`collector01.<site>`). Grafana Alloy rec
 
 ## What it deploys
 
-- The Grafana apt repository (deb822 source) and the `alloy` package, pinned by `collector_alloy_version`.
-- `/etc/default/alloy`: `CONFIG_FILE=/etc/alloy` (Alloy loads every `*.alloy` file in the directory), usage reporting off, status endpoint on loopback.
-- `/etc/alloy/collector.alloy`, rendered from `templates/collector.alloy.j2` and checked with `alloy validate` before it is written. It contains:
+- Alloy itself comes from the `linux/alloy` role (a role dependency): the Grafana apt repository, the pinned `alloy` package (`alloy_version`), `/etc/default/alloy`, the service and its handlers, and the host fragments (`base.alloy`, `node.alloy`, `units.alloy`) that give the collector its own node metrics. This role adds only `collector.alloy` next to them; the collector pushes its own host metrics to its own receiver like any host.
+- `/etc/alloy/collector.alloy`, rendered from `templates/collector.alloy.j2` and checked with `alloy validate` before it is copied into place. It contains:
   - `prometheus.receive_http` on `collector_receiver_port` (default 8429, path `/api/v1/metrics/write`). No authentication; access is limited to the site network by the network itself.
   - `prometheus.remote_write "hub"` with an on-disk WAL. `collector_wal_max_keepalive_time` (default 72h; the design minimum is 48h) is how long unsent data is kept while the hub is unreachable. Data is sent in order when the hub is back. Two limits, both measured: an outage longer than the window loses the whole backlog, and so does a restart of Alloy during the outage (older WAL segments are read only for their series records on start), which is why config changes use a reload.
   - A self-scrape whose `up{job="collector"}` is the site heartbeat, plus a short list of Alloy and remote-write series used by rules and the Collectors dashboard.
@@ -19,7 +18,6 @@ All are role defaults in `defaults/main.yml`; the site layout comes from `monito
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `collector_alloy_version` | pinned | Alloy apt package version |
 | `collector_site` | derived | The site whose `monitoring_topology.sites` entry names this host as collector |
 | `collector_receiver_port` | `8429` | Push receiver port |
 | `collector_hub_host` / `collector_hub_port` | `victoriametrics01.aah.muffn.io` / `8428` | Hub; the inventory address is used when known |

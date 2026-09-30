@@ -1,0 +1,6 @@
+---
+# The package, service, environment file and handlers are shared with the
+# host metrics role; this role only adds the collector config next to the host
+# fragments.
+dependencies:
+  - role: linux/alloy

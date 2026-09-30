@@ -83,6 +83,15 @@ prometheus.scrape "collector" {
 prometheus.relabel "collector" {
   forward_to = [prometheus.remote_write.hub.receiver]
 
+  // The collector's own host metrics are pushed by base.alloy (job="alloy"),
+  // so the push component is left out here: this heartbeat describes the
+  // forward to the hub only.
+  rule {
+    source_labels = ["component_id"]
+    regex         = "prometheus\\.remote_write\\.push"
+    action        = "drop"
+  }
+
   rule {
     source_labels = ["__name__"]
     regex         = "up|alloy_build_info|alloy_config_last_load_(successful|success_timestamp_seconds)|alloy_resources_process_(cpu_seconds_total|resident_memory_bytes)|prometheus_remote_storage_(samples_total|samples_failed_total|samples_retried_total|samples_pending|bytes_total|highest_timestamp_in_seconds|queue_highest_sent_timestamp_seconds|shards)"

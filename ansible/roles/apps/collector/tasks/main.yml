@@ -9,24 +9,35 @@
       monitoring_topology.sites. Add it there or do not target this host.
   tags: always
 
-- name: Configure the Grafana apt repository
-  ansible.builtin.import_tasks: repo.yml
-  tags:
-    - repo
-    - setup
-
-- name: Install Alloy
-  ansible.builtin.import_tasks: install.yml
-  tags:
-    - install
-    - packages
-
-- name: Configure Alloy
-  ansible.builtin.import_tasks: config.yml
+# Alloy is installed and running from the linux/alloy dependency. The template
+# is passed by absolute path because the shared task runs in that role, so the
+# path is fixed here, in this role's context.
+- name: Locate the collector template
+  ansible.builtin.set_fact:
+    collector_template_src: "{{ role_path }}/templates/collector.alloy.j2"
   tags:
     - config
 
-- name: Manage the Alloy service
-  ansible.builtin.import_tasks: service.yml
+- name: Apply the collector config
+  ansible.builtin.include_role:
+    name: linux/alloy
+    tasks_from: apply_config.yml
+  vars:
+    alloy_config_set: collector
+    alloy_config_files:
+      - src: "{{ collector_template_src }}"
+        dest: collector.alloy
+    alloy_config_absent: []
   tags:
-    - service
+    - config
+
+- name: Apply pending Alloy changes now
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the push receiver
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ collector_receiver_port }}"
+    timeout: 30
+  tags:
+    - verify

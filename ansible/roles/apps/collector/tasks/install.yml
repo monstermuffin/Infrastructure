@@ -1,9 +1,0 @@
----
-- name: Install Alloy
-  ansible.builtin.apt:
-    name: "alloy={{ collector_alloy_version }}"
-    state: present
-    allow_downgrade: true
-    update_cache: true
-    cache_valid_time: 3600
-  notify: Restart alloy
