@@ -1,4 +1,10 @@
 ---
+# Nofail on offline host
+- name: End host if facts could not be gathered
+  ansible.builtin.meta: end_host
+  when: ansible_system is not defined
+  tags: always
+
 - name: Check the monitoring variables
   ansible.builtin.assert:
     that:
