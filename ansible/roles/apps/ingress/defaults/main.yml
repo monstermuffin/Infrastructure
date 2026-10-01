@@ -80,6 +80,9 @@ ingress_crowdsec_appsec_configs:
 ingress_crowdsec_appsec_failure_block: false
 ingress_crowdsec_appsec_unreachable_block: false
 ingress_crowdsec_appsec_body_limit: 10485760
+# AppSec (Coraza) leaks crzmp* body buffers into tmpfs /tmp; age them out
+ingress_crowdsec_appsec_tmp_max_age: 30m
+ingress_crowdsec_appsec_tmp_clean_interval: 15min
 
 ingress_crowdsec_whitelist_enabled: false
 ingress_crowdsec_whitelist_reason: "Trusted IP"

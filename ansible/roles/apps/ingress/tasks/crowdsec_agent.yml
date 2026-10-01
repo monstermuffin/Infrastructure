@@ -83,6 +83,41 @@
     - crowdsec
     - config
 
+- name: Age out leaked CrowdSec AppSec body buffers in /tmp
+  ansible.builtin.copy:
+    dest: /etc/tmpfiles.d/crowdsec-appsec.conf
+    content: |
+      e /tmp/crzmp* - - - {{ ingress_crowdsec_appsec_tmp_max_age }}
+    mode: "0644"
+  when: ingress_crowdsec_appsec_enabled
+  tags:
+    - crowdsec
+    - config
+
+- name: Ensure systemd-tmpfiles-clean timer drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/systemd-tmpfiles-clean.timer.d
+    state: directory
+    mode: "0755"
+  when: ingress_crowdsec_appsec_enabled
+  tags:
+    - crowdsec
+    - config
+
+- name: Run systemd-tmpfiles-clean more often
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/systemd-tmpfiles-clean.timer.d/override.conf
+    content: |
+      [Timer]
+      OnUnitActiveSec=
+      OnUnitActiveSec={{ ingress_crowdsec_appsec_tmp_clean_interval }}
+    mode: "0644"
+  when: ingress_crowdsec_appsec_enabled
+  notify: Restart systemd-tmpfiles-clean timer
+  tags:
+    - crowdsec
+    - config
+
 - name: Check installed CrowdSec collections
   ansible.builtin.command:
     argv:
