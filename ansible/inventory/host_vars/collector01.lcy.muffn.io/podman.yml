@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: prompve/prometheus-pve-exporter
     # renovate: datasource=docker depName=prompve/prometheus-pve-exporter
-    tag: 3.10.0
+    tag: 3.10.1
     network_mode: host
     ports:
       - "9221:9221"
