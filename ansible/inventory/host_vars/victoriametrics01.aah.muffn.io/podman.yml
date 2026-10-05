@@ -36,7 +36,7 @@ podman_apps:
     enabled: true
     image: victoriametrics/vmalert
     # renovate: datasource=docker depName=victoriametrics/vmalert
-    tag: v1.152.0
+    tag: v1.153.0
     port: 8880
     network: metrics
     after:
