@@ -27,7 +27,7 @@ podman_apps:
     enabled: true
     image: docker.io/vikunja/vikunja
     # renovate: datasource=docker depName=docker.io/vikunja/vikunja
-    tag: "2.6.0"
+    tag: "2.7.0"
     port: 3456
     user: "1000:1000"
     uid: 1000
