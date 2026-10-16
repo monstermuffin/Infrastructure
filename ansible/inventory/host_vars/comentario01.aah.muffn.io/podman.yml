@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: registry.gitlab.com/comentario/comentario
     # renovate: datasource=docker depName=registry.gitlab.com/comentario/comentario
-    tag: v3.18.0-ubuntu
+    tag: v3.19.0-ubuntu
     container_name: comentario
     port: 8080
     container_port: 80
