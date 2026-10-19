@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/calibrain/shelfmark
     # renovate: datasource=docker depName=ghcr.io/calibrain/shelfmark
-    tag: v1.3.15
+    tag: v1.4.0
     port: 8084
     uid: 982
     gid: 981
