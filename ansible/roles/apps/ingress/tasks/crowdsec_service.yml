@@ -1,4 +1,45 @@
 ---
+# AppSec (Coraza) spools large request bodies to TMPDIR. /tmp is tmpfs and
+# counts against the LXC memory limit; files orphaned by an OOM kill stay.
+- name: Ensure CrowdSec temp directory exists
+  ansible.builtin.file:
+    path: "{{ ingress_crowdsec_tmp_dir }}"
+    state: directory
+    mode: "0700"
+  tags:
+    - crowdsec
+    - service
+
+# Spool files that leak (killed or aborted requests) are aged out daily.
+- name: Age out leaked CrowdSec spool files
+  ansible.builtin.copy:
+    dest: /etc/tmpfiles.d/crowdsec-tmp.conf
+    mode: "0644"
+    content: |
+      d {{ ingress_crowdsec_tmp_dir }} 0700 root root {{ ingress_crowdsec_tmp_max_age }}
+  tags:
+    - crowdsec
+    - service
+
+- name: Create CrowdSec systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/crowdsec.service.d
+    state: directory
+    mode: "0755"
+  tags:
+    - crowdsec
+    - service
+
+- name: Write CrowdSec systemd resource drop-in
+  ansible.builtin.template:
+    src: crowdsec-service-override.conf.j2
+    dest: /etc/systemd/system/crowdsec.service.d/override.conf
+    mode: "0644"
+  notify: Restart crowdsec
+  tags:
+    - crowdsec
+    - service
+
 - name: Ensure CrowdSec service is enabled and started
   ansible.builtin.systemd:
     name: crowdsec

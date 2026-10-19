@@ -18,6 +18,35 @@
     - config
     - traefik
 
+- name: Install logrotate
+  ansible.builtin.apt:
+    name: logrotate
+    state: present
+    cache_valid_time: 3600
+  tags:
+    - config
+    - traefik
+
+# copytruncate: Traefik keeps the file open and CrowdSec tails it by path.
+- name: Rotate Traefik access log
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/traefik-access
+    mode: "0644"
+    content: |
+      {{ ingress_traefik_access_log_path_host }} {
+          daily
+          rotate {{ ingress_traefik_access_log_rotate_count }}
+          maxsize {{ ingress_traefik_access_log_max_size }}
+          compress
+          delaycompress
+          missingok
+          notifempty
+          copytruncate
+      }
+  tags:
+    - config
+    - traefik
+
 - name: Check for Traefik TLS certificate
   ansible.builtin.stat:
     path: "{{ ingress_traefik_cert_dir }}/traefik.crt"

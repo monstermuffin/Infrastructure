@@ -1,0 +1,8 @@
+[Service]
+# Back crowdsec's /tmp with disk so AppSec body spooling never lands in tmpfs
+# (RAM), whether or not Coraza honours TMPDIR.
+BindPaths={{ ingress_crowdsec_tmp_dir }}:/tmp
+Environment=TMPDIR={{ ingress_crowdsec_tmp_dir }}
+ExecStartPre=-/usr/bin/find {{ ingress_crowdsec_tmp_dir }} -maxdepth 1 -type f -name 'crzmp*' -delete
+MemoryHigh={{ ingress_crowdsec_memory_high }}
+MemoryMax={{ ingress_crowdsec_memory_max }}

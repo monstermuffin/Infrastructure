@@ -9,6 +9,8 @@ ingress_traefik_plugin_dir: "{{ ingress_traefik_dir }}/plugins-storage"
 ingress_traefik_static_config: "{{ ingress_traefik_config_dir }}/traefik.yml"
 ingress_traefik_dynamic_config: "{{ ingress_traefik_dynamic_dir }}/routes.yml"
 ingress_traefik_access_log_path_host: "{{ ingress_traefik_log_dir }}/access.log"
+ingress_traefik_access_log_rotate_count: 7
+ingress_traefik_access_log_max_size: 200M
 
 # Accepts either the final route list or a keyed route-definition map.
 ingress_routes: []
@@ -80,6 +82,10 @@ ingress_crowdsec_appsec_configs:
 ingress_crowdsec_appsec_failure_block: false
 ingress_crowdsec_appsec_unreachable_block: false
 ingress_crowdsec_appsec_body_limit: 10485760
+ingress_crowdsec_tmp_dir: /var/lib/crowdsec/tmp
+ingress_crowdsec_tmp_max_age: 6h
+ingress_crowdsec_memory_high: 320M
+ingress_crowdsec_memory_max: 384M
 
 ingress_crowdsec_whitelist_enabled: false
 ingress_crowdsec_whitelist_reason: "Trusted IP"
