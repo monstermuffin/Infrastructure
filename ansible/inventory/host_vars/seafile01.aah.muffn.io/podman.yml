@@ -45,9 +45,11 @@ podman_apps:
     enabled: true
     image: seafileltd/seafile-pro-mc
     # renovate: datasource=docker depName=seafileltd/seafile-pro-mc
-    tag: 13.0.28
+    tag: 14.0.9
     port: 8443
     container_port: 443
+    # Seafile can take a while on first start after a major upgrade
+    startup_timeout: 300
     network: seafile
     after:
       - mariadb.service
@@ -94,7 +96,11 @@ podman_apps:
       SEAFILE_ADMIN_PASSWORD: "{{ seafile_admin_password | trim }}"
       SEAFILE_SERVER_LETSENCRYPT: "false"
       FORCE_HTTPS_IN_CONF: "true"
+      CACHE_PROVIDER: redis
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      # Search moved to env vars in 14.0 and the image now defaults to SeaSearch. No search engine is deployed here.
+      ENABLE_SEARCH: "false"
       JWT_PRIVATE_KEY: "{{ seafile_jwt_private_key | trim }}"
     restart: always
