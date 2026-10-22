@@ -5,7 +5,7 @@
 # allowlist, opt-out) come from group_vars/monitored.yml (monitoring_*).
 
 # renovate: grafana-apt depName=alloy
-alloy_version: "1.21.0-1"
+alloy_version: "1.21.1-1"
 alloy_repo_uri: https://apt.grafana.com
 alloy_repo_key: https://apt.grafana.com/gpg.key
 alloy_repo_architectures:
