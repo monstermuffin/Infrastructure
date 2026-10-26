@@ -7,7 +7,7 @@ pve_lxcs_rembg01:
     cores: 4
     memory: 4096
     swap: 2048
-    disk: "16G"
+    disk: "32G"
     network_ip: "10.82.10.131/24"
     network_gw: "10.82.10.1"
     network_vlan: 710
