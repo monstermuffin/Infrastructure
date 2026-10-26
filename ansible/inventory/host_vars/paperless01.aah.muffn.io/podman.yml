@@ -52,6 +52,8 @@ podman_apps:
     tag: 3.3.4
     port: 8084
     container_port: 8000
+    # New image starup is slow
+    startup_timeout: 600
     uid: 993
     gid: 991
     network: paperless
