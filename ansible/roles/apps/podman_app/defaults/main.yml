@@ -1,2 +1,5 @@
 ---
 podman_apps: {}
+
+# Remove images no container uses after each deploy
+podman_prune_images: true

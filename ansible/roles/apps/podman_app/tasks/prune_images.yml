@@ -1,0 +1,17 @@
+---
+- name: Prune unused images
+  ansible.builtin.command:
+    argv:
+      - podman
+      - image
+      - prune
+      - --all
+      - --force
+  register: _image_prune
+  changed_when: _image_prune.stdout | trim | length > 0
+  failed_when: false
+
+- name: Warn when image prune failed
+  ansible.builtin.debug:
+    msg: "podman image prune failed (rc={{ _image_prune.rc }}): {{ _image_prune.stderr | trim }}"
+  when: _image_prune.rc != 0

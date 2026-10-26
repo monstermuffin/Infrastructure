@@ -43,6 +43,14 @@
     - cleanup
     - podman
 
+- name: Prune unused images
+  ansible.builtin.include_tasks: prune_images.yml
+  when: podman_prune_images | bool
+  tags:
+    - deploy
+    - cleanup
+    - podman
+
 - name: Discover LXC context for Proxmox note (VMID, runtime, node)
   ansible.builtin.include_tasks: "{{ role_path }}/../../lxc/common/tasks/discover_lxc_context.yml"
   tags:

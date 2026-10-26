@@ -86,6 +86,8 @@ podman_apps:
 
 The role attempts to reconcile desired state in `podman_apps` against actual state (Quadlet files on disk) on every run.
 
+After the apps are reconciled, the role runs `podman image prune --all --force` so superseded image versions do not fill the LXC root disk. Images used by a container are kept, and a failed pull stops the play before the prune. The previous version is therefore not kept for rollback; reverting a tag pulls it again. Set `podman_prune_images: false` on a host to skip it.
+
 ## Tags
 
 - `deploy` — full deploy
