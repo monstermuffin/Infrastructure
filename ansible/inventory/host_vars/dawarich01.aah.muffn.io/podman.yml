@@ -19,7 +19,7 @@ podman_apps:
     enabled: true
     image: postgis/postgis
     # renovate: datasource=docker depName=postgis/postgis versioning=regex:^(?<major>\d+)-(?<minor>\d+)\.(?<patch>\d+)(?<compatibility>-alpine)$
-    tag: "17-3.5-alpine"
+    tag: "17-3.6-alpine"
     container_name: dawarich-db
     network: dawarich
     shm_size: 1g
