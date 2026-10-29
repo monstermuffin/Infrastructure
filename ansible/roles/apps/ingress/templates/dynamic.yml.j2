@@ -25,6 +25,12 @@ http:
 {% endif %}
           HTTPTimeoutSeconds: {{ ingress_crowdsec_http_timeout_seconds }}
           UpdateIntervalSeconds: {{ ingress_crowdsec_update_interval_seconds }}
+{% if ingress_routes | selectattr('blocked_paths', 'defined') | list | length > 0 %}
+    deny-all:
+      ipAllowList:
+        sourceRange:
+          - "127.0.0.1/32"
+{% endif %}
 {% if _ingress_oidc_required %}
     oidc:
       plugin:
@@ -61,6 +67,19 @@ http:
   routers:
 {% for route in ingress_routes %}
 {% set route_name = route.name | default(route.hostname | regex_replace('[^A-Za-z0-9]+', '-')) %}
+{% if route.blocked_paths is defined and route.blocked_paths | length > 0 %}
+    {{ route_name }}-blocked:
+      rule: "Host(`{{ route.hostname }}`) && ({% for path in route.blocked_paths %}PathPrefix(`{{ path }}`){% if not loop.last %} || {% endif %}{% endfor %})"
+      entryPoints:
+        - "{{ ingress_entrypoint_name }}"
+      middlewares:
+        - crowdsec
+        - deny-all
+      service: {{ route_name }}
+      priority: 100
+      tls: {}
+
+{% endif %}
 {% if route.oidc_enabled | default(false) and route.exempt_paths is defined and route.exempt_paths | length > 0 %}
     {{ route_name }}-exempt:
       rule: "Host(`{{ route.hostname }}`) && ({% for path in route.exempt_paths %}PathPrefix(`{{ path }}`){% if not loop.last %} || {% endif %}{% endfor %})"

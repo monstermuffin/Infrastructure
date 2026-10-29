@@ -88,6 +88,10 @@
             (route_def.value.exempt_paths is defined)
             | ternary({'exempt_paths': route_def.value.exempt_paths}, {})
           )
+        | combine(
+            (route_def.value.blocked_paths is defined)
+            | ternary({'blocked_paths': route_def.value.blocked_paths}, {})
+          )
       }}
   loop: "{{ _ingress_route_defs | dict2items }}"
   loop_control:
