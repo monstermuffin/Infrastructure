@@ -17,6 +17,7 @@ ingress_routes:
     hostname: docs.example.net
     upstream_host: 10.0.0.13
     service_port: 8084
+    blocked_paths: ["/admin", "/api/token"]
   vaultwarden:
     hostname: vault.example.com
     upstream_host: 10.0.0.14

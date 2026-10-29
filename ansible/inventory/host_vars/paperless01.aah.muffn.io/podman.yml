@@ -76,6 +76,8 @@ podman_apps:
       PAPERLESS_URL: "https://{{ paperless_public_hostname }}"
       PAPERLESS_OCR_USER_ARGS: '{"continue_on_soft_render_error": true}'
       PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+      PAPERLESS_DISABLE_REGULAR_LOGIN: "true"
+      PAPERLESS_REDIRECT_LOGIN_TO_SSO: "true"
       PAPERLESS_SOCIALACCOUNT_PROVIDERS: >-
         {{
           {
