@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: docker.io/rtuszik/photon-docker
     # renovate: datasource=docker depName=rtuszik/photon-docker
-    tag: "2.4.0"
+    tag: "2.5.0"
     container_name: photon
     port: 2322
     startup_timeout: 120
