@@ -1,0 +1,24 @@
+---
+pve_lxcs_dogtagger01:
+  dogtagger01:
+    vmid: 159
+    hostname: dogtagger01.aah.muffn.io
+    node: pve03
+    cores: 14
+    memory: 16384
+    swap: 1024
+    disk: "64G"
+    network_ip: "10.82.10.159/24"
+    network_gw: "10.82.10.1"
+    network_vlan: 710
+    unprivileged: true
+    tags:
+      - ansible
+      - os_linux
+      - os_trixie
+      - site_aah
+      - podman_app
+      - app_dogtagger
+    features: "{{ lxc_features_podman }}"
+    ha: "{{ lxc_ha_default }}"
+    replication: "{{ lxc_replication_default }}"

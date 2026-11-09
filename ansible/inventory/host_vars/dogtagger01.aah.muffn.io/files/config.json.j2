@@ -1,0 +1,17 @@
+{
+  "immich": {
+    "url": "{{ dogtagger_immich_url }}",
+    "timeout_seconds": 120,
+    "accounts": [
+      {
+        "name": "R",
+        "api_key": "{{ dogtagger_api_key_r | trim }}"
+      }{% if dogtagger_api_key_c is defined %},
+      {
+        "name": "C",
+        "api_key": "{{ dogtagger_api_key_c | trim }}"
+      }{% endif %}
+
+    ]
+  }
+}

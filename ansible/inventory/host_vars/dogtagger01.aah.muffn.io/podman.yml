@@ -1,0 +1,65 @@
+---
+podman_enabled: true
+
+dogtagger_immich_url: "http://immich01.aah.muffn.io:2283"
+
+dogtagger_api_key_r: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          32333339336439313961316335306239623330343638363838333533643034313235386433326131
+          6334653932363331663366343064323964303132626231310a663765373461306161346435613162
+          63656438306237653335636266626632346133353663656530633432376437613837386332383563
+          3564633166653136340a373338316665323363313834643039383465386566336561383334306565
+          32636665356461396465323061663335363161653766383263366161303132623232663837363131
+          6162616562636164336239323536303364396164313663333934
+
+# dogtagger_api_key_c: !vault |
+
+# The UI container's nginx proxies /api/ to the hostname "dog-tagger".
+podman_networks:
+  dogtagger:
+    driver: bridge
+
+# https://github.com/bradreimer/immich-dog-tagger/issues/436
+podman_apps:
+  dog-tagger:
+    enabled: true
+    display_name: Dog Tagger API
+    image: ghcr.io/bradreimer/immich-dog-tagger
+    tag: sha-a1c8489
+    container_name: dog-tagger
+    network: dogtagger
+    volumes:
+      - /opt/dogtagger/state:/app/state
+      - /opt/dogtagger/cache:/app/cache
+      - /opt/dogtagger/models:/app/models
+      - /opt/dogtagger/config.json:/app/config/config.json:ro
+    podman_args:
+      - "--entrypoint=uvicorn"
+    exec: immich_dog_tagger.api.app:app --host 0.0.0.0 --port 8000
+    env:
+      TZ: Europe/London
+      CONFIG_FILE: /app/config/config.json
+      STATE_DIR: /app/state
+      CACHE_DIR: /app/cache
+      YOLO_MODEL: /app/models/yolo11m.pt
+      HF_HOME: /app/models/huggingface
+    files:
+      - dest: /opt/dogtagger/config.json
+        template_src: config.json.j2
+        owner: root
+        group: root
+        mode: "0600"
+
+  dog-tagger-ui:
+    enabled: true
+    display_name: Dog Tagger
+    image: ghcr.io/bradreimer/immich-dog-tagger-ui
+    tag: sha-a1c8489
+    container_name: dog-tagger-ui
+    network: dogtagger
+    port: 8080
+    container_port: 80
+    after:
+      - dog-tagger.service
+    requires:
+      - dog-tagger.service
