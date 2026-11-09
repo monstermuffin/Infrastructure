@@ -34,7 +34,7 @@ podman_apps:
     enabled: true
     image: freikin/dawarich
     # renovate: datasource=docker depName=freikin/dawarich
-    tag: "1.16.0"
+    tag: "1.22.0"
     container_name: dawarich-app
     port: 3000
     network: dawarich
@@ -51,6 +51,8 @@ podman_apps:
       - /opt/dawarich/storage:/var/app/storage
     podman_args:
       - "--entrypoint=/usr/local/bin/web-entrypoint.sh"
+      # Background jobs run inside this container now; give them time to finish on stop.
+      - "--stop-timeout=60"
     exec: "bin/rails server -p 3000 -b ::"
     env:
       RAILS_ENV: production
@@ -67,7 +69,11 @@ podman_apps:
       RAILS_LOG_TO_STDOUT: "true"
       SELF_HOSTED: "true"
       STORE_GEODATA: "true"
-      WEB_CONCURRENCY: "1"
+      # Sidekiq runs embedded in the app container (1.17.0+). WEB_CONCURRENCY must be 0:
+      # every extra web process would start its own set of job threads.
+      SIDEKIQ_EMBEDDED: "true"
+      WEB_CONCURRENCY: "0"
+      BACKGROUND_PROCESSING_CONCURRENCY: "2"
       PHOTON_API_HOST: "10.82.10.153:2322"
       PHOTON_API_USE_HTTPS: "false"
       OIDC_CLIENT_ID: "{{ dawarich_oidc_client_id | trim }}"
@@ -77,46 +83,6 @@ podman_apps:
       OIDC_PKCE_ENABLED: "true"
       OIDC_REDIRECT_URI: "https://{{ dawarich_domain | trim }}/users/auth/openid_connect/callback"
       ALLOW_EMAIL_PASSWORD_LOGIN: "false"
-
-  dawarich-sidekiq:
-    enabled: true
-    image: freikin/dawarich
-    # renovate: datasource=docker depName=freikin/dawarich
-    tag: "1.16.0"
-    container_name: dawarich-sidekiq
-    network: dawarich
-    podman_args:
-      - "--entrypoint=/usr/local/bin/sidekiq-entrypoint.sh"
-    exec: sidekiq
-    after:
-      - dawarich-db.service
-      - dawarich-redis.service
-      - dawarich-app.service
-    requires:
-      - dawarich-db.service
-      - dawarich-redis.service
-    volumes:
-      - /opt/dawarich/public:/var/app/public
-      - /opt/dawarich/watched:/var/app/tmp/imports/watched
-      - /opt/dawarich/storage:/var/app/storage
-    env:
-      RAILS_ENV: production
-      REDIS_URL: redis://dawarich-redis:6379
-      DATABASE_HOST: dawarich-db
-      DATABASE_PORT: "5432"
-      DATABASE_USERNAME: dawarich
-      DATABASE_PASSWORD: "{{ dawarich_db_password | trim }}"
-      DATABASE_NAME: dawarich_production
-      APPLICATION_HOSTS: "{{ dawarich_domain | trim }}"
-      APPLICATION_PROTOCOL: https
-      TIME_ZONE: Europe/London
-      SECRET_KEY_BASE: "{{ dawarich_secret_key_base | trim }}"
-      RAILS_LOG_TO_STDOUT: "true"
-      SELF_HOSTED: "true"
-      STORE_GEODATA: "true"
-      BACKGROUND_PROCESSING_CONCURRENCY: "3"
-      PHOTON_API_HOST: "10.82.10.153:2322"
-      PHOTON_API_USE_HTTPS: "false"
 
 dawarich_domain: !vault |
           $ANSIBLE_VAULT;1.1;AES256
