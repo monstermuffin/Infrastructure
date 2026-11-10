@@ -6,7 +6,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/majorfi/immich-stack
     # renovate: datasource=docker depName=ghcr.io/majorfi/immich-stack
-    tag: 0.2.43
+    tag: 0.2.44
     env:
       API_URL: "http://immich01.aah.muffn.io:2283/api"
       API_KEY: !vault |
