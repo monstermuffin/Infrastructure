@@ -9,7 +9,7 @@ podman_apps:
     enabled: true
     image: dgtlmoon/sockpuppetbrowser
     # renovate: datasource=docker depName=dgtlmoon/sockpuppetbrowser
-    tag: 0.0.3
+    tag: 0.0.4
     container_name: playwright_changedetection
     network: changedetection
     env:
