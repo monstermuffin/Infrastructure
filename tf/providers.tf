@@ -14,7 +14,7 @@ terraform {
     }
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.120"
+      version = "~> 0.122"
     }
     technitium = {
       source  = "darkhonor/technitium"
