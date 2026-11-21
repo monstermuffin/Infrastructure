@@ -1,0 +1,147 @@
+---
+# rustguac (browser RDP/SSH/VNC gateway, bundles guacd) with OpenBao as its
+# connection store. First-time setup and day-2 steps: README.md here.
+podman_enabled: true
+
+podman_networks:
+  rustguac: {}
+
+podman_apps:
+  openbao:
+    enabled: true
+    image: docker.io/openbao/openbao
+    # renovate: datasource=docker depName=docker.io/openbao/openbao
+    tag: 2.7.3
+    container_name: openbao
+    network: rustguac
+    # Image user openbao (uid 100, gid 1000). Not published on the host: only
+    # rustguac reaches it, over the rustguac network.
+    uid: 100
+    gid: 1000
+    # The image's default command is `server -dev` (in-memory); override it.
+    exec: server
+    volumes:
+      - /opt/openbao/file:/openbao/file
+    env:
+      TZ: Europe/London
+      SKIP_CHOWN: "true"
+      BAO_LOCAL_CONFIG: "{{ rustguac_openbao_config | to_json }}"
+      BAO_UNSEAL_KEY: "{{ rustguac_openbao_unseal_key | trim }}"
+
+  rustguac:
+    enabled: true
+    image: docker.io/sol1/rustguac
+    # renovate: datasource=docker depName=docker.io/sol1/rustguac
+    tag: 1.15.2
+    container_name: rustguac
+    network: rustguac
+    port: 8089
+    startup_timeout: 60
+    # Image user rustguac is 996:996 (verified against the 1.14.1 image).
+    # Pinned so a rebuilt image cannot silently change bind mount ownership.
+    user: "996:996"
+    uid: 996
+    gid: 996
+    after:
+      - openbao.service
+    requires:
+      - openbao.service
+    volumes:
+      - /opt/rustguac/data:/opt/rustguac/data
+      # Named volume, not a bind mount: rustguac sets its recordings dir to 0750
+      # at startup, which the role's bind mount handling would reset to 0755 on
+      # every deploy (restarting the service each time).
+      - rustguac-recordings:/opt/rustguac/recordings
+      - /opt/rustguac/config/config.toml:/opt/rustguac/config.toml:ro
+    files:
+      - dest: /opt/rustguac/config/config.toml
+        template_src: config.toml.j2
+        owner: root
+        group: root
+        mode: "0644"
+    env:
+      TZ: Europe/London
+      RUST_LOG: info
+      # Both are read only when the matching [oidc] / [vault] block is
+      # rendered into config.toml (see the defined-checks in config.toml.j2).
+      OIDC_CLIENT_SECRET: "{{ rustguac_oidc_client_secret | default('') | trim }}"
+      VAULT_SECRET_ID: "{{ rustguac_vault_secret_id | default('') | trim }}"
+
+# Allowlist of hosts rustguac may open RDP sessions to. Loopback plus the
+# specific machines users are meant to reach (a /32 each).
+rustguac_rdp_allowed_networks:
+  - 127.0.0.0/8
+  - "::1/128"
+  - 10.82.3.102/32
+
+# Hops whose X-Forwarded-For entries are skipped when working out the client
+# IP: the two ingress hosts, plus the ingress hosts' podman network, where
+# cloudflared sits (Traefik appends its address to the header). Without the
+# network, every visitor resolves to cloudflared's address and shares one
+# rate-limit allowance.
+rustguac_trusted_proxies:
+  - 10.82.3.106/32
+  - 10.82.3.107/32
+  - 10.89.0.0/29
+
+# OpenBao: single node, integrated (raft) storage (the file backend no longer
+# exists), auto-unsealed with a static key so a restart needs no manual unseal.
+# The key lives next to the data it protects; acceptable for this single-host
+# store, see README.md.
+rustguac_openbao_config:
+  ui: false
+  disable_mlock: true
+  api_addr: http://openbao:8200
+  cluster_addr: http://openbao:8201
+  storage:
+    raft:
+      path: /openbao/file
+      node_id: openbao-1
+  listener:
+    tcp:
+      address: 0.0.0.0:8200
+      tls_disable: true
+  seal:
+    static:
+      current_key_id: rustguac-1
+      current_key: env://BAO_UNSEAL_KEY
+
+# OpenBao AppRole for rustguac (bootstrapped once; steps in README.md).
+rustguac_vault_role_id: c0e4ec8d-f8cc-a632-cf8f-6a2f070c9658
+rustguac_vault_secret_id: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          37393362326236653463633534653866666263613834343734313163666435636536653638393733
+          6563343832376232616366313166363338613061323338360a633137393139373632303262313662
+          30316266643363343330666134313238396536663737373933386361643062383131613331633866
+          3039653532346131330a353366623232653432633433643737343437666262633530383434323330
+          38363430363365336637643435613035333664623932366566323138323963656639396131303735
+          3936333661376336653465316332653762383064633930643165
+
+# Pocket ID client for rustguac (callback /auth/callback; restricted to a user
+# group in Pocket ID, which is what gates who can sign in).
+rustguac_oidc_client_id: a5f68cc7-dbfd-42c8-a80c-a409c2b32ced
+rustguac_oidc_client_secret: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          63656133316335356238373839633636316133656662666665663262366431353263626562633232
+          6435356462386636353864356166653130373838303035370a323763393431613732623062663733
+          31313162313863353338336333636137303265316561343034663062393763623138383134353461
+          6537383361393639630a643337373036393664666638303333306438656664383431343537306437
+          37376162303334373263313936653463653533323064393066336137623535613236376164323666
+          6336373962376666313033376365626430656235393065623035
+
+rustguac_public_host: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          38346663376139373964373436393834306336383035623632653137316432383730376333343864
+          6236363031316530666262373266353263626331616337350a613939646466653532643261323936
+          65656162313539376236623631306336363237343932373835613933323631343536326238353839
+          3037396261633963330a383062666361313565366266633063633562333530316134383336393734
+          3663
+
+rustguac_openbao_unseal_key: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          64613438313031653864663037393338313230636435663335613236323635323461373030626662
+          3863646331616636386232373435383237386130326461300a393938653361646337376164663865
+          61393939613938373765333530346264346164353063353732633339343234353937326132386139
+          3739343534306634310a663764373930313565663739396537656636616564623962643364646434
+          37666530366237613161356230656139653366643862326338633764356562316436353631633762
+          3130336534383361646533376366636131323064313430376165

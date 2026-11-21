@@ -1,0 +1,42 @@
+# {{ ansible_managed }}
+# Secrets are not rendered here: OIDC_CLIENT_SECRET and VAULT_SECRET_ID come
+# from the container environment. Top-level keys must stay above any [section].
+
+listen_addr = "0.0.0.0:8089"
+guacd_addr = "127.0.0.1:4822"
+recording_path = "/opt/rustguac/recordings"
+static_path = "/opt/rustguac/static"
+db_path = "/opt/rustguac/data/rustguac.db"
+site_title = "Remote access"
+
+# Only RDP targets are allowed; SSH, VNC and web sessions stay on the
+# loopback-only defaults.
+rdp_allowed_networks = {{ rustguac_rdp_allowed_networks | to_json }}
+
+# Real client IPs come from the ingress hosts' X-Forwarded-For.
+trusted_proxies = {{ rustguac_trusted_proxies | to_json }}
+rate_limit = true
+
+# Plain HTTP for the reverse proxy; TLS stays on between rustguac and guacd.
+[tls]
+guacd_cert_path = "/opt/rustguac/tls/cert.pem"
+{% if rustguac_oidc_client_id is defined %}
+
+[oidc]
+issuer_url = "https://id.muffn.io"
+client_id = "{{ rustguac_oidc_client_id | trim }}"
+redirect_uri = "https://{{ rustguac_public_host | trim }}/auth/callback"
+# Pocket ID decides who may sign in (the client is restricted to a user group),
+# so accounts are created on first login. Each account is pinned to its Pocket
+# ID subject. New accounts get operator: they can open saved connections only.
+auto_create_users = true
+default_role = "operator"
+groups_claim = "groups"
+extra_scopes = ["groups"]
+{% endif %}
+{% if rustguac_vault_role_id is defined %}
+
+[vault]
+addr = "http://openbao:8200"
+role_id = "{{ rustguac_vault_role_id | trim }}"
+{% endif %}
