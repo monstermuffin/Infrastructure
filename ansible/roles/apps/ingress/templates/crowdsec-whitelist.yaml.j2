@@ -1,5 +1,8 @@
 name: local-trusted-ips
 description: "{{ ingress_crowdsec_whitelist_reason }}"
+# Without next_stage the event stops here and never reaches s02-enrich, so no
+# scenario (including appsec-vpatch) ever sees it and nothing gets banned.
+onsuccess: next_stage
 filter: "1 == 1"
 whitelist:
   reason: "{{ ingress_crowdsec_whitelist_reason }}"
