@@ -4,7 +4,7 @@ pve_lxcs_mcphub01:
     vmid: 120
     hostname: mcphub01.lcy.muffn.io
     cores: 2
-    memory: 1024
+    memory: 2048
     swap: 512
     disk: "16G"
     network_ip: "10.83.7.120/24"

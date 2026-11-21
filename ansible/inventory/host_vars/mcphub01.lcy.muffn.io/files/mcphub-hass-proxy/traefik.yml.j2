@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+entryPoints:
+  hass:
+    address: ":3100"
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+
+log:
+  level: INFO
+
+accessLog: {}

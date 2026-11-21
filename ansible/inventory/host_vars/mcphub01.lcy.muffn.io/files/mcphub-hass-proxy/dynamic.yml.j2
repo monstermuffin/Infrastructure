@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+http:
+  routers:
+    hass-voice:
+      entryPoints: [hass]
+      rule: "Path(`/mcp/hass-voice`)"
+      middlewares: [hass-allow, hass-auth]
+      service: mcphub
+
+  middlewares:
+    hass-allow:
+      ipAllowList:
+        sourceRange: {{ mcphub_hass_proxy_allowed_sources | to_json }}
+    hass-auth:
+      headers:
+        customRequestHeaders:
+          Authorization: "Bearer {{ mcphub_bearer_key_hass_voice | trim }}"
+
+  services:
+    mcphub:
+      loadBalancer:
+        servers:
+          - url: "http://mcphub:3000"
