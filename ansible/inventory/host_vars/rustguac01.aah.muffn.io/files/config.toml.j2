@@ -15,7 +15,12 @@ rdp_allowed_networks = {{ rustguac_rdp_allowed_networks | to_json }}
 
 # Real client IPs come from the ingress hosts' X-Forwarded-For.
 trusted_proxies = {{ rustguac_trusted_proxies | to_json }}
-rate_limit = true
+# Off on purpose. rustguac's API limiter is built on tower_governor, where
+# per_second(20) replenishes ONE request every 20 seconds, not 20 a second:
+# 100 requests, then one per 20s per client IP. A normal session of the web
+# UI exhausts that and every call returns 429. The OIDC login/callback limiter
+# is always on regardless of this setting.
+rate_limit = false
 
 # Plain HTTP for the reverse proxy; TLS stays on between rustguac and guacd.
 [tls]

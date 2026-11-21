@@ -14,6 +14,7 @@ Browser RDP gateway. [rustguac](https://github.com/sol1/rustguac) (web UI plus b
 - **Login:** rustguac does the OIDC authorization-code flow with PKCE against Pocket ID. Pocket ID decides who may sign in (the client is restricted to a user group), so `auto_create_users = true`: the first login creates an `operator` account pinned to that Pocket ID `sub`. Operators can only open saved connections. Grant admin with `set-role` or a group mapping (step 5).
 - **Connections page:** needs a Vault-compatible KV v2 store. OpenBao runs single-node with integrated (raft) storage and a static-key auto-unseal, so a restart needs no manual unseal. The key sits in the container env next to the data it protects, so anyone with root on this LXC can read the store; that is accepted for a single-host store.
 - **Recordings** live in the `rustguac-recordings` named volume: rustguac sets the directory to 0750 at startup, which a bind mount would have reset (and restarted the service) on every deploy.
+- **Rate limiting is off** (`rate_limit = false`). rustguac's API limiter replenishes one request every 20 seconds after a burst of 100 per client IP (the library's `per_second(20)` is an interval, not a rate), so normal use of the web UI ends in `429` for minutes. Do not turn it on without testing a real session. The OIDC login and callback routes keep an always-on limiter. Cloudflare and CrowdSec sit in front.
 - **Image users:** rustguac runs as 996:996 and OpenBao as 100:1000. Both are pinned in `podman.yml`. Check them against the new image before bumping a major version, or bind mounts become unwritable.
 - **RDP targets:** `rustguac_rdp_allowed_networks` in `podman.yml` is the allowlist of hosts rustguac may open RDP to. It starts as loopback only. Add the target machine as a /32.
 
@@ -70,10 +71,11 @@ Run on the LXC after the first deploy. rustguac starts without OIDC or the Conne
 
 ## Contractor access (live state in OpenBao, not in git)
 
-- Folder `lutron`, visible only to the Pocket ID group `lutron-users`. That group must also be assigned to the rustguac client in Pocket ID, or its members cannot sign in.
+- Folder `lutron`, visible only to the Pocket ID group `lutron_users`. That group must also be assigned to the rustguac client in Pocket ID, or its members cannot sign in.
+- rustguac matches the exact string Pocket ID puts in the `groups` claim, which is the group's internal name (underscores), not the display name you typed in the UI. Check what a user actually sent: `journalctl -u rustguac | grep 'OIDC groups extracted'`.
 - Entry `windows-desktop`: RDP to the target with a stored low-privilege account. The password is set in the Connections page (edit the entry), never in git.
 - New users start as `operator`: they can open entries in folders their groups allow and cannot edit anything.
-- To give someone access: add them to `lutron-users` in Pocket ID. To remove it: take them out of the group; an existing session ends within its session limit, so also disable the account with `disable-user --email <email>` if it must stop at once.
+- To give someone access: add them to the `lutron_users` group in Pocket ID. To remove it: take them out of the group; an existing session ends within its session limit, so also disable the account with `disable-user --email <email>` if it must stop at once.
 
 ## Windows side
 
