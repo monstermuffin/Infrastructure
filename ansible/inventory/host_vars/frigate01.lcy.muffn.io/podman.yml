@@ -48,9 +48,32 @@ podman_apps:
         owner: root
         group: root
         mode: "0644"
+      # YOLOv9-s (320) alternative: more accurate than -t at ~3.5x the compute.
+      # Exported alongside -t so switching is only `frigate_model_name` below.
+      - dest: /opt/frigate/config/model_cache/yolov9s.onnx
+        setup_command: >-
+          systemctl stop frigate.service 2>/dev/null; true &&
+          rm -rf /root/ul_venv /root/yolov9s.pt &&
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -q
+          python3-venv libgl1 &&
+          python3 -m venv /root/ul_venv &&
+          /root/ul_venv/bin/pip install ultralytics --quiet --no-cache-dir &&
+          cd /root && /root/ul_venv/bin/python3 -c
+          "from ultralytics import YOLO; import shutil;
+          shutil.move(str(YOLO('yolov9s.pt').export(format='onnx',imgsz=320,simplify=True)),
+          '/opt/frigate/config/model_cache/yolov9s.onnx')" &&
+          rm -rf /root/ul_venv /root/yolov9s.pt
+        owner: root
+        group: root
+        mode: "0644"
     env:
       TZ: Europe/London
     startup_timeout: 60
+
+# Detector model file in /opt/frigate/config/model_cache (yolov9t | yolov9s).
+# Both are exported on first deploy. Flip to yolov9s once yolov9t is measured on
+# the new detect resolution; check Frigate System > Detectors inference speed.
+frigate_model_name: yolov9s
 
 frigate_camera_ips:
   master_bedroom: "10.83.22.102"

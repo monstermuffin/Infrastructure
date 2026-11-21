@@ -10,6 +10,9 @@ detectors:
   ov:
     type: openvino
     device: GPU
+  ov2:
+    type: openvino
+    device: GPU
 
 model:
   model_type: yolo-generic
@@ -17,17 +20,15 @@ model:
   height: 320
   input_tensor: nchw
   input_dtype: float
-  path: /config/model_cache/yolov9t.onnx
+  path: /config/model_cache/{{ frigate_model_name }}.onnx
   labelmap_path: /labelmap/coco-80.txt
 
 objects:
   track:
     - person
     - dog
-    - cell phone
-    - bird
     - cat
-    - horse
+    - bird
 
 ffmpeg:
   hwaccel_args: preset-vaapi
@@ -68,13 +69,13 @@ record:
     post_capture: 5
   detections:
     retain:
-      days: 14
+      days: 10
     pre_capture: 5
     post_capture: 5
   continuous:
     days: 0
   motion:
-    days: 3
+    days: 1
 
 snapshots:
   enabled: true
@@ -129,8 +130,8 @@ cameras:
 
   camera_patio_left_dual:
     detect:
-      width: 1200
-      height: 536
+      width: 1816
+      height: 816
       fps: 5
     ffmpeg:
       output_args:
@@ -140,17 +141,31 @@ cameras:
           input_args: preset-rtsp-restream
           roles:
             - record
-        - path: rtsp://127.0.0.1:8554/camera_patio_left_dual_sub
-          input_args: preset-rtsp-restream
-          roles:
             - detect
     motion:
       mask: 0.028,0,0.029,0.05,0.29,0.047,0.289,0
+    zones:
+      pavement:
+        coordinates: 0.000,0.634,0.025,0.653,0.250,0.821,0.283,0.877,0.250,1,0.000,1
+      road:
+        coordinates: 0.000,0.569,0.208,0.616,0.392,0.616,0.467,0.588,0.450,0.709,0.367,0.784,0.300,0.821,0.250,0.821,0.025,0.653,0.000,0.634
+      patio_edge:
+        coordinates: 0.771,1,0.775,0.746,0.804,0.634,0.833,0.616,0.838,1
+      living_room_door:
+        coordinates: 0.889,0.910,0.892,0.432,0.988,0.450,0.990,0.892,0.988,0.931,0.889,0.962
+    review:
+      alerts:
+        labels:
+          - person
+          - dog
+          - cat
+        required_zones:
+          - patio_edge
 
   camera_patio_right_dual:
     detect:
-      width: 1200
-      height: 536
+      width: 1816
+      height: 816
       fps: 5
     ffmpeg:
       output_args:
@@ -160,9 +175,36 @@ cameras:
           input_args: preset-rtsp-restream
           roles:
             - record
-        - path: rtsp://127.0.0.1:8554/camera_patio_right_dual_sub
-          input_args: preset-rtsp-restream
-          roles:
             - detect
     motion:
       mask: 0.028,0,0.029,0.05,0.29,0.047,0.289,0
+    objects:
+      filters:
+        dog:
+          min_score: 0.4
+          threshold: 0.55
+        cat:
+          min_score: 0.4
+          threshold: 0.55
+    zones:
+      patio:
+        coordinates: 0.279,1,0.279,0.802,0.308,0.616,0.375,0.569,0.450,0.550,0.533,0.532,0.608,0.485,0.667,0.560,0.733,0.653,0.792,0.784,0.833,0.933,0.842,1
+      office_door:
+        coordinates: 0.096,0.256,0.140,0.196,0.181,0.183,0.212,0.261,0.250,0.403,0.279,0.545,0.299,0.661,0.293,0.726,0.267,0.747,0.233,0.674,0.175,0.571,0.134,0.442,0.103,0.339
+      # Makeshift gate. Only the lower band at the base of the screen: people on the
+      # pavement behind it are cut off by the screen, so their feet always land at
+      # y~0.195 (all 36 pass-by events did). Someone coming through the gate has their
+      # feet at the base (y>0.4), so this zone starts well below that line.
+      gate:
+        coordinates: 0.384,0.300,0.493,0.300,0.487,0.416,0.464,0.481,0.424,0.494,0.395,0.429
+      # Lowered section of the street-side fence.
+      lowered_fence:
+        coordinates: 0.763,0.434,0.800,0.455,0.869,0.558,0.933,0.649,0.985,0.739,0.991,0.778,0.950,0.835,0.921,0.842,0.869,0.791,0.811,0.726,0.753,0.636,0.736,0.558,0.742,0.481
+    review:
+      alerts:
+        labels:
+          - person
+          - dog
+          - cat
+        required_zones:
+          - patio
