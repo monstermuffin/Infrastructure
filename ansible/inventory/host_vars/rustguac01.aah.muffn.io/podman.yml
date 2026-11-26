@@ -32,7 +32,7 @@ podman_apps:
     enabled: true
     image: docker.io/sol1/rustguac
     # renovate: datasource=docker depName=docker.io/sol1/rustguac
-    tag: 1.15.2
+    tag: 1.15.3
     container_name: rustguac
     network: rustguac
     port: 8089
