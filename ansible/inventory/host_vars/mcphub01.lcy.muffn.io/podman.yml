@@ -40,7 +40,7 @@ podman_apps:
     enabled: true
     image: ghcr.io/traefik/traefik
     # renovate: datasource=docker depName=ghcr.io/traefik/traefik
-    tag: v3.7.19
+    tag: v3.8.0
     description: mcphub auth proxy for Home Assistant
     ports:
       - "3100:3100"
