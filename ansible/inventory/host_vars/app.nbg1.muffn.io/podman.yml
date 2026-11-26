@@ -9,7 +9,7 @@ podman_package_versions:
     arm64: "5.8.3+ds1-1"
   podman-compose: "1.0.3-3"
   # renovate: suite=testing arch=arm64 depName=crun
-  crun: "1.28-1"
+  crun: "1.31-1"
   netavark: "1.4.0-3"
   aardvark-dns: "1.4.0-3"
 
