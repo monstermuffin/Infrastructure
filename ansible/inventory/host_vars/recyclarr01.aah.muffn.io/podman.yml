@@ -7,7 +7,7 @@ podman_apps:
     display_name: Recyclarr
     image: ghcr.io/recyclarr/recyclarr
     # renovate: datasource=docker depName=ghcr.io/recyclarr/recyclarr
-    tag: "8"
+    tag: "9"
     container_name: recyclarr
     uid: 65534
     gid: 65533
